@@ -35,8 +35,8 @@ SunDAI runs on math, collateral, and immutable code.
 
 | Contract | Description |
 |-----------|-------------|
-| `pSunDAI.sol` | ERC-20 stable asset token (Autonomous Stable Asset). |
-| `pSunDAIVault_ASA.sol` | Core vault logic — handles deposits, minting, repayment, withdrawals, and liquidations. |
+| `pSunDAI_ASA_Token.sol` | ERC-20 stable asset token (Autonomous Stable Asset). |
+| `pSunDAI_Stable_Vaultv3.sol` | Core vault logic — handles deposits, minting, repayment, withdrawals, and liquidations. |
 | `pSunDAIoraclePLSX3.sol` | Oracle contract that aggregates stable pair data and clamps volatility. |
 
 All contracts are immutable and deployed without admin ownership.  
