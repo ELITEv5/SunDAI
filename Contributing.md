@@ -39,10 +39,10 @@ Use explicit revert messages for every require().
 2️⃣ Project Structure
 Maintain this structure unless improving modularity or readability:
 
-Copy code
+
 contracts/
-├── pSunDAI.sol
-├── pSunDAIVault_ASA.sol
+├── pSunDAI_ASA_Token.sol
+├── pSunDAI_STABLE_Vaultv3.sol
 ├── pSunDAIoraclePLSX3.sol
 └── interfaces/
     └── IWPLS.sol
