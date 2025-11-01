@@ -85,7 +85,7 @@ All parameters are **hardcoded and immutable** — no DAO votes or admin adjustm
 ## 🌐 Official Links
 
 - 🌞 **Website:** [https://www.sundaitoken.com](https://www.sundaitoken.com)  
-- 📜 **Docs:** [https://github.com/ELITEv5/AutonomousStableAssets](https://github.com/ELITEv5/AutonomousStableAssets)  
+- 📜 **Docs:** [https://github.com/ELITEv5/SunDAI](https://github.com/ELITEv5/SunDAI)  
 - 🧑‍💻 **Developers:** dev@sundaitoken.com  
 - 🧠 **Whitepaper: https://github.com/ELITEv5/SunDAI/blob/main/SunDAI_Whitepaper_2025.md
 
