@@ -1,9 +1,10 @@
-MIT License
-
-Copyright (c) 2025 ELITE LABS LLC
-SunDAI Autonomous Stable Asset (ASA)
-Website: https://www.sundaitoken.com
+Copyright (c) 2025 ELITE LABS LLC  
+All rights reserved.  
+SunDAI Autonomous Stable Asset (ASA) Protocol  
+Website: https://www.sundaitoken.com  
 Contact: dev@sundaitoken.com
+
+Licensed under the MIT License (see below).
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
