@@ -359,8 +359,7 @@
     async function loadVault(){
       try {
         const i = await vault.vaultInfo(account);
-        const ratioNum = Number(i.ratio);
-        let ratioValue = ratioNum > 1e8 ? ratioNum/1e16 : ratioNum/100;
+        const ratioValue = Number(i.ratio); // already in percent
         let ratioClass = ratioValue<150?"risk":ratioValue<170?"warn":"safe";
         const ratioDisplay = ratioNum>1e30?"∞":ratioValue.toFixed(2)+"%";
         stats.innerHTML = `
