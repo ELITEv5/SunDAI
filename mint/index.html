@@ -283,12 +283,12 @@
       <button class="btn" id="withdraw" disabled>Withdraw PLS</button>
     </div>
 
-    <div class="card">
+       <div class="card">
       <button class="btn" id="risk" disabled style="background:#ff3366">Check Risk</button>
       <div id="riskText" style="margin-top:10px;text-align:center;font-weight:700"></div>
     </div>
-  </div>
-      <!-- 🟢 Safety / Oracle Sync Status -->
+
+    <!-- 🟢 Safety / Oracle Sync Status -->
     <div class="card" id="safetyCard" style="margin-top: 12px;">
       <div id="safetyStatus" style="text-align:center;font-weight:700;color:#ffd700;margin-bottom:8px;">
         Checking Oracle status...
@@ -297,6 +297,9 @@
         Wake Oracle 🌞
       </button>
     </div>
+
+  </div> <!-- ✅ now this closes the container at the right time -->
+
 
   <script>
     // Detect ethers global across versions
