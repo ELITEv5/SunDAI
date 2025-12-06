@@ -223,7 +223,7 @@
       return [v,t,o];
     }
 
-    // 🌌 Cosmic animated background — Pulsing Supernova effect
+    // 🌌 Full Cosmic Field Background (Supernova across entire screen)
 const c = document.getElementById("bg");
 const ctx = c.getContext("2d");
 let w = (c.width = window.innerWidth);
@@ -232,51 +232,70 @@ let stars = [];
 
 function initStars() {
   stars = [];
-  for (let i = 0; i < 400; i++) {
+  for (let i = 0; i < 600; i++) {
     stars.push({
       x: Math.random() * w,
       y: Math.random() * h,
       z: Math.random() * w,
-      o: Math.random(),
+      size: Math.random() * 1.5 + 0.3,
+      speed: Math.random() * 0.7 + 0.3,
+      hue: 200 + Math.random() * 80, // bluish-purple tone
+      o: Math.random() * 0.8 + 0.2
     });
   }
 }
 
-function drawStars() {
-  ctx.fillStyle = "rgba(5, 0, 20, 0.35)";
+function draw() {
+  // subtle moving gradient background
+  const t = Date.now() * 0.0001;
+  const grad = ctx.createLinearGradient(
+    w * Math.sin(t * 0.7),
+    h * Math.cos(t * 0.5),
+    w,
+    h
+  );
+  grad.addColorStop(0, `hsl(${220 + 40 * Math.sin(t)}, 80%, 5%)`);
+  grad.addColorStop(0.5, `hsl(${260 + 60 * Math.sin(t * 1.5)}, 60%, 8%)`);
+  grad.addColorStop(1, `hsl(${200 + 20 * Math.cos(t)}, 70%, 10%)`);
+  ctx.fillStyle = grad;
   ctx.fillRect(0, 0, w, h);
 
-  const cx = w / 2, cy = h / 2;
-  const t = Date.now() * 0.001;
-  const pulse = 0.6 + 0.4 * Math.sin(t * 2.0);
-
+  // star field movement
   for (let i = 0; i < stars.length; i++) {
     let s = stars[i];
-    s.z -= 2;
+    s.z -= s.speed * 2;
     if (s.z <= 0) s.z = w;
-
     const k = 128.0 / s.z;
-    const px = s.x * k + cx;
-    const py = s.y * k + cy;
+    const px = s.x * k + w / 2;
+    const py = s.y * k + h / 2;
 
     if (px >= 0 && px <= w && py >= 0 && py <= h) {
-      const shade = (1 - s.z / w) * 255;
-      ctx.fillStyle = `rgba(${100 + shade * 0.3}, ${100 + shade * 0.1}, ${255}, ${s.o * 0.8})`;
-      ctx.fillRect(px, py, pulse * 2, pulse * 2);
+      const twinkle = 0.6 + 0.4 * Math.sin(t * 40 + i);
+      ctx.fillStyle = `hsla(${s.hue}, 100%, ${60 + 20 * Math.sin(t + i)}%, ${s.o * twinkle})`;
+      ctx.fillRect(px, py, s.size, s.size);
     }
   }
 
-  // 🌠 Supernova pulse
-  const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, 400 + 100 * pulse);
-  gradient.addColorStop(0, `rgba(160, 120, 255, ${0.4 * pulse})`);
-  gradient.addColorStop(0.3, `rgba(100, 60, 220, ${0.2 * pulse})`);
-  gradient.addColorStop(1, "rgba(0,0,40,0)");
+  // multi-layer supernova glow (covers entire screen)
+  const pulse = 0.4 + 0.3 * Math.sin(Date.now() * 0.0015);
+  const g = ctx.createRadialGradient(
+    w / 2 + 100 * Math.sin(t * 2),
+    h / 2 + 100 * Math.cos(t * 1.5),
+    0,
+    w / 2,
+    h / 2,
+    Math.max(w, h)
+  );
+  g.addColorStop(0, `rgba(160, 100, 255, ${0.25 * pulse})`);
+  g.addColorStop(0.3, `rgba(80, 40, 180, ${0.15 * pulse})`);
+  g.addColorStop(0.7, `rgba(20, 10, 60, ${0.1 * pulse})`);
+  g.addColorStop(1, "rgba(0,0,20,0)");
   ctx.globalCompositeOperation = "screen";
-  ctx.fillStyle = gradient;
+  ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
   ctx.globalCompositeOperation = "source-over";
 
-  requestAnimationFrame(drawStars);
+  requestAnimationFrame(draw);
 }
 
 window.addEventListener("resize", () => {
@@ -286,7 +305,8 @@ window.addEventListener("resize", () => {
 });
 
 initStars();
-drawStars();
+draw();
+
 
 
     window.connectWallet = async function(){
