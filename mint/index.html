@@ -478,27 +478,41 @@
   </div>
 </footer>
 
-<!-- 🌞 Safety Logic (Immediate Visual Update) -->
+<!-- 🌞 Safety Logic (Non-blocking, Timeout-Safe & Instant UI) -->
 <script>
-  async function checkOracleHealth(immediate = false) {
+  async function safeCall(promise, timeoutMs = 4000) {
+    return Promise.race([
+      promise,
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("RPC timeout")), timeoutMs)
+      ),
+    ]);
+  }
+
+  async function checkOracleHealth(force = false) {
     const statusEl = document.getElementById("safetyStatus");
     const pokeBtn = document.getElementById("pokeBtn");
 
-    // show “checking” right away on every call
+    // always show an immediate UI change
     statusEl.textContent = "🔄 Checking Oracle...";
     statusEl.style.color = "#ffd700";
+    pokeBtn.disabled = true;
 
-    if (!oracle) {
+    // If oracle not ready, wait and retry quickly
+    if (!oracle || !oracle.isHealthy) {
       console.warn("Oracle not yet initialized");
+      setTimeout(() => checkOracleHealth(true), 500);
       return;
     }
 
     try {
-      const [healthy, result] = await Promise.all([
-        oracle.isHealthy(),
-        oracle.peekPriceView()
+      // parallel calls with timeout to prevent UI freeze
+      const [healthy, peek] = await Promise.all([
+        safeCall(oracle.isHealthy(), 3000),
+        safeCall(oracle.peekPriceView(), 3000)
       ]);
-      const [price, timestamp] = result;
+
+      const [price, timestamp] = peek;
       const age = Math.floor(Date.now() / 1000 - Number(timestamp));
 
       if (healthy && age < 86400) {
@@ -513,42 +527,55 @@
         pokeBtn.disabled = false;
       }
     } catch (e) {
-      statusEl.textContent = "⚠️ Oracle check failed: " + e.message;
+      console.warn("Oracle check failed:", e.message);
+      statusEl.textContent = "⚠️ " + e.message;
       statusEl.style.color = "#ff3366";
       pokeBtn.disabled = false;
     }
   }
 
-  // Call this the instant wallet connects
+  // 🟡 Run as soon as wallet connects
   const originalConnectWallet = connectWallet;
   connectWallet = async function () {
     await originalConnectWallet();
-    document.getElementById("safetyCard").style.opacity = "1";
-    // call once immediately for instant UI update
+
+    const safetyCard = document.getElementById("safetyCard");
+    safetyCard.style.opacity = "1";
+
+    // immediate visible feedback
+    const statusEl = document.getElementById("safetyStatus");
+    statusEl.textContent = "🔄 Checking Oracle...";
+    statusEl.style.color = "#ffd700";
+
+    // first check right away
     checkOracleHealth(true);
-    // keep refreshing every 15 seconds
-    setInterval(checkOracleHealth, 15000);
+
+    // recheck every 20 seconds (non-blocking)
+    setInterval(() => checkOracleHealth(), 20000);
   };
 
-  // Wake Oracle button
+  // 🌞 Manual poke
   document.getElementById("pokeBtn").onclick = async () => {
+    const statusEl = document.getElementById("safetyStatus");
     try {
       if (!oracle || !signer) {
         alert("Please connect your wallet first!");
         return;
       }
-      const statusEl = document.getElementById("safetyStatus");
       statusEl.textContent = "⏳ Sending wake-up...";
+      statusEl.style.color = "#ffd700";
       const tx = await oracle.connect(signer).poke();
       await tx.wait();
       statusEl.textContent = "✅ Oracle awakened & synced!";
       statusEl.style.color = "#00ff9d";
-      setTimeout(checkOracleHealth, 3000);
+      setTimeout(() => checkOracleHealth(true), 2500);
     } catch (e) {
-      document.getElementById("safetyStatus").textContent = "⚠️ " + e.message;
+      statusEl.textContent = "⚠️ " + e.message;
+      statusEl.style.color = "#ff3366";
     }
   };
 </script>
+
 
 <!-- 🌌 Golden Nebula Drift Background -->
 <style>
