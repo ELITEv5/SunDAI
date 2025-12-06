@@ -195,6 +195,22 @@ input:focus {
       .container { padding: 20px 15px; }
       input, .btn { font-size: 0.95em; padding: 12px; }
     }
+    /* 🔵 Ratio Color States */
+.value.safe {
+  color: #00ff9d; /* Green – safe */
+  text-shadow: 0 0 8px rgba(0,255,157,0.5);
+}
+
+.value.warn {
+  color: #ffcc00; /* Yellow – watch zone */
+  text-shadow: 0 0 8px rgba(255,204,0,0.5);
+}
+
+.value.risk {
+  color: #ff3366; /* Red – danger */
+  text-shadow: 0 0 8px rgba(255,51,102,0.5);
+}
+
   </style>
 </head>
 
@@ -392,16 +408,30 @@ draw();
     });
 
     async function loadVault(){
-      try {
-        const i=await vault.vaultInfo(account);
-        const r=i.ratio>1e30?"∞":(Number(i.ratio)/100).toFixed(2)+"%";
-        stats.innerHTML=`
-          <div class="stat"><div class="label">Collateral</div><div class="value">${Math.round(Number(ethers.formatEther(i.collateral)))} PLS</div></div>
-          <div class="stat"><div class="label">Debt</div><div class="value">${Number(ethers.formatEther(i.debt)).toFixed(2)} pSunDAI</div></div>
-          <div class="stat"><div class="label">Ratio</div><div class="value ${Number(i.ratio)<15000?"risk":"safe"}">${r}</div></div>
-          <div class="stat"><div class="label">Can Mint</div><div class="value">${Number(ethers.formatEther(i.mintable)).toFixed(2)} pSunDAI</div></div>`;
-      } catch(e){ error.textContent=e.message; }
-    }
+  try {
+    const i = await vault.vaultInfo(account);
+    const ratioNum = Number(i.ratio);
+    let ratioValue;
+    
+    // Auto-detect scaling (1e18 vs 1e4)
+    if (ratioNum > 1e14) ratioValue = ratioNum / 1e16; // ratio scaled by 1e18
+    else ratioValue = ratioNum / 100; // ratio scaled by 1e4
+
+    // Determine color zones
+    let ratioClass = "safe";
+    if (ratioValue < 150) ratioClass = "risk";
+    else if (ratioValue < 170) ratioClass = "warn";
+
+    const ratioDisplay = ratioNum > 1e30 ? "∞" : ratioValue.toFixed(2) + "%";
+
+    stats.innerHTML = `
+      <div class="stat"><div class="label">Collateral</div><div class="value">${Math.round(Number(ethers.formatEther(i.collateral)))} PLS</div></div>
+      <div class="stat"><div class="label">Debt</div><div class="value">${Number(ethers.formatEther(i.debt)).toFixed(2)} pSunDAI</div></div>
+      <div class="stat"><div class="label">Ratio</div><div class="value ${ratioClass}">${ratioDisplay}</div></div>
+      <div class="stat"><div class="label">Can Mint</div><div class="value">${Number(ethers.formatEther(i.mintable)).toFixed(2)} pSunDAI</div></div>
+    `;
+  } catch(e){ error.textContent = e.message; }
+}
 
     walletBtn.onclick=connectWallet;
     deposit.onclick=async()=>{const u=parseFloat(usdIn.value);if(!u)return alert("Enter amount");await(await vault.depositPLS({value:usdToPLS(u)})).wait();loadVault();};
