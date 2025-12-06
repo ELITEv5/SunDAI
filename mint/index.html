@@ -431,7 +431,7 @@
       }catch(e){ error.textContent=e.message; }
       finally{ oneClickBtn.textContent="1-Click Auto Mint (155%)"; }
     };
-  </script>
+    </script>
 
   <!-- 🟢 Safety / Oracle Sync Status -->
   <div class="card" id="safetyCard">
@@ -443,7 +443,7 @@
     </button>
   </div>
 
-  </div> <!-- end .container -->
+</div> <!-- end .container -->
 
   <footer class="footer">
     <h3>Official Contracts</h3>
@@ -470,8 +470,10 @@
   <script>
     async function checkOracleHealth() {
       try {
+        if (!oracle) return;
+
         const healthy = await oracle.isHealthy();
-        const [ , timestamp ] = await oracle.peekPriceView();
+        const [price, timestamp] = await oracle.peekPriceView();
         const age = Math.floor(Date.now()/1000 - Number(timestamp));
 
         const statusEl = document.getElementById("safetyStatus");
@@ -511,13 +513,14 @@
       if (oracle) checkOracleHealth();
     }, 120000);
 
-    // Run after wallet connection
+    // ✅ Run after wallet connection
     const _connectWallet = connectWallet;
     connectWallet = async function() {
       await _connectWallet();
       await checkOracleHealth();
     };
   </script>
+
 
   <!-- 🌌 Golden Nebula & Shooting Stars -->
   <style>
