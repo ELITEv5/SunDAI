@@ -8,6 +8,7 @@
   <meta name="description" content="Autonomous 150% PLS-Collateralized Stable Asset on PulseChain." />
   <meta name="theme-color" content="#FF6B00" />
   <script src="ethers.umd.min.js"></script>
+
   <style>
     body {
       margin: 0;
@@ -45,6 +46,7 @@
       border-color: #ffd700;
       color: #ffd700;
     }
+
     .container {
       background: rgba(10, 0, 30, 0.8);
       backdrop-filter: blur(20px);
@@ -58,18 +60,30 @@
       position: relative;
       z-index: 10;
     }
-    .logo {
-      display: block;
-      max-width: 240px;
-      margin: 0 auto 10px;
-      animation: pulseGlow 4s ease-in-out infinite;
-      transform-origin: center;
-    }
-    @keyframes pulseGlow {
-      0% { filter: drop-shadow(0 0 10px rgba(180, 120, 255, 0.5)); }
-      50% { filter: drop-shadow(0 0 35px rgba(255, 180, 255, 0.85)); }
-      100% { filter: drop-shadow(0 0 10px rgba(180, 120, 255, 0.5)); }
-    }
+
+.logo {
+  display: block;
+  max-width: 240px;
+  margin: 0 auto 10px;
+  animation: pulseGlow 4s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* 🌠 Soft pulsating glow effect — cosmic aura */
+@keyframes pulseGlow {
+  0% {
+    filter: drop-shadow(0 0 10px rgba(180, 120, 255, 0.5));
+  }
+  50% {
+    filter: drop-shadow(0 0 35px rgba(255, 180, 255, 0.85));
+  }
+  100% {
+    filter: drop-shadow(0 0 10px rgba(180, 120, 255, 0.5));
+  }
+}
+
+
+
     h1 {
       text-align: center;
       font-size: 2em;
@@ -78,13 +92,7 @@
       color: transparent;
       margin-bottom: 8px;
     }
-    h2 {
-      text-align: center;
-      font-size: 1.1em;
-      color: #ffd700;
-      margin-bottom: 20px;
-      font-weight: normal;
-    }
+
     .price {
       text-align: center;
       color: #ffd700;
@@ -92,6 +100,7 @@
       font-size: 1.2em;
       margin-bottom: 10px;
     }
+
     .card {
       background: rgba(255, 107, 0, 0.1);
       border: 1px solid rgba(255, 107, 0, 0.3);
@@ -99,33 +108,61 @@
       padding: 16px;
       margin-bottom: 12px;
     }
-    input, .btn {
-      width: 100%;
-      display: block;
-      box-sizing: border-box;
-      font-size: 1em;
-      font-weight: 700;
+
+    input,
+.btn {
+  width: 100%;
+  display: block;
+  box-sizing: border-box;
+  font-size: 1em;
+  font-weight: 700;
+  text-align: center;
+  border-radius: 10px;
+  padding: 14px; /* unified padding */
+  transition: all 0.2s ease;
+}
+
+/* ✏️ Input field styling */
+input {
+  background: #110022;
+  border: 2px solid rgba(255, 107, 0, 0.4);
+  color: #fff;
+}
+input:focus {
+  border-color: #ffd700;
+  outline: none;
+}
+
+/* 🔘 Button styling */
+.btn {
+  background: #ff6b00;
+  border: 2px solid transparent;
+  color: #000;
+  cursor: pointer;
+}
+.btn:hover {
+  background: #ffd700;
+  transform: translateY(-2px);
+}
+.btn:disabled {
+  background: #444;
+  color: #999;
+  cursor: not-allowed;
+  border-color: transparent;
+}
+
+/* 🧩 Fix spacing between input and button in each card */
+.card input + .btn {
+  margin-top: 8px;
+}
+
+    .preview {
+      color: #ffbd70;
       text-align: center;
-      border-radius: 10px;
-      padding: 14px;
-      transition: all 0.2s ease;
+      font-size: 0.9em;
+      margin-top: 4px;
     }
-    input {
-      background: #110022;
-      border: 2px solid rgba(255, 107, 0, 0.4);
-      color: #fff;
-    }
-    input:focus { border-color: #ffd700; outline: none; }
-    .btn {
-      background: #ff6b00;
-      border: 2px solid transparent;
-      color: #000;
-      cursor: pointer;
-    }
-    .btn:hover { background: #ffd700; transform: translateY(-2px); }
-    .btn:disabled { background: #444; color: #999; cursor: not-allowed; border-color: transparent; }
-    .card input + .btn { margin-top: 8px; }
-    .preview { color: #ffbd70; text-align: center; font-size: 0.9em; margin-top: 4px; }
+
     .stats {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -133,7 +170,384 @@
       text-align: center;
       font-size: 0.9em;
     }
-    .stat { background: rgba(255, 107, 0, 0.12); padding: 10px; border-radius: 10px; }
+    .stat {
+      background: rgba(255, 107, 0, 0.12);
+      padding: 10px;
+      border-radius: 10px;
+    }
     .label { color: #ffbd70; }
     .value { color: #ffd700; font-weight: 700; }
-    .value.safe { color: #00ff9d; text-shadow: 0 0 8px rgba(0,255,157,0
+    .risk { color: #ff3366; }
+    .safe { color: #00ff9d; }
+
+    .status, .error {
+      text-align: center;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    .status { color: #00ff9d; }
+    .error { color: #ff3366; }
+
+    @media (max-width: 600px) {
+      .container { padding: 20px 15px; }
+      input, .btn { font-size: 0.95em; padding: 12px; }
+    }
+    /* 🔵 Ratio Color States */
+.value.safe {
+  color: #00ff9d; /* Green – safe */
+  text-shadow: 0 0 8px rgba(0,255,157,0.5);
+}
+
+.value.warn {
+  color: #ffcc00; /* Yellow – watch zone */
+  text-shadow: 0 0 8px rgba(255,204,0,0.5);
+}
+
+.value.risk {
+  color: #ff3366; /* Red – danger */
+  text-shadow: 0 0 8px rgba(255,51,102,0.5);
+}
+/* 🌞 Official Contract Footer */
+.footer {
+  text-align: center;
+  margin: 40px 0 20px;
+  padding: 20px 10px;
+  font-size: 0.85em;
+  color: #ffbd70;
+  border-top: 1px solid rgba(255, 215, 0, 0.15);
+  width: 100%;
+  max-width: 800px;
+}
+
+.footer h3 {
+  margin-bottom: 10px;
+  color: #ffd700;
+  letter-spacing: 0.5px;
+  font-size: 1.1em;
+}
+
+/* 💬 Contract section */
+.contracts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  text-align: left;
+  line-height: 1.6;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  padding: 0 10px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.contracts a {
+  color: #ffebd1;
+  text-decoration: none;
+  font-family: monospace;
+  word-break: break-all;
+  display: inline-block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  transition: color 0.2s ease;
+}
+
+.contracts a:hover {
+  color: #ffd700;
+}
+
+.contracts .label {
+  color: #ff6b00;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 2px;
+}
+
+/* 📱 Mobile adjustments */
+@media (max-width: 480px) {
+  .contracts {
+    font-size: 0.75em;
+    gap: 8px;
+  }
+  .contracts a {
+    font-size: 0.75em;
+  }
+}
+
+  </style>
+</head>
+
+<body>
+  <canvas id="bg"></canvas>
+  <div class="wallet" id="walletBtn"><span id="walletText">Connect Wallet</span></div>
+
+  <div class="container">
+    <img src="sundailogo.png" class="logo" alt="SunDAI Logo" />
+    <h1>SunDAI</h1> 
+    <h2>Autonomous Stable Asset</h2>
+    <div class="price" id="price">Loading price...</div>
+    <div class="status" id="status"></div>
+    <div class="error" id="error"></div>
+
+    <div class="card"><div class="stats" id="stats">Connect wallet</div></div>
+
+    <!-- 1-Click Auto Mint -->
+    <div class="card">
+      <input id="usdOneClick" type="number" step="0.01" placeholder="Deposit & Auto Mint (USD)" />
+      <div class="preview" id="plsOneClick"></div>
+      <button class="btn" id="oneClickBtn" disabled>1-Click Auto Mint (155%)</button>
+    </div>
+
+    <div class="card">
+      <input id="usdIn" type="number" step="0.01" placeholder="Deposit USD" />
+      <div class="preview" id="plsOut"></div>
+      <button class="btn" id="deposit" disabled>Deposit PLS</button>
+    </div>
+
+    <div class="card">
+      <input id="usdMint" type="number" step="0.01" placeholder="Mint USD" />
+      <button class="btn" id="mint" disabled>Mint pSunDAI</button>
+    </div>
+
+    <div class="card">
+      <input id="usdRepay" type="number" step="0.01" placeholder="Repay USD" />
+      <button class="btn" id="repay" disabled>Repay</button>
+    </div>
+
+    <div class="card">
+      <input id="usdOut" type="number" step="0.01" placeholder="Withdraw USD" />
+      <div class="preview" id="plsIn"></div>
+      <button class="btn" id="withdraw" disabled>Withdraw PLS</button>
+    </div>
+
+    <div class="card">
+      <button class="btn" id="risk" disabled style="background:#ff3366">Check Risk</button>
+      <div id="riskText" style="margin-top:10px;text-align:center;font-weight:700"></div>
+    </div>
+  </div>
+
+  <script>
+    const { ethers } = window.ethers;
+    const VAULT = "0x8F4d720d1b97c478d4232B2264a1edc566B23d7B";
+    const TOKEN = "0xb54a634194a69B3839F16F73Cf783F55680dbc64";
+    const ORACLE = "0x9c4b448520D17D3dD8a2046fEA011c7b40E88Fe5";
+
+    let provider, signer, vault, token, oracle, account, price = 0n;
+
+    async function loadABIs(){
+      const v = await fetch("vault-abi.json").then(r=>r.json());
+      const t = await fetch("token-abi.json").then(r=>r.json());
+      const o = await fetch("oracle-abi.json").then(r=>r.json());
+      return [v,t,o];
+    }
+
+    // 🌌 Full Cosmic Field Background (Supernova across entire screen)
+const c = document.getElementById("bg");
+const ctx = c.getContext("2d");
+let w = (c.width = window.innerWidth);
+let h = (c.height = window.innerHeight);
+let stars = [];
+
+function initStars() {
+  stars = [];
+  for (let i = 0; i < 600; i++) {
+    stars.push({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      z: Math.random() * w,
+      size: Math.random() * 1.5 + 0.3,
+      speed: Math.random() * 0.7 + 0.3,
+      hue: 200 + Math.random() * 80, // bluish-purple tone
+      o: Math.random() * 0.8 + 0.2
+    });
+  }
+}
+
+function draw() {
+  // subtle moving gradient background
+  const t = Date.now() * 0.0001;
+  const grad = ctx.createLinearGradient(
+    w * Math.sin(t * 0.7),
+    h * Math.cos(t * 0.5),
+    w,
+    h
+  );
+  grad.addColorStop(0, `hsl(${220 + 40 * Math.sin(t)}, 80%, 5%)`);
+  grad.addColorStop(0.5, `hsl(${260 + 60 * Math.sin(t * 1.5)}, 60%, 8%)`);
+  grad.addColorStop(1, `hsl(${200 + 20 * Math.cos(t)}, 70%, 10%)`);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  // star field movement
+  for (let i = 0; i < stars.length; i++) {
+    let s = stars[i];
+    s.z -= s.speed * 2;
+    if (s.z <= 0) s.z = w;
+    const k = 128.0 / s.z;
+    const px = s.x * k + w / 2;
+    const py = s.y * k + h / 2;
+
+    if (px >= 0 && px <= w && py >= 0 && py <= h) {
+      const twinkle = 0.6 + 0.4 * Math.sin(t * 40 + i);
+      ctx.fillStyle = `hsla(${s.hue}, 100%, ${60 + 20 * Math.sin(t + i)}%, ${s.o * twinkle})`;
+      ctx.fillRect(px, py, s.size, s.size);
+    }
+  }
+
+  // multi-layer supernova glow (covers entire screen)
+  const pulse = 0.4 + 0.3 * Math.sin(Date.now() * 0.0015);
+  const g = ctx.createRadialGradient(
+    w / 2 + 100 * Math.sin(t * 2),
+    h / 2 + 100 * Math.cos(t * 1.5),
+    0,
+    w / 2,
+    h / 2,
+    Math.max(w, h)
+  );
+  g.addColorStop(0, `rgba(160, 100, 255, ${0.25 * pulse})`);
+  g.addColorStop(0.3, `rgba(80, 40, 180, ${0.15 * pulse})`);
+  g.addColorStop(0.7, `rgba(20, 10, 60, ${0.1 * pulse})`);
+  g.addColorStop(1, "rgba(0,0,20,0)");
+  ctx.globalCompositeOperation = "screen";
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+  ctx.globalCompositeOperation = "source-over";
+
+  requestAnimationFrame(draw);
+}
+
+window.addEventListener("resize", () => {
+  w = c.width = window.innerWidth;
+  h = c.height = window.innerHeight;
+  initStars();
+});
+
+initStars();
+draw();
+
+
+
+    window.connectWallet = async function(){
+      try {
+        const [VAULT_ABI,TOKEN_ABI,ORACLE_ABI] = await loadABIs();
+        if(window.ethereum){
+          await window.ethereum.request({method:"eth_requestAccounts"});
+          provider = new ethers.BrowserProvider(window.ethereum);
+        } else { alert("No browser wallet found."); return; }
+        signer = await provider.getSigner();
+        account = await signer.getAddress();
+        vault = new ethers.Contract(VAULT, VAULT_ABI, signer);
+        token = new ethers.Contract(TOKEN, TOKEN_ABI, signer);
+        oracle = new ethers.Contract(ORACLE, ORACLE_ABI, provider);
+        walletText.textContent = account.slice(0,6)+"..."+account.slice(-4);
+        walletBtn.classList.add("connected");
+        document.querySelectorAll(".btn").forEach(b=>b.disabled=false);
+        status.textContent = "Connected!";
+        await updatePrice();
+        await loadVault();
+      } catch(e){ error.textContent=e.message; }
+    };
+
+    async function updatePrice(){
+  try {
+    const [p] = await oracle.peekPriceView();
+    price = p;
+    document.getElementById("price").textContent = "$" + (Number(p) / 1e18).toFixed(6) + " per PLS";
+  } catch {
+    document.getElementById("price").textContent = "Oracle offline";
+  }
+}
+
+    function usdToPLS(usd){ if(!price)return 0n; const usdWei=ethers.parseEther(usd.toString()); return (usdWei*(10n**18n))/price; }
+    function usdToPSun(usd){ return ethers.parseEther(usd.toString()); }
+
+    ["usdIn","usdOut"].forEach(id=>{
+      document.getElementById(id).addEventListener("input",()=>{
+        const usd=parseFloat(document.getElementById(id).value)||0;
+        const pls=usdToPLS(usd);
+        const text=usd>0?`≈ ${Math.round(Number(ethers.formatEther(pls)))} PLS`:"";
+        document.getElementById(id==="usdIn"?"plsOut":"plsIn").textContent=text;
+      });
+    });
+
+   async function loadVault(){
+  try {
+    const i = await vault.vaultInfo(account);
+    const ratioNum = Number(i.ratio);
+    let ratioValue;
+
+    if (ratioNum > 1e8) {
+  ratioValue = ratioNum / 1e16; // 1e18-scaled
+} else {
+  ratioValue = ratioNum / 100;  // 1e4-scaled
+}
+
+    // Assign color class based on safety thresholds
+    let ratioClass = "safe";
+    if (ratioValue < 150) ratioClass = "risk";
+    else if (ratioValue < 170) ratioClass = "warn";
+
+    const ratioDisplay = ratioNum > 1e30 ? "∞" : ratioValue.toFixed(2) + "%";
+
+    stats.innerHTML = `
+      <div class="stat"><div class="label">Collateral</div><div class="value">${Math.round(Number(ethers.formatEther(i.collateral)))} PLS</div></div>
+      <div class="stat"><div class="label">Debt</div><div class="value">${Number(ethers.formatEther(i.debt)).toFixed(2)} pSunDAI</div></div>
+      <div class="stat"><div class="label">Ratio</div><div class="value ${ratioClass}">${ratioDisplay}</div></div>
+      <div class="stat"><div class="label">Can Mint</div><div class="value">${Number(ethers.formatEther(i.mintable)).toFixed(2)} pSunDAI</div></div>
+    `;
+  } catch(e){
+    error.textContent = e.message;
+  }
+}
+
+    walletBtn.onclick=connectWallet;
+    deposit.onclick=async()=>{const u=parseFloat(usdIn.value);if(!u)return alert("Enter amount");await(await vault.depositPLS({value:usdToPLS(u)})).wait();loadVault();};
+    mint.onclick=async()=>{const u=parseFloat(usdMint.value);if(!u)return alert("Enter amount");await(await vault.mint(usdToPSun(u))).wait();loadVault();};
+    repay.onclick=async()=>{const u=parseFloat(usdRepay.value);if(!u)return alert("Enter amount");await(await token.approve(VAULT,usdToPSun(u))).wait();await(await vault.repay(usdToPSun(u))).wait();loadVault();};
+    withdraw.onclick=async()=>{const u=parseFloat(usdOut.value);if(!u)return alert("Enter amount");await(await vault.withdrawPLS(usdToPLS(u))).wait();loadVault();};
+    risk.onclick=async()=>{const c=await vault.canLiquidate(account);riskText.innerHTML=c?'<span class="risk">⚠️ LIQUIDATION RISK ⚠️</span>':'<span class="safe">You are safe 🌞</span>';};
+
+    usdOneClick.addEventListener("input",()=>{
+      const usd=parseFloat(usdOneClick.value)||0;
+      if(!usd||!price){plsOneClick.textContent="";return;}
+      const pls=usdToPLS(usd);
+      const mintUSD=usd/1.55;
+      plsOneClick.textContent=`≈ ${Math.round(Number(ethers.formatEther(pls)))} PLS → ${mintUSD.toFixed(2)} pSunDAI (at 155%)`;
+    });
+
+    oneClickBtn.onclick=async()=>{
+      const usd=parseFloat(usdOneClick.value);
+      if(!usd)return alert("Enter amount");
+      try{
+        oneClickBtn.textContent="Processing...";
+        const plsValue=usdToPLS(usd);
+        const tx=await vault.depositAndAutoMintPLS({value:plsValue});
+        await tx.wait();
+        status.textContent=`Deposited ${usd.toFixed(2)} USD and auto-minted ${(usd/1.55).toFixed(2)} pSunDAI`;
+        loadVault();
+      }catch(e){error.textContent=e.message;}finally{oneClickBtn.textContent="1-Click Auto Mint (155%)";}
+    };
+  </script>
+    <!-- 🔗 Official Contract Addresses -->
+  <footer class="footer">
+    <h3>Official Contracts</h3>
+    <div class="contracts">
+      <div><span class="label">pSunDAI Token:</span> 
+        <a href="https://scan.pulsechain.com/address/0xb54a634194a69B3839F16F73Cf783F55680dbc64" target="_blank">
+          0xb54a634194a69B3839F16F73Cf783F55680dbc64
+        </a>
+      </div>
+      <div><span class="label">Vault:</span> 
+        <a href="https://scan.pulsechain.com/address/0x8F4d720d1b97c478d4232B2264a1edc566B23d7B" target="_blank">
+          0x8F4d720d1b97c478d4232B2264a1edc566B23d7B
+        </a>
+      </div>
+      <div><span class="label">Oracle:</span> 
+        <a href="https://scan.pulsechain.com/address/0x9c4b448520D17D3dD8a2046fEA011c7b40E88Fe5" target="_blank">
+          0x9c4b448520D17D3dD8a2046fEA011c7b40E88Fe5
+        </a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
