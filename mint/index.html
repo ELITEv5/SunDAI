@@ -418,7 +418,7 @@
       plsOneClick.textContent=`≈ ${Math.round(Number(ethers.formatEther(pls)))} PLS → ${mintUSD.toFixed(2)} pSunDAI (at 155%)`;
     });
 
-        oneClickBtn.onclick = async()=>{
+            oneClickBtn.onclick = async()=>{
       const usd=parseFloat(usdOneClick.value);
       if(!usd)return alert("Enter amount");
       try{
@@ -431,17 +431,17 @@
       }catch(e){ error.textContent=e.message; }
       finally{ oneClickBtn.textContent="1-Click Auto Mint (155%)"; }
     };
-
-    <!-- 🟢 Safety / Oracle Sync Status -->
-    <div class="card" id="safetyCard">
-      <div id="safetyStatus" style="text-align:center;font-weight:700;color:#ffd700;margin-bottom:8px;">
-        Checking Oracle status...
-      </div>
-      <button class="btn" id="pokeBtn" disabled style="background:#ffaa00;border-color:#ffcc00;">
-        Wake Oracle 🌞
-      </button>
-    </div>
   </script>
+
+  <!-- 🟢 Safety / Oracle Sync Status -->
+  <div class="card" id="safetyCard">
+    <div id="safetyStatus" style="text-align:center;font-weight:700;color:#ffd700;margin-bottom:8px;">
+      Checking Oracle status...
+    </div>
+    <button class="btn" id="pokeBtn" disabled style="background:#ffaa00;border-color:#ffcc00;">
+      Wake Oracle 🌞
+    </button>
+  </div>
 
   </div> <!-- end .container -->
 
