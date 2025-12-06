@@ -433,7 +433,7 @@
     };
   </script>
 
-  <footer class="footer">
+    <footer class="footer">
     <h3>Official Contracts</h3>
     <div class="contracts">
       <div><span class="label">pSunDAI Token:</span>
@@ -453,5 +453,73 @@
       </div>
     </div>
   </footer>
+
+  <!-- 🌌 Nebula Background Style -->
+  <style>
+    #bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at 30% 30%, rgba(90,0,120,0.25), transparent 60%),
+                  radial-gradient(circle at 70% 70%, rgba(255,120,0,0.15), transparent 60%);
+    }
+  </style>
+
+  <!-- 🌠 Animated Starfield Script -->
+  <script>
+    const canvas = document.getElementById("bg");
+    const ctx = canvas.getContext("2d");
+    let stars = [];
+    let width, height, centerX, centerY;
+
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+      centerX = width / 2;
+      centerY = height / 2;
+      stars = Array.from({ length: 300 }, () => ({
+        x: Math.random() * width - centerX,
+        y: Math.random() * height - centerY,
+        z: Math.random() * width,
+        o: 0.5 + Math.random() * 0.5
+      }));
+    }
+
+    function draw() {
+      ctx.fillStyle = "rgba(10,0,30,0.25)";
+      ctx.fillRect(0, 0, width, height);
+
+      const angle = Date.now() * 0.00002; // 🌌 slow galaxy rotation
+      const cosA = Math.cos(angle), sinA = Math.sin(angle);
+
+      for (let s of stars) {
+        s.z -= 2;
+        if (s.z <= 0) s.z = width;
+
+        const rx = s.x * cosA - s.y * sinA;
+        const ry = s.x * sinA + s.y * cosA;
+        const k = 128 / s.z;
+        const px = rx * k + centerX;
+        const py = ry * k + centerY;
+
+        if (px < 0 || px >= width || py < 0 || py >= height) continue;
+
+        const size = (1 - s.z / width) * 2;
+        const hue = 270 + Math.sin(Date.now() * 0.001 + s.x) * 60;
+        ctx.fillStyle = `hsla(${hue}, 80%, 70%, ${s.o})`;
+        ctx.beginPath();
+        ctx.arc(px, py, size, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+
+      requestAnimationFrame(draw);
+    }
+
+    window.addEventListener("resize", resize);
+    resize();
+    draw();
+  </script>
+
 </body>
 </html>
