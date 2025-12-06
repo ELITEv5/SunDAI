@@ -252,6 +252,32 @@
       input, .btn { font-size: 0.95em; padding: 12px; }
       .contracts { font-size: 0.8em; }
     }
+    /* 🧭 Fix for wallet button clickability */
+.wallet {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999; /* bring it above all other elements */
+  pointer-events: auto;
+}
+
+/* Ensure canvas does NOT capture clicks */
+canvas {
+  pointer-events: none !important;
+}
+
+/* Ensure container blur doesn't block interactions */
+.container {
+  position: relative;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+/* Ensure footer is below wallet */
+footer.footer {
+  z-index: 5;
+}
+
   </style>
 </head>
 
