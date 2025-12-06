@@ -1,277 +1,177 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pSunDAI - Golden Sun Vault</title>
-  <link rel="icon" href="sundailogo.png" type="image/png" />
-  <script src="ethers.umd.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>pSunDAI – Golden Sun Vault</title>
+  <link rel="icon" href="https://i.imgur.com/8v5V9wK.png" type="image/png">
+  <meta property="og:image" content="https://i.imgur.com/8v5V9wK.png">
+  <meta name="description" content="Autonomous 150% PLS-Collateralized Stable Asset on PulseChain. No admin. Pure golden sun energy.">
+  <meta name="theme-color" content="#FF6B00">
+  <script src="https://cdn.ethers.io/lib/ethers-6.13.1.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.12.1/dist/index.min.js"></script>
   <style>
-    body {
-      margin: 0;
-      background: #0a001f;
-      color: #ffebd1;
-      font-family: Segoe UI, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      overflow: hidden;
-    }
-    canvas { position: fixed; inset: 0; pointer-events: none; }
-    .box {
-      background: rgba(10, 0, 30, .8);
-      backdrop-filter: blur(20px);
-      border: 2px solid #FF6B00;
-      border-radius: 24px;
-      padding: 40px 30px;
-      max-width: 660px;
-      width: 100%;
-      box-shadow: 0 0 100px rgba(255, 215, 0, .6);
-      position: relative;
-      z-index: 10;
-    }
-    h1 {
-      font-size: 3.4em;
-      background: linear-gradient(90deg,#FF6B00,#FFD700,#FFA500);
-      -webkit-background-clip: text;
-      color: transparent;
-      text-align: center;
-    }
-    .wallet {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: #111;
-      padding: 12px 28px;
-      border: 2px solid #FF6B00;
-      border-radius: 12px;
-      color: #fff;
-      font-weight: 700;
-      cursor: pointer;
-      z-index: 20;
-    }
-    .wallet.connected { border-color: #FFD700; color: #FFD700; }
-    .price { font-size: 2.2em; color: #FFD700; text-align: center; margin: 20px 0; font-weight: 900; }
-    .card {
-      background: rgba(255,107,0,.12);
-      border: 1px solid rgba(255,107,0,.3);
-      border-radius: 16px;
-      padding: 20px;
-      margin: 15px 0;
-    }
-    input {
-      width: 100%;
-      padding: 16px;
-      background: #110022;
-      border: 2px solid rgba(255,107,0,.4);
-      border-radius: 12px;
-      color: #fff;
-      font-size: 18px;
-      text-align: center;
-      margin: 10px 0;
-    }
-    .btn {
-      width: 100%;
-      padding: 18px;
-      background: #FF6B00;
-      color: #000;
-      border: none;
-      border-radius: 14px;
-      font-size: 18px;
-      font-weight: 900;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-    .btn:hover { background: #FFD700; color: #000; }
-    .btn:disabled { background: #555; color: #aaa; cursor: not-allowed; }
-    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 14px; }
-    .stat { background: rgba(255,107,0,.1); padding: 12px; border-radius: 10px; text-align: center; }
-    .label { color: #ffbd70; }
-    .value { color: #FFD700; font-weight: 900; }
-    .risk { color: #ff3366; }
-    .safe { color: #00ff9d; }
-    .logo { max-width: 320px; width: 100%; margin: 0 auto 20px; display: block; filter: drop-shadow(0 0 30px #FFD700); }
-    .preview { color: #ffbd70; text-align: center; margin: 8px 0; }
-    .status, .error { text-align: center; margin: 10px 0; font-weight: bold; }
-    .status { color: #00ff9d; }
-    .error { color: #ff3366; }
+    :root { --primary:#FF6B00; --accent:#FFD700; --bg:#0a001f; --card:rgba(255,107,0,0.12); --glow:rgba(255,215,0,0.6); --text:#ffebd1;}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;overflow-x:hidden}
+    canvas#cosmos-bg{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+    .container{background:rgba(10,0,30,0.75);backdrop-filter:blur(20px);border-radius:24px;padding:40px 30px;max-width:660px;width:100%;border:2px solid var(--primary);box-shadow:0 0 100px var(--glow),inset 0 0 40px rgba(255,107,0,0.1);position:relative;z-index:10}
+    h1{font-size:3.4em;background:linear-gradient(90deg,#FF6B00,#FFD700,#FFA500);-webkit-background-clip:text;color:transparent;margin-bottom:8px;text-shadow:0 0 40px var(--glow);text-align:center}
+    .subtitle{color:var(--accent);font-size:1.3em;margin-bottom:30px;text-align:center}
+    .wallet-button{position:fixed;top:20px;right:20px;background:rgba(10,0,30,0.9);padding:12px 28px;border:2px solid var(--primary);border-radius:12px;color:#fff;font-weight:700;cursor:pointer;transition:all .3s;z-index:9999}
+    .wallet-button:hover{border-color:var(--accent);box-shadow:0 0 40px var(--glow)}
+    .wallet-button.connected{color:var(--accent);border-color:var(--accent)}
+    .price{text-align:center;font-size:2em;font-weight:900;color:var(--accent);margin:20px 0}
+    .card{background:var(--card);border:1px solid rgba(255,107,0,0.3);border-radius:16px;padding:20px;margin:15px 0;box-shadow:0 8px 32px rgba(255,107,0,0.15)}
+    .input-group{margin:20px 0}
+    input{width:100%;padding:16px;border-radius:12px;border:2px solid rgba(255,107,0,0.4);background:#110022;color:#fff;font-size:18px;text-align:center}
+    input:focus{border-color:var(--accent);outline:none;box-shadow:0 0 20px var(--glow)}
+    .btn{width:100%;padding:18px;background:var(--primary);color:#000;border:none;border-radius:14px;font-size:18px;font-weight:900;cursor:pointer;margin-top:15px;transition:all .3s;box-shadow:0 0 30px var(--glow)}
+    .btn:hover{background:var(--accent);color:#000;transform:translateY(-3px)}
+    .btn:disabled{background:#333;color:#666;cursor:not-allowed}
+    .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px;font-size:14px}
+    .stat{background:rgba(255,107,0,0.1);padding:12px;border-radius:10px;text-align:center}
+    .stat-label{color:#ffbd70}
+    .stat-value{font-weight:900;color:var(--accent);font-size:1.2em}
+    .risk{color:#ff3366}
+    .safe{color:#00ff9d}
+    .logo{max-width:320px;width:100%;margin:0 auto 20px;display:block;filter:drop-shadow(0 0 30px var(--glow))}
+    #plsPreview,#plsWithdrawPreview{color:#ffbd70;font-size:14px;margin:8px 0}
   </style>
 </head>
 <body>
-  <canvas id="bg"></canvas>
-  <div class="wallet" id="walletBtn"><span id="walletText">Connect Wallet</span></div>
-  <div class="box">
-    <img src="sundailogo.png" class="logo">
+  <canvas id="cosmos-bg"></canvas>
+
+  <div id="walletButton" class="wallet-button" onclick="connectWallet()">
+    <span id="walletText">Connect Wallet</span>
+  </div>
+
+  <div class="container">
+    <img src="https://i.imgur.com/8v5V9wK.png" alt="pSunDAI Golden Sun" class="logo">
     <h1>pSunDAI Vault</h1>
-    <div class="price" id="price">Loading price...</div>
-    <div class="status" id="status"></div>
-    <div class="error" id="error"></div>
-    <div class="card"><div class="stats" id="stats">Connect wallet</div></div>
-    <div class="card">
-      <input id="usdIn" type="number" step="0.01" placeholder="Deposit USD">
-      <div class="preview" id="plsOut"></div>
-      <button class="btn" id="deposit" disabled>Deposit PLS</button>
-    </div>
-    <div class="card">
+    <p class="subtitle">Autonomous • Immutable • 150% PLS Collateral</p>
+
+    <div class="price" id="priceDisplay">Loading oracle...</div>
+
+    <div class="card"><div class="stats-grid" id="vaultStats">Connect your wallet</div></div>
+
+    <div class="card"><div class="input-group">
+      <input id="usdDeposit" type="number" step="0.01" placeholder="Deposit USD">
+      <div id="plsPreview"></div>
+      <button class="btn" id="depositBtn">Deposit PLS</button>
+    </div></div>
+
+    <div class="card"><div class="input-group">
       <input id="usdMint" type="number" step="0.01" placeholder="Mint USD">
-      <button class="btn" id="mint" disabled>Mint pSunDAI</button>
-    </div>
-    <div class="card">
+      <button class="btn" id="mintBtn">Mint pSunDAI</button>
+    </div></div>
+
+    <div class="card"><div class="input-group">
       <input id="usdRepay" type="number" step="0.01" placeholder="Repay USD">
-      <button class="btn" id="repay" disabled>Repay</button>
-    </div>
+      <button class="btn" id="repayBtn">Repay</button>
+    </div></div>
+
+    <div class="card"><div class="input-group">
+      <input id="usdWithdraw" type="number" step="0.01" placeholder="Withdraw USD">
+      <div id="plsWithdrawPreview"></div>
+      <button class="btn" id="withdrawBtn">Withdraw PLS</button>
+    </div></div>
+
     <div class="card">
-      <input id="usdOut" type="number" step="0.01" placeholder="Withdraw USD">
-      <div class="preview" id="plsIn"></div>
-      <button class="btn" id="withdraw" disabled>Withdraw PLS</button>
-    </div>
-    <div class="card">
-      <button class="btn" id="risk" disabled style="background:#ff3366">Check Risk</button>
-      <div id="riskText" style="margin-top:15px;text-align:center;font-weight:700"></div>
+      <button class="btn" id="riskBtn" style="background:#ff3366">Check Risk</button>
+      <div id="riskDisplay" style="margin-top:15px;text-align:center;font-weight:700;font-size:1.2em"></div>
     </div>
   </div>
 
   <script>
-  window.addEventListener("load", async () => {
     const { ethers } = window.ethers;
-    console.log("Ethers.js loaded ✅");
 
-    const VAULT  = "0xBFd8C212e0A132b2e58d45e0b5ccA3D2009d3778";
-    const TOKEN  = "0x98316280B93F835Ef561C59430270D31e0575A44";
-    const ORACLE = "0xD3c339d4e0b48E77a781dA61724672625b5CD56d";
-
-    async function getABI(file) {
-      const res = await fetch(file);
-      if (!res.ok) throw new Error(`Failed to load ABI: ${file}`);
-      return await res.json();
-    }
-
-    let vaultABI, tokenABI, oracleABI;
-    try {
-      [vaultABI, tokenABI, oracleABI] = await Promise.all([
-        getABI("vault-abi.json"),
-        getABI("token-abi.json"),
-        getABI("oracle-abi.json")
-      ]);
-      console.log("ABIs loaded ✅");
-    } catch (err) {
-      document.getElementById("error").textContent = "Error loading ABI files.";
-      console.error(err);
-      return;
-    }
+    const TOKEN = '0x98316280B93F835Ef561C59430270D31e0575A44';
+    const VAULT = '0xBFd8C212e0A132b2e58d45e0b5ccA3D2009d3778';
+    const ORACLE = '0xD3c339d4e0b48E77a781dA61724672625b5CD56d';
+    const ORACLE_ABI = [{"inputs":[],"name":"peekPriceView","outputs":[{"internalType":"uint256","name":"price","type":"uint256"},{"internalType":"uint256","name":"timestamp","type":"uint256"}],"stateMutability":"view","type":"function"}];
+    const VAULT_ABI = [ /* vault ABI */ ];
+    const TOKEN_ABI = [ /* token ABI */ ];
 
     let provider, signer, vault, token, oracle, account, price = 0n;
 
-    // Background Animation
-    const c = document.getElementById("bg");
-    const x = c.getContext("2d");
-    let w = c.width = innerWidth, h = c.height = innerHeight, t = 0;
-    window.addEventListener("resize", () => { w = c.width = innerWidth; h = c.height = innerHeight; });
-    (function animate() {
-      x.clearRect(0, 0, w, h); t += 0.003;
-      const layers = [{s:0.3,c:1.4,o:0.4,h:35},{s:0.5,c:1,o:0.6,h:45},{s:0.8,c:0.7,o:0.5,h:55}];
-      layers.forEach(m=>{
-        const g=x.createLinearGradient(0,0,w,h);
-        g.addColorStop(0,`hsla(${m.h+Math.sin(t*m.s)*10},90%,60%,0)`);
-        g.addColorStop(0.3,`hsla(${m.h+15},95%,70%,${m.o})`);
-        g.addColorStop(0.5,`hsla(${m.h+30},100%,80%,${m.o+0.2})`);
-        g.addColorStop(1,`hsla(${m.h},90%,60%,0)`);
-        x.globalCompositeOperation="screen"; x.filter=`blur(${20*m.c}px)`; x.fillStyle=g; x.fillRect(0,0,w,h);
-      });
-      const p=0.5+0.5*Math.sin(t*2);
-      const sg=x.createRadialGradient(w/2,w/2,0,w/2,w/2,400*p);
-      sg.addColorStop(0,`rgba(255,220,100,${0.8*p})`);
-      sg.addColorStop(1,"rgba(255,100,0,0)");
-      x.filter="blur(80px)"; x.fillStyle=sg; x.fillRect(0,0,w,h);
-      x.filter="none"; x.globalCompositeOperation="source-over";
-      requestAnimationFrame(animate);
-    })();
+    // --- Background animation
+    const canvas = document.getElementById('cosmos-bg'), ctx = canvas.getContext('2d');
+    let w,h,time=0; function resize(){w=canvas.width=innerWidth;h=canvas.height=innerHeight;} resize(); window.addEventListener('resize',resize);
+    const layers=[{speed:0.3,scale:1.4,opacity:0.4,hue:35},{speed:0.5,scale:1,opacity:0.6,hue:45},{speed:0.8,scale:0.7,opacity:0.5,hue:55}];
+    (function draw(){ctx.clearRect(0,0,w,h);time+=0.003;layers.forEach(l=>{const g=ctx.createLinearGradient(0,0,w,h);g.addColorStop(0,`hsla(${l.hue+Math.sin(time*l.speed)*10},90%,60%,0)`);g.addColorStop(0.3,`hsla(${l.hue+15},95%,70%,${l.opacity})`);g.addColorStop(0.5,`hsla(${l.hue+30},100%,80%,${l.opacity+0.2})`);g.addColorStop(1,`hsla(${l.hue},90%,60%,0)`);ctx.globalCompositeOperation="screen";ctx.filter=`blur(${20*l.scale}px)`;ctx.fillStyle=g;ctx.fillRect(0,0,w,h);});ctx.filter="none";ctx.globalCompositeOperation="source-over";requestAnimationFrame(draw);})();
 
-    // Wallet connection
+    // --- Wallet Connection ---
     async function connectWallet() {
-      if (!window.ethereum) return alert("No wallet detected. Please install MetaMask or Rabby.");
       try {
-        await window.ethereum.request({ method: "eth_requestAccounts" });
-        provider = new ethers.BrowserProvider(window.ethereum);
+        // MetaMask or Rabby first
+        if (window.ethereum) {
+          await window.ethereum.request({ method: 'eth_requestAccounts' });
+          provider = new ethers.BrowserProvider(window.ethereum);
+        } else {
+          // WalletConnect fallback
+          const wcProvider = await window.WalletConnectEthereumProvider.init({
+            projectId: "fbc2ef68c9d8e5c2b1d9f93e35b2b962",
+            chains: [369],
+            rpc: { 369: "https://rpc.pulsechain.com" },
+            showQrModal: true
+          });
+          await wcProvider.enable();
+          provider = new ethers.BrowserProvider(wcProvider);
+        }
+
         signer = await provider.getSigner();
         account = await signer.getAddress();
 
-        // PulseChain network
-        try {
-          await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x171" }] });
-        } catch (err) {
-          if (err.code === 4902) {
-            await window.ethereum.request({
-              method: "wallet_addEthereumChain",
-              params: [{
-                chainId: "0x171",
-                chainName: "PulseChain",
-                nativeCurrency: { name: "PLS", symbol: "PLS", decimals: 18 },
-                rpcUrls: ["https://rpc.pulsechain.com"],
-                blockExplorerUrls: ["https://scan.pulsechain.com"]
-              }]
-            });
-          }
-        }
+        vault = new ethers.Contract(VAULT, VAULT_ABI, signer);
+        token = new ethers.Contract(TOKEN, TOKEN_ABI, signer);
+        oracle = new ethers.Contract(ORACLE, ORACLE_ABI, provider);
 
-        vault = new ethers.Contract(VAULT, vaultABI, signer);
-        token = new ethers.Contract(TOKEN, tokenABI, signer);
-        oracle = new ethers.Contract(ORACLE, oracleABI, provider);
-
-        document.getElementById("walletText").textContent = account.slice(0,6)+"..."+account.slice(-4);
-        document.querySelectorAll(".btn").forEach(b => b.disabled = false);
-        document.getElementById("status").textContent = "Connected! Loading vault...";
+        document.getElementById('walletText').textContent = account.slice(0,6)+'...'+account.slice(-4);
+        document.getElementById('walletButton').classList.add('connected');
 
         await updatePrice();
-        setInterval(updatePrice, 30000);
-        await loadVault();
-      } catch (err) {
-        console.error(err);
-        document.getElementById("error").textContent = err.message || "Connection failed.";
+        await updateAll();
+      } catch (e) {
+        alert('Wallet connection failed: '+e.message);
       }
     }
 
-    document.getElementById("walletBtn").onclick = connectWallet;
-
-    async function updatePrice() {
-      try {
-        const [p] = await oracle.getPriceWithTimestamp();
-        price = p;
-        document.getElementById("price").textContent = "$" + (Number(p)/1e18).toFixed(6) + " per PLS";
-      } catch (err) {
-        console.error(err);
-        document.getElementById("price").textContent = "Oracle offline";
-      }
+    async function updatePrice(){
+      try{
+        const [p]=await oracle.peekPriceView();price=p;
+        document.getElementById('priceDisplay').textContent='$'+(Number(p)/1e18).toFixed(6)+' per PLS';
+      }catch{document.getElementById('priceDisplay').textContent='Oracle offline';}
     }
 
-    function usdToPLS(usd) { return price ? ethers.parseEther(usd.toString()) * 1e18n / price : 0n; }
-    function usdToPSun(usd) { return ethers.parseEther(usd.toString()); }
+    function usdToPLS(usd){return price?ethers.parseEther(usd.toString())*1e18n/price:0n;}
+    function usdToPSun(usd){return ethers.parseEther(usd.toString());}
 
-    ["usdIn","usdOut"].forEach(id => {
-      document.getElementById(id).addEventListener("input", () => {
-        const usd = parseFloat(document.getElementById(id).value) || 0;
-        const pls = usdToPLS(usd);
-        document.getElementById(id==="usdIn"?"plsOut":"plsIn").textContent =
-          usd>0 ? "~ "+Number(ethers.formatEther(pls)).toFixed(6)+" PLS" : "";
+    ['usdDeposit','usdWithdraw'].forEach(id=>{
+      document.getElementById(id).addEventListener('input',()=>{
+        const usd=parseFloat(document.getElementById(id).value)||0;
+        const pls=usdToPLS(usd);
+        const text=usd>0?'≈ '+Number(ethers.formatEther(pls)).toFixed(6)+' PLS':'';
+        document.getElementById(id==='usdDeposit'?'plsPreview':'plsWithdrawPreview').textContent=text;
       });
     });
 
-    async function loadVault() {
-      try {
-        const i = await vault.vaultInfo(account);
-        const r = i.ratio > 1e30 ? "∞" : (Number(i.ratio)/100).toFixed(2)+"%";
-        document.getElementById("stats").innerHTML = `
-          <div class="stat"><div class="label">Collateral</div><div class="value">${Number(ethers.formatEther(i.collateral)).toFixed(4)} PLS</div></div>
-          <div class="stat"><div class="label">Debt</div><div class="value">${Number(ethers.formatEther(i.debt)).toFixed(4)} pSunDAI</div></div>
-          <div class="stat"><div class="label">Ratio</div><div class="value ${Number(i.ratio)<15000?"risk":"safe"}">${r}</div></div>
-          <div class="stat"><div class="label">Can Mint</div><div class="value">${Number(ethers.formatEther(i.mintable)).toFixed(4)} pSunDAI</div></div>`;
-      } catch (err) {
-        console.error(err);
-        document.getElementById("error").textContent = err.message;
-      }
+    async function updateAll(){
+      const info=await vault.vaultInfo(account);
+      const ratio=info.ratio>1e30?'Infinite':(Number(info.ratio)/100).toFixed(2)+'%';
+      document.getElementById('vaultStats').innerHTML=`
+        <div class="stat"><div class="stat-label">Collateral</div><div class="stat-value">${Number(ethers.formatEther(info.collateral)).toFixed(4)} PLS</div></div>
+        <div class="stat"><div class="stat-label">Debt</div><div class="stat-value">${Number(ethers.formatEther(info.debt)).toFixed(4)} pSunDAI</div></div>
+        <div class="stat"><div class="stat-label">Ratio</div><div class="stat-value ${Number(info.ratio)<15000?'risk':'safe'}">${ratio}</div></div>
+        <div class="stat"><div class="stat-label">Can Mint</div><div class="stat-value">${Number(ethers.formatEther(info.mintable)).toFixed(4)} pSunDAI</div></div>`;
     }
-  });
+
+    // same transaction functions from your old version...
+    document.getElementById('depositBtn').onclick=async()=>{const u=parseFloat(document.getElementById('usdDeposit').value);if(!u)return alert('Enter amount');const tx=await vault.depositPLS({value:usdToPLS(u)});await tx.wait();updateAll();};
+    document.getElementById('mintBtn').onclick=async()=>{const u=parseFloat(document.getElementById('usdMint').value);if(!u)return alert('Enter amount');const tx=await vault.mint(usdToPSun(u));await tx.wait();updateAll();};
+    document.getElementById('repayBtn').onclick=async()=>{const u=parseFloat(document.getElementById('usdRepay').value);if(!u)return alert('Enter amount');await (await token.approve(VAULT,usdToPSun(u))).wait();const tx=await vault.repay(usdToPSun(u));await tx.wait();updateAll();};
+    document.getElementById('withdrawBtn').onclick=async()=>{const u=parseFloat(document.getElementById('usdWithdraw').value);if(!u)return alert('Enter amount');const tx=await vault.withdrawPLS(usdToPLS(u));await tx.wait();updateAll();};
+    document.getElementById('riskBtn').onclick=async()=>{const c=await vault.canLiquidate(account);document.getElementById('riskDisplay').innerHTML=c?'<span class="risk">⚠️ LIQUIDATION RISK ⚠️</span>':'<span class="safe">You are safe 🌞</span>';};
   </script>
 </body>
 </html>
