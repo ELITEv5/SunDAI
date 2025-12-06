@@ -544,12 +544,17 @@
 <style>
   #bg {
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     z-index: 0;
     pointer-events: none;
     background: radial-gradient(circle at 25% 25%, rgba(255,190,80,0.15), transparent 60%),
                 radial-gradient(circle at 75% 70%, rgba(255,130,40,0.12), transparent 60%),
                 radial-gradient(circle at 50% 50%, rgba(110,0,150,0.18), transparent 70%);
+    background-repeat: no-repeat;
+    background-size: cover;
     transition: background 5s ease;
   }
 </style>
