@@ -443,87 +443,105 @@
       }catch(e){ error.textContent=e.message; }
       finally{ oneClickBtn.textContent="1-Click Auto Mint (155%)"; }
     };
-    </script>
+     </script>
 
-
-  <footer class="footer">
-    <h3>Official Contracts</h3>
-    <div class="contracts">
-      <div><span class="label">pSunDAI Token:</span>
-        <a href="https://scan.pulsechain.com/address/0xf822bE76E69f0Ff90D9102eD9b97C5A78EEcf8f9" target="_blank">
-          0xf822bE76E69f0Ff90D9102eD9b97C5A78EEcf8f9
-        </a>
-      </div>
-      <div><span class="label">Vault:</span>
-        <a href="https://scan.pulsechain.com/address/0x253506fA54c1B2cC837E9E5b1eB0Cde9acF9bD3c" target="_blank">
-          0x253506fA54c1B2cC837E9E5b1eB0Cde9acF9bD3c
-        </a>
-      </div>
-      <div><span class="label">Oracle:</span>
-        <a href="https://scan.pulsechain.com/address/0x259A012eE1b60338EDBdF0aC75ae20F55F1c302B" target="_blank">
-          0x259A012eE1b60338EDBdF0aC75ae20F55F1c302B
-        </a>
-      </div>
+<footer class="footer">
+  <h3>Official Contracts</h3>
+  <div class="contracts">
+    <div>
+      <span class="label">pSunDAI Token:</span>
+      <a href="https://scan.pulsechain.com/address/0xf822bE76E69f0Ff90D9102eD9b97C5A78EEcf8f9" target="_blank">
+        0xf822bE76E69f0Ff90D9102eD9b97C5A78EEcf8f9
+      </a>
     </div>
-  </footer>
+    <div>
+      <span class="label">Vault:</span>
+      <a href="https://scan.pulsechain.com/address/0x253506fA54c1B2cC837E9E5b1eB0Cde9acF9bD3c" target="_blank">
+        0x253506fA54c1B2cC837E9E5b1eB0Cde9acF9bD3c
+      </a>
+    </div>
+    <div>
+      <span class="label">Oracle:</span>
+      <a href="https://scan.pulsechain.com/address/0x259A012eE1b60338EDBdF0aC75ae20F55F1c302B" target="_blank">
+        0x259A012eE1b60338EDBdF0aC75ae20F55F1c302B
+      </a>
+    </div>
+  </div>
+</footer>
 
-  <!-- 🌞 Safety Logic -->
-  <script>
-    async function checkOracleHealth() {
-      try {
-        if (!oracle) return;
-
-        const healthy = await oracle.isHealthy();
-        const [price, timestamp] = await oracle.peekPriceView();
-        const age = Math.floor(Date.now()/1000 - Number(timestamp));
-
-        const statusEl = document.getElementById("safetyStatus");
-        const pokeBtn = document.getElementById("pokeBtn");
-
-        if (healthy && age < 600) {
-          statusEl.innerHTML = `🟢 Vault & Oracle synced – data fresh (${age}s ago)`;
-          statusEl.style.color = "#00ff9d";
-          pokeBtn.disabled = true;
-        } else {
-          statusEl.innerHTML = "🔴 Oracle stale – press <b>Wake Oracle 🌞</b> to refresh";
-          statusEl.style.color = "#ff3366";
-          pokeBtn.disabled = false;
-        }
-      } catch (e) {
-        document.getElementById("safetyStatus").textContent = "⚠️ Oracle check failed: " + e.message;
-        document.getElementById("pokeBtn").disabled = false;
+<!-- 🌞 Safety Logic -->
+<script>
+  async function checkOracleHealth() {
+    try {
+      if (!oracle) {
+        console.log("⏳ Oracle not initialized yet...");
+        return;
       }
-    }
 
-    document.getElementById("pokeBtn").onclick = async () => {
-      try {
-        const tx = await oracle.connect(signer).poke();
-        const statusEl = document.getElementById("safetyStatus");
-        statusEl.textContent = "⏳ Sending wake-up...";
-        await tx.wait();
-        statusEl.textContent = "✅ Oracle awakened & synced!";
+      const healthy = await oracle.isHealthy();
+      const [price, timestamp] = await oracle.peekPriceView();
+      const age = Math.floor(Date.now() / 1000 - Number(timestamp));
+
+      const statusEl = document.getElementById("safetyStatus");
+      const pokeBtn = document.getElementById("pokeBtn");
+
+      if (healthy && age < 600) {
+        statusEl.innerHTML = `🟢 Vault & Oracle synced – data fresh (${age}s ago)`;
         statusEl.style.color = "#00ff9d";
-        setTimeout(checkOracleHealth, 5000);
-      } catch (e) {
-        document.getElementById("safetyStatus").textContent = "⚠️ " + e.message;
+        pokeBtn.disabled = true;
+        pokeBtn.classList.remove("poke-active");
+      } else {
+        statusEl.innerHTML = "🔴 Oracle stale – press <b>Wake Oracle 🌞</b> to refresh";
+        statusEl.style.color = "#ff3366";
+        pokeBtn.disabled = false;
+        pokeBtn.classList.add("poke-active");
       }
-    };
 
-    // 🕐 Re-check every 2 minutes
-    setInterval(() => {
-      if (oracle) checkOracleHealth();
-    }, 120000);
+    } catch (e) {
+      console.error("⚠️ Oracle check failed:", e);
+      const statusEl = document.getElementById("safetyStatus");
+      statusEl.textContent = "⚠️ Oracle check failed: " + e.message;
+      document.getElementById("pokeBtn").disabled = false;
+    }
+  }
 
-    // ✅ Run after wallet connection
-    const _connectWallet = connectWallet;
-    connectWallet = async function() {
-      await _connectWallet();
-      await checkOracleHealth();
-    };
-  </script>
+  // 🟡 Ensure it runs after wallet connect
+  const originalConnectWallet = connectWallet;
+  connectWallet = async function() {
+    await originalConnectWallet();
+    setTimeout(() => {
+      checkOracleHealth();
+      document.getElementById("safetyCard").style.opacity = "1";
+    }, 1500);
+  };
 
+  // 🔁 Re-check every 2 minutes
+  setInterval(() => {
+    if (oracle) checkOracleHealth();
+  }, 120000);
 
-  <!-- 🌌 Golden Nebula & Shooting Stars -->
+  // 🌞 Wake Oracle button logic
+  document.getElementById("pokeBtn").onclick = async () => {
+    try {
+      if (!oracle || !signer) {
+        alert("Please connect your wallet first!");
+        return;
+      }
+      const tx = await oracle.connect(signer).poke();
+      const statusEl = document.getElementById("safetyStatus");
+      statusEl.textContent = "⏳ Sending wake-up...";
+      await tx.wait();
+      statusEl.textContent = "✅ Oracle awakened & synced!";
+      statusEl.style.color = "#00ff9d";
+      setTimeout(checkOracleHealth, 5000);
+    } catch (e) {
+      document.getElementById("safetyStatus").textContent = "⚠️ " + e.message;
+    }
+  };
+</script>
+
+<!-- 🌌 Golden Nebula & Shooting Stars -->
+
   <style>
     #bg {
       position: fixed;
