@@ -126,7 +126,7 @@
       requestAnimationFrame(draw);
     })();
 
-    // 🌐 Multi-wallet connect (MetaMask, Rabby, Coinbase, WalletConnect fallback)
+    // 🌐 Multi-wallet connect (MetaMask, Rabby, Coinbase)
     window.connectWallet = async function(){
       try {
         const [VAULT_ABI,TOKEN_ABI,ORACLE_ABI] = await loadABIs();
@@ -167,7 +167,12 @@
       }catch(e){document.getElementById("price").textContent="Oracle offline";}
     }
 
-    function usdToPLS(usd){return price?ethers.parseEther(usd.toString())*1e18n/price:0n;}
+    function usdToPLS(usd){
+      if (!price) return 0n;
+      const usdWei = ethers.parseEther(usd.toString());
+      return (usdWei * (10n ** 18n)) / price;
+    }
+
     function usdToPSun(usd){return ethers.parseEther(usd.toString());}
 
     ["usdIn","usdOut"].forEach(id=>{
