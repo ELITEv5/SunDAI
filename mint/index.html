@@ -69,29 +69,27 @@
   transform-origin: center;
 }
 
-/* 🌞 Logo float + cosmic glow sync */
-@keyframes floatGlow {
+.logo {
+  display: block;
+  max-width: 240px;
+  margin: 0 auto 10px;
+  animation: pulseGlow 4s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* 🌠 Soft pulsating glow effect — cosmic aura */
+@keyframes pulseGlow {
   0% {
-    transform: rotate(0deg) translateY(0);
-    filter: drop-shadow(0 0 15px rgba(180, 120, 255, 0.5));
-  }
-  25% {
-    transform: rotate(0.5deg) translateY(-2px);
-    filter: drop-shadow(0 0 25px rgba(220, 160, 255, 0.7));
+    filter: drop-shadow(0 0 10px rgba(180, 120, 255, 0.5));
   }
   50% {
-    transform: rotate(-0.5deg) translateY(2px);
-    filter: drop-shadow(0 0 35px rgba(255, 180, 255, 0.8));
-  }
-  75% {
-    transform: rotate(0.3deg) translateY(-1px);
-    filter: drop-shadow(0 0 25px rgba(180, 140, 255, 0.6));
+    filter: drop-shadow(0 0 35px rgba(255, 180, 255, 0.85));
   }
   100% {
-    transform: rotate(0deg) translateY(0);
-    filter: drop-shadow(0 0 15px rgba(180, 120, 255, 0.5));
+    filter: drop-shadow(0 0 10px rgba(180, 120, 255, 0.5));
   }
 }
+
 
 
     h1 {
