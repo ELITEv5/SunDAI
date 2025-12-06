@@ -321,7 +321,14 @@
     const TOKEN  = "0xf822bE76E69f0Ff90D9102eD9b97C5A78EEcf8f9";
     const ORACLE = "0x259A012eE1b60338EDBdF0aC75ae20F55F1c302B";
 
-    let provider, signer, vault, token, oracle, account, price = 0n;
+    window.provider = null;
+window.signer = null;
+window.vault = null;
+window.token = null;
+window.oracle = null;
+window.account = null;
+window.price = 0n;
+
 
     async function loadABIs(){
       const v = await fetch("vault-abi.json").then(r=>r.json());
