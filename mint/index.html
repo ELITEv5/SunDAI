@@ -238,11 +238,20 @@
       .contracts { font-size: 0.75em; gap: 8px; }
       .contracts a { font-size: 0.75em; }
     }
+    #bg {
+  opacity: 0;
+  animation: fadeIn 2s ease forwards;
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
   </style>
 </head>
 
 <body>
-  <canvas id="bg"></canvas>
+  <div id="bg"></div>
   <div class="wallet" id="walletBtn"><span id="walletText">Connect Wallet</span></div>
 
   <div class="container">
