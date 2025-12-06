@@ -226,10 +226,19 @@ input:focus {
   font-size: 1.1em;
 }
 
+/* 💬 Contract section */
 .contracts {
-  display: inline-block;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
   text-align: left;
   line-height: 1.6;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  padding: 0 10px;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .contracts a {
@@ -237,6 +246,9 @@ input:focus {
   text-decoration: none;
   font-family: monospace;
   word-break: break-all;
+  display: inline-block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   transition: color 0.2s ease;
 }
 
@@ -247,17 +259,19 @@ input:focus {
 .contracts .label {
   color: #ff6b00;
   font-weight: 700;
-  display: inline-block;
-  width: 140px;
+  display: block;
+  margin-bottom: 2px;
 }
-footer.footer {
-  position: relative;
-  z-index: 20; /* keeps it above the canvas */
-  bottom: 0;
-  width: 100%;
-  text-align: center;
-  margin-top: 40px;
-  padding-bottom: 20px;
+
+/* 📱 Mobile adjustments */
+@media (max-width: 480px) {
+  .contracts {
+    font-size: 0.75em;
+    gap: 8px;
+  }
+  .contracts a {
+    font-size: 0.75em;
+  }
 }
 
   </style>
