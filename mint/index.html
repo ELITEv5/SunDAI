@@ -491,12 +491,11 @@ window.addEventListener("load", () => {
   async function checkOracleHealth() {
     const statusEl = document.getElementById("safetyStatus");
     const pokeBtn = document.getElementById("pokeBtn");
-
     statusEl.textContent = "🔄 Checking Oracle...";
     statusEl.style.color = "#ffd700";
     pokeBtn.disabled = true;
 
-    if (!oracle || !oracle.isHealthy) {
+    if (!window.oracle) {
       console.warn("Oracle not ready yet, retrying...");
       setTimeout(checkOracleHealth, 1000);
       return;
@@ -504,9 +503,10 @@ window.addEventListener("load", () => {
 
     try {
       const [healthy, peek] = await Promise.all([
-        safeCall(oracle.isHealthy(), 3000),
-        safeCall(oracle.peekPriceView(), 3000)
+        safeCall(window.oracle.isHealthy(), 3000),
+        safeCall(window.oracle.peekPriceView(), 3000)
       ]);
+
       const [price, timestamp] = peek;
       const age = Math.floor(Date.now() / 1000 - Number(timestamp));
 
@@ -526,9 +526,8 @@ window.addEventListener("load", () => {
     }
   }
 
-  // Override connectWallet AFTER it exists
-  const originalConnectWallet = connectWallet;
-  connectWallet = async function () {
+  const originalConnectWallet = window.connectWallet;
+  window.connectWallet = async function () {
     await originalConnectWallet();
 
     const safetyCard = document.getElementById("safetyCard");
@@ -537,9 +536,8 @@ window.addEventListener("load", () => {
     statusEl.textContent = "🔄 Checking Oracle...";
     statusEl.style.color = "#ffd700";
 
-    // Wait until oracle is defined before starting
     const waitOracle = setInterval(() => {
-      if (oracle && oracle.isHealthy) {
+      if (window.oracle) {
         clearInterval(waitOracle);
         checkOracleHealth();
         setInterval(checkOracleHealth, 20000);
@@ -547,21 +545,20 @@ window.addEventListener("load", () => {
     }, 250);
   };
 
-  // Wake Oracle
   document.getElementById("pokeBtn").onclick = async () => {
     const statusEl = document.getElementById("safetyStatus");
     try {
-      if (!oracle || !signer) {
+      if (!window.oracle || !window.signer) {
         alert("Please connect your wallet first!");
         return;
       }
       statusEl.textContent = "⏳ Sending wake-up...";
       statusEl.style.color = "#ffd700";
-      const tx = await oracle.connect(signer).poke();
+      const tx = await window.oracle.connect(window.signer).poke();
       await tx.wait();
       statusEl.textContent = "✅ Oracle awakened & synced!";
       statusEl.style.color = "#00ff9d";
-      setTimeout(checkOracleHealth, 2000);
+      setTimeout(checkOracleHealth, 2500);
     } catch (e) {
       statusEl.textContent = "⚠️ " + e.message;
       statusEl.style.color = "#ff3366";
@@ -569,8 +566,6 @@ window.addEventListener("load", () => {
   };
 });
 </script>
-
-
 
 <!-- 🌌 Golden Nebula Drift Background -->
 <style>
