@@ -551,7 +551,7 @@
       {
         "name": "",
         "type": "address",
-        "internalType": "contract pSunDAIoraclePLSX4"
+        "internalType": "contract pSunDAIoraclePLSXHybrid"
       }
     ],
     "stateMutability": "view"
