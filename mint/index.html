@@ -485,9 +485,21 @@ window.price = 0n;
   </div>
 </footer>
 
-<!-- 🌞 Safety Logic (Guaranteed Init + Fast UI) -->
+<!-- 🌞 Safety Logic (Guaranteed Instant Status) -->
 <script>
 window.addEventListener("load", () => {
+  console.log("🌞 Safety logic loaded");
+
+  async function waitForOracle(timeoutMs = 10000) {
+    const start = Date.now();
+    while ((!window.oracle || !window.oracle.isHealthy) && Date.now() - start < timeoutMs) {
+      console.log("⏳ Waiting for oracle to initialize...");
+      await new Promise(r => setTimeout(r, 300));
+    }
+    if (!window.oracle) throw new Error("Oracle not initialized within timeout");
+    return window.oracle;
+  }
+
   async function safeCall(promise, timeoutMs = 4000) {
     return Promise.race([
       promise,
@@ -498,20 +510,16 @@ window.addEventListener("load", () => {
   async function checkOracleHealth() {
     const statusEl = document.getElementById("safetyStatus");
     const pokeBtn = document.getElementById("pokeBtn");
-    statusEl.textContent = "🔄 Checking Oracle...";
-    statusEl.style.color = "#ffd700";
-    pokeBtn.disabled = true;
-
-    if (!window.oracle) {
-      console.warn("Oracle not ready yet, retrying...");
-      setTimeout(checkOracleHealth, 1000);
-      return;
-    }
 
     try {
+      const oracle = await waitForOracle(); // ✅ waits until oracle really exists
+      statusEl.textContent = "🔄 Checking Oracle...";
+      statusEl.style.color = "#ffd700";
+      pokeBtn.disabled = true;
+
       const [healthy, peek] = await Promise.all([
-        safeCall(window.oracle.isHealthy(), 3000),
-        safeCall(window.oracle.peekPriceView(), 3000)
+        safeCall(oracle.isHealthy(), 3000),
+        safeCall(oracle.peekPriceView(), 3000)
       ]);
 
       const [price, timestamp] = peek;
@@ -526,42 +534,41 @@ window.addEventListener("load", () => {
         statusEl.style.color = "#ff3366";
         pokeBtn.disabled = false;
       }
-    } catch (err) {
-      statusEl.textContent = "⚠️ " + err.message;
+
+      console.log("✅ Oracle check complete", { healthy, age });
+    } catch (e) {
+      console.warn("⚠️ Oracle check failed:", e);
+      const statusEl = document.getElementById("safetyStatus");
+      statusEl.textContent = "⚠️ " + e.message;
       statusEl.style.color = "#ff3366";
-      pokeBtn.disabled = false;
+      document.getElementById("pokeBtn").disabled = false;
     }
   }
 
   const originalConnectWallet = window.connectWallet;
   window.connectWallet = async function () {
     await originalConnectWallet();
+    console.log("🔗 Wallet connected, starting oracle check");
 
-    const safetyCard = document.getElementById("safetyCard");
-    safetyCard.style.opacity = "1";
-    const statusEl = document.getElementById("safetyStatus");
-    statusEl.textContent = "🔄 Checking Oracle...";
-    statusEl.style.color = "#ffd700";
+    document.getElementById("safetyCard").style.opacity = "1";
+    document.getElementById("safetyStatus").textContent = "🔄 Checking Oracle...";
+    document.getElementById("safetyStatus").style.color = "#ffd700";
 
-    const waitOracle = setInterval(() => {
-      if (window.oracle) {
-        clearInterval(waitOracle);
-        checkOracleHealth();
-        setInterval(checkOracleHealth, 20000);
-      }
-    }, 250);
+    await checkOracleHealth(); // immediate
+    setInterval(checkOracleHealth, 20000); // re-check every 20s
   };
 
   document.getElementById("pokeBtn").onclick = async () => {
     const statusEl = document.getElementById("safetyStatus");
     try {
-      if (!window.oracle || !window.signer) {
+      const oracle = await waitForOracle();
+      if (!window.signer) {
         alert("Please connect your wallet first!");
         return;
       }
       statusEl.textContent = "⏳ Sending wake-up...";
       statusEl.style.color = "#ffd700";
-      const tx = await window.oracle.connect(window.signer).poke();
+      const tx = await oracle.connect(window.signer).poke();
       await tx.wait();
       statusEl.textContent = "✅ Oracle awakened & synced!";
       statusEl.style.color = "#00ff9d";
@@ -573,6 +580,7 @@ window.addEventListener("load", () => {
   };
 });
 </script>
+
 
 <!-- 🌌 Golden Nebula Drift Background -->
 <style>
