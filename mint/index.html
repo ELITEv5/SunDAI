@@ -76,7 +76,11 @@
       <div class="preview" id="plsIn"></div>
       <button class="btn" id="withdraw" disabled>Withdraw PLS</button>
     </div>
-
+    <div class="card">
+  <input id="usdOneClick" type="number" step="0.01" placeholder="Deposit & Auto Mint (USD)">
+  <div class="preview" id="plsOneClick"></div>
+  <button class="btn" id="oneClickBtn" disabled>1-Click Auto Mint (155%)</button>
+</div>
     <div class="card">
       <button class="btn" id="risk" disabled style="background:#ff3366">Check Risk</button>
       <div id="riskText" style="margin-top:15px;text-align:center;font-weight:700"></div>
@@ -203,6 +207,36 @@
     document.getElementById("repay").onclick=async()=>{const u=parseFloat(usdRepay.value);if(!u)return alert("Enter amount");await(await token.approve(VAULT,usdToPSun(u))).wait();await(await vault.repay(usdToPSun(u))).wait();loadVault();};
     document.getElementById("withdraw").onclick=async()=>{const u=parseFloat(usdOut.value);if(!u)return alert("Enter amount");await(await vault.withdrawPLS(usdToPLS(u))).wait();loadVault();};
     document.getElementById("risk").onclick=async()=>{const c=await vault.canLiquidate(account);riskText.innerHTML=c?'<span class="risk">⚠️ LIQUIDATION RISK ⚠️</span>':'<span class="safe">You are safe 🌞</span>';};
+    // --- One-Click Auto Mint (155%) ---
+document.getElementById("usdOneClick").addEventListener("input", () => {
+  const usd = parseFloat(document.getElementById("usdOneClick").value) || 0;
+  const pls = usdToPLS(usd);
+  document.getElementById("plsOneClick").textContent =
+    usd > 0 ? "≈ " + Number(ethers.formatEther(pls)).toFixed(6) + " PLS" : "";
+});
+
+document.getElementById("oneClickBtn").onclick = async () => {
+  const usd = parseFloat(document.getElementById("usdOneClick").value);
+  if (!usd) return alert("Enter amount to deposit");
+
+  try {
+    document.getElementById("oneClickBtn").textContent = "Processing...";
+    const plsValue = usdToPLS(usd);
+
+    // contract call — deposits PLS and mints automatically to ~155%
+    const tx = await vault.depositAndAutoMintPLS({ value: plsValue });
+    await tx.wait();
+
+    document.getElementById("status").textContent =
+      `Deposited ${usd.toFixed(2)} USD worth of PLS and auto-minted at 155% ratio.`;
+    await loadVault();
+  } catch (e) {
+    console.error(e);
+    document.getElementById("error").textContent = e.message || "Auto-mint failed";
+  } finally {
+    document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
+  }
+};
   </script>
 </body>
 </html>
