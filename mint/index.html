@@ -4,9 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>pSunDAI – Golden Sun Vault</title>
-  <link rel="icon" href="https://i.imgur.com/8v5V9wK.png" type="image/png">
+  <link rel="icon" href="sundailogo.png" type="image/png">
   <meta name="theme-color" content="#FF6B00">
-  <script src="https://cdn.ethers.io/lib/ethers-6.13.1.umd.min.js"></script>
+
+  <!-- LOCAL ethers.js from your repo -->
+  <script src="ethers.umd.min.js"></script>
+
   <style>
     :root{--primary:#FF6B00;--accent:#FFD700;--bg:#0a001f;--card:rgba(255,107,0,0.12);--glow:rgba(255,215,0,0.6);--text:#ffebd1}
     *{margin:0;padding:0;box-sizing:border-box}
@@ -20,7 +23,7 @@
     .price{font-size:2.2em;font-weight:900;color:var(--accent);text-align:center;margin:20px 0}
     .card{background:var(--card);border:1px solid rgba(255,107,0,0.3);border-radius:16px;padding:20px;margin:15px 0}
     input{width:100%;padding:16px;border-radius:12px;border:2px solid rgba(255,107,0,0.4);background:#110022;color:#fff;font-size:18px;text-align:center;margin:10px 0}
-    .btn{width:100%;padding:18px;background:var(--primary);color:#000;border:none;border-radius:14px;font-size:18px;font-weight:900;cursor:pointer;margin-top:10px;transition:all .3s}
+    .btn{width:100%;padding:18px;background:var(--primary);color:#000;border:none;border-radius:14px;font-size:18px;font-weight:900;cursor:pointer;margin-top:10px}
     .btn:hover{background:var(--accent);color:#000}
     .btn:disabled{background:#555;color:#aaa;cursor:not-allowed}
     .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:14px}
@@ -33,6 +36,7 @@
     .preview{color:#ffbd70;font-size:14px;text-align:center;margin:8px 0}
     .status{color:#00ff9d;font-weight:bold;text-align:center;margin:10px 0}
     .error{color:#ff3366;font-weight:bold;text-align:center;margin:10px 0}
+    @media(max-width:768px){h1{font-size:2.4em}.stats-grid{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
@@ -43,6 +47,7 @@
   </div>
 
   <div class="container">
+    <img src="sundailogo.png" alt="pSunDAI" class="logo">
     <h1>pSunDAI Vault</h1>
     <p class="subtitle">Autonomous • 150% PLS Collateral • Golden Sun Energy</p>
 
@@ -50,7 +55,7 @@
     <div class="status" id="status"></div>
     <div class="error" id="error"></div>
 
-    <div class="card"><div class="stats-grid" id="vaultStats">Connect wallet to load</div></div>
+    <div class="card"><div class="stats-grid" id="vaultStats">Connect wallet</div></div>
 
     <div class="card">
       <input id="usdDeposit" type="number" step="0.01" placeholder="Deposit amount in USD">
@@ -81,6 +86,7 @@
   </div>
 
   <script>
+    // Wait for local ethers to load
     window.addEventListener('load', () => {
       const { ethers } = window.ethers;
 
@@ -88,177 +94,108 @@
       const TOKEN = '0x98316280B93F835Ef561C59430270D31e0575A44';
       const ORACLE = '0xD3c339d4e0b48E77a781dA61724672625b5CD56d';
 
-      const VAULT_ABI = [
-        {"inputs":[{"internalType":"address","name":"_wpls","type":"address"},{"internalType":"address","name":"_psundai","type":"address"},{"internalType":"address","name":"_oracle","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},
-        {"name":"depositPLS","outputs":[],"stateMutability":"payable","type":"function"},
-        {"name":"mint","inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"outputs":[],"stateMutability":"nonpayable","type":"function"},
-        {"name":"repay","inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"outputs":[],"stateMutability":"nonpayable","type":"function"},
-        {"name":"withdrawPLS","inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"outputs":[],"stateMutability":"nonpayable","type":"function"},
-        {"name":"canLiquidate","inputs":[{"internalType":"address","name":"user","type":"address"}],"outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
-        {"name":"vaultInfo","inputs":[{"internalType":"address","name":"user","type":"address"}],"outputs":[{"internalType":"uint256","name":"collateral","type":"uint256"},{"internalType":"uint256","name":"debt","type":"uint256"},{"internalType":"uint256","name":"collateralUSD","type":"uint256"},{"internalType":"uint256","name":"ratio","type":"uint256"},{"internalType":"uint256","name":"mintable","type":"uint256"},{"internalType":"bool","name":"oracleHealthy","type":"bool"},{"internalType":"uint256","name":"price","type":"uint256"},{"internalType":"uint256","name":"systemRatio","type":"uint256"}],"stateMutability":"view","type":"function"},
-        {"name":"systemHealth","outputs":[{"internalType":"uint256","name":"systemRatio","type":"uint256"}],"stateMutability":"view","type":"function"},
-        {"name":"totalDebt","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"}
-      ];
+      // Load ABIs from your local repo
+      Promise.all([
+        fetch('abi/vault-abi.json').then(r => r.json()),
+        fetch('abi/token-abi.json').then(r => r.json()),
+        fetch('abi/oracle-abi.json').then(r => r.json())
+      ]).then(([vaultABI, tokenABI, oracleABI]) => {
+        let provider, signer, vault, token, oracle, account, price = 0n;
 
-      const TOKEN_ABI = [{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}];
-      const ORACLE_ABI = [{"inputs":[],"name":"peekPriceView","outputs":[{"internalType":"uint256","name":"price","type":"uint256"},{"internalType":"uint256","name":"timestamp","type":"uint256"}],"stateMutability":"view","type":"function"}];
+        // Nebula background
+        const canvas = document.getElementById('cosmos-bg');
+        const ctx = canvas.getContext('2d');
+        let w, h, time = 0;
+        function resize(){w=canvas.width=innerWidth;h=canvas.height=innerHeight;}
+        resize(); window.addEventListener('resize', resize);
+        function draw(){
+          ctx.clearRect(0,0,w,h); time+=0.003;
+          const layers = [{s:0.3,c:1.4,o:0.4,h:35},{s:0.5,c:1,o:0.6,h:45},{s:0.8,c:0.7,o:0.5,h:55}];
+          layers.forEach(l=>{const t=time*l.s;const g=ctx.createLinearGradient(0,0,w,h);
+            g.addColorStop(0,`hsla(${l.h+Math.sin(t)*10},90%,60%,0)`);
+            g.addColorStop(0.3,`hsla(${l.h+15},95%,70%,${l.o})`);
+            g.addColorStop(0.5,`hsla(${l.h+30},100%,80%,${l.o+0.2})`);
+            g.addColorStop(0.7,`hsla(${l.h+15},95%,70%,${l.o})`);
+            g.addColorStop(1,`hsla(${l.h},90%,60%,0)`);
+            ctx.globalCompositeOperation='screen';ctx.filter=`blur(${20*l.c}px)`;
+            ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+          });
+          const p=0.5+0.5*Math.sin(time*2);
+          const sx=w*0.5+Math.cos(time*0.7)*w*0.1;
+          const sy=h*0.5+Math.sin(time*0.5)*h*0.1;
+          const sg=ctx.createRadialGradient(sx,sy,0,sx,sy,400*p);
+          sg.addColorStop(0,`rgba(255,220,100,${0.8*p})`);
+          sg.addColorStop(0.4,`rgba(255,160,0,${0.4*p})`);
+          sg.addColorStop(1,'rgba(255,100,0,0)');
+          ctx.filter='blur(80px)';ctx.fillStyle=sg;ctx.fillRect(0,0,w,h);
+          ctx.filter='none';ctx.globalCompositeOperation='source-over';
+          requestAnimationFrame(draw);
+        }
+        draw();
 
-      let provider, signer, vault, token, oracle, account, price = 0n;
+        window.connectWallet = async function() {
+          if (!window.ethereum) return alert('Install a wallet');
+          try {
+            await window.ethereum.request({ method: 'eth_requestAccounts' });
+            provider = new ethers.BrowserProvider(window.ethereum);
+            signer = await provider.getSigner();
+            account = await signer.getAddress();
 
-      // Nebula background (same)
-      const canvas = document.getElementById('cosmos-bg');
-      const ctx = canvas.getContext('2d');
-      let w, h, time = 0;
-      function resize(){w=canvas.width=innerWidth;h=canvas.height=innerHeight;}
-      resize(); window.addEventListener('resize', resize);
-      function draw(){
-        ctx.clearRect(0,0,w,h); time+=0.003;
-        const layers = [{s:0.3,c:1.4,o:0.4,h:35},{s:0.5,c:1,o:0.6,h:45},{s:0.8,c:0.7,o:0.5,h:55}];
-        layers.forEach(l=>{const t=time*l.s;const g=ctx.createLinearGradient(0,0,w,h);
-          g.addColorStop(0,`hsla(${l.h+Math.sin(t)*10},90%,60%,0)`);
-          g.addColorStop(0.3,`hsla(${l.h+15},95%,70%,${l.o})`);
-          g.addColorStop(0.5,`hsla(${l.h+30},100%,80%,${l.o+0.2})`);
-          g.addColorStop(0.7,`hsla(${l.h+15},95%,70%,${l.o})`);
-          g.addColorStop(1,`hsla(${l.h},90%,60%,0)`);
-          ctx.globalCompositeOperation='screen';ctx.filter=`blur(${20*l.c}px)`;
-          ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+            try { await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x171' }]}); }
+            catch (e) { if (e.code === 4902) await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{ chainId: '0x171', chainName: 'PulseChain', nativeCurrency: { name: 'PLS', symbol: 'PLS', decimals: 18 }, rpcUrls: ['https://rpc.pulsechain.com'], blockExplorerUrls: ['https://scan.pulsechain.com'] }]}); }
+
+            vault = new ethers.Contract(VAULT, vaultABI, signer);
+            token = new ethers.Contract(TOKEN, tokenABI, signer);
+            oracle = new ethers.Contract(ORACLE, oracleABI, provider);
+
+            document.getElementById('walletText').textContent = account.slice(0,6)+'...'+account.slice(-4);
+            document.querySelectorAll('.btn').forEach(b => b.disabled = false);
+            document.getElementById('status').textContent = 'Connected! Loading...';
+
+            await updatePrice();
+            setInterval(updatePrice, 30000);
+            await updateAll();
+          } catch (err) { document.getElementById('error').textContent = err.message; }
+        };
+
+        async function updatePrice() {
+          try { const [p] = await oracle.peekPriceView(); price = p; document.getElementById('priceDisplay').textContent = `$${(Number(p)/1e18).toFixed(6)} per PLS`; }
+          catch { document.getElementById('priceDisplay').textContent = 'Oracle offline'; }
+        }
+
+        function usdToPLS(usd) { return price ? ethers.parseEther(usd.toString()) * 1e18 / price : 0n; }
+        function usdToPSun(usd) { return ethers.parseEther(usd.toString()); }
+
+        ['usdDeposit','usdWithdraw'].forEach(id => {
+          document.getElementById(id).addEventListener('input', () => {
+            const usd = parseFloat(document.getElementById(id).value) || 0;
+            const pls = usdToPLS(usd);
+            const txt = usd > 0 ? `≈ ${Number(ethers.formatEther(pls)).toFixed(6)} PLS` : '';
+            document.getElementById(id === 'usdDeposit' ? 'plsPreview' : 'plsWithdrawPreview').textContent = txt;
+          });
         });
-        const p=0.5+0.5*Math.sin(time*2);
-        const sx=w*0.5+Math.cos(time*0.7)*w*0.1;
-        const sy=h*0.5+Math.sin(time*0.5)*h*0.1;
-        const sg=ctx.createRadialGradient(sx,sy,0,sx,sy,400*p);
-        sg.addColorStop(0,`rgba(255,220,100,${0.8*p})`);
-        sg.addColorStop(0.4,`rgba(255,160,0,${0.4*p})`);
-        sg.addColorStop(1,'rgba(255,100,0,0)');
-        ctx.filter='blur(80px)';ctx.fillStyle=sg;ctx.fillRect(0,0,w,h);
-        ctx.filter='none';ctx.globalCompositeOperation='source-over';
-        requestAnimationFrame(draw);
-      }
-      draw();
 
-      window.connectWallet = async function() {
-        if (!window.ethereum) return alert('Install a wallet');
-        try {
-          await window.ethereum.request({ method: 'eth_requestAccounts' });
-          provider = new ethers.BrowserProvider(window.ethereum);
-          signer = await provider.getSigner();
-          account = await signer.getAddress();
+        async function updateAll() {
+          try {
+            const info = await vault.vaultInfo(account);
+            const ratio = info.ratio > 1e30 ? 'Infinite' : (Number(info.ratio)/100).toFixed(2)+'%';
+            document.getElementById('vaultStats').innerHTML = `
+              <div class="stat"><div class="stat-label">Collateral</div><div class="stat-value">${Number(ethers.formatEther(info.collateral)).toFixed(4)} PLS</div></div>
+              <div class="stat"><div class="stat-label">Debt</div><div class="stat-value">${Number(ethers.formatEther(info.debt)).toFixed(4)} pSunDAI</div></div>
+              <div class="stat"><div class="stat-label">Ratio</div><div class="stat-value ${Number(info.ratio)<15000?'risk':'safe'}">${ratio}</div></div>
+              <div class="stat"><div class="stat-label">Can Mint</div><div class="stat-value">${Number(ethers.formatEther(info.mintable)).toFixed(4)} pSunDAI</div></div>
+            `;
+          } catch (err) { document.getElementById('error').textContent = 'Vault error: ' + err.message; }
+        }
 
-          // Switch to PulseChain
-          try { await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x171' }]}); }
-          catch (e) { if (e.code === 4902) await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{ chainId: '0x171', chainName: 'PulseChain', nativeCurrency: { name: 'PLS', symbol: 'PLS', decimals: 18 }, rpcUrls: ['https://rpc.pulsechain.com'], blockExplorerUrls: ['https://scan.pulsechain.com'] }]}); }
+        document.getElementById('depositBtn').onclick = async () => { const usd = parseFloat(document.getElementById('usdDeposit').value); if(!usd)return alert('Enter amount'); try { document.getElementById('depositBtn').textContent='Sending...'; await (await vault.depositPLS({value:usdToPLS(usd)})).wait(); document.getElementById('status').textContent=`Deposited $${usd.toFixed(2)}`; updateAll(); } catch(e){document.getElementById('error').textContent=e.message;} finally{document.getElementById('depositBtn').textContent='Deposit PLS';} };
+        document.getElementById('mintBtn').onclick = async () => { const usd = parseFloat(document.getElementById('usdMint').value); if(!usd)return alert('Enter amount'); try { document.getElementById('mintBtn').textContent='Minting...'; await (await vault.mint(usdToPSun(usd))).wait(); document.getElementById('status').textContent=`Minted $${usd.toFixed(2)}`; updateAll(); } catch(e){document.getElementById('error').textContent=e.message;} finally{document.getElementById('mintBtn').textContent='Mint pSunDAI';} };
+        document.getElementById('repayBtn').onclick = async () => { const usd = parseFloat(document.getElementById('usdRepay').value); if(!usd)return alert('Enter amount'); try { document.getElementById('repayBtn').textContent='Repaying...'; await (await token.approve(VAULT,usdToPSun(usd))).wait(); await (await vault.repay(usdToPSun(usd))).wait(); document.getElementById('status').textContent=`Repaid $${usd.toFixed(2)}`; updateAll(); } catch(e){document.getElementById('error').textContent=e.message;} finally{document.getElementById('repayBtn').textContent='Repay Debt';} };
+        document.getElementById('withdrawBtn').onclick = async () => { const usd = parseFloat(document.getElementById('usdWithdraw').value); if(!usd)return alert('Enter amount'); try { document.getElementById('withdrawBtn').textContent='Withdrawing...'; await (await vault.withdrawPLS(usdToPLS(usd))).wait(); document.getElementById('status').textContent=`Withdrew $${usd.toFixed(2)}`; updateAll(); } catch(e){document.getElementById('error').textContent=e.message;} finally{document.getElementById('withdrawBtn').textContent='Withdraw PLS';} };
+        document.getElementById('riskBtn').onclick = async () => { try { const can = await vault.canLiquidate(account); document.getElementById('riskDisplay').innerHTML = can ? '<span class="risk">LIQUIDATION RISK!</span>' : '<span class="safe">You are safe</span>'; } catch(e){document.getElementById('error').textContent=e.message;} };
 
-          vault = new ethers.Contract(VAULT, VAULT_ABI, signer);
-          token = new ethers.Contract(TOKEN, TOKEN_ABI, signer);
-          oracle = new ethers.Contract(ORACLE, ORACLE_ABI, provider);
-
-          document.getElementById('walletText').textContent = account.slice(0,6)+'...'+account.slice(-4);
-          document.querySelectorAll('.btn').forEach(b => b.disabled = false);
-          document.getElementById('status').textContent = 'Wallet connected!';
-
-          await updatePrice();
-          setInterval(updatePrice, 30000);
-          await updateAll();
-        } catch (err) { document.getElementById('error').textContent = 'Error: ' + err.message; }
-      };
-
-      async function updatePrice() {
-        try {
-          const [p] = await oracle.peekPriceView();
-          price = p;
-          document.getElementById('priceDisplay').textContent = `$${(Number(p)/1e18).toFixed(6)} per PLS`;
-        } catch { document.getElementById('priceDisplay').textContent = 'Oracle offline'; }
-      }
-
-      function usdToPLS(usd) { return price ? ethers.parseEther(usd.toString()) * 1e18 / price : 0n; }
-      function usdToPSun(usd) { return ethers.parseEther(usd.toString()); }
-
-      ['usdDeposit','usdWithdraw'].forEach(id => {
-        document.getElementById(id).addEventListener('input', () => {
-          const usd = parseFloat(document.getElementById(id).value) || 0;
-          const pls = usdToPLS(usd);
-          const txt = usd > 0 ? `≈ ${Number(ethers.formatEther(pls)).toFixed(6)} PLS` : '';
-          document.getElementById(id === 'usdDeposit' ? 'plsPreview' : 'plsWithdrawPreview').textContent = txt;
-        });
-      });
-
-      async function updateAll() {
-        try {
-          const info = await vault.vaultInfo(account);
-          const ratio = info.ratio > 1e30 ? 'Infinite' : (Number(info.ratio)/100).toFixed(2)+'%';
-          document.getElementById('vaultStats').innerHTML = `
-            <div class="stat"><div class="stat-label">Collateral</div><div class="stat-value">${Number(ethers.formatEther(info.collateral)).toFixed(4)} PLS</div></div>
-            <div class="stat"><div class="stat-label">Debt</div><div class="stat-value">${Number(ethers.formatEther(info.debt)).toFixed(4)} pSunDAI</div></div>
-            <div class="stat"><div class="stat-label">Ratio</div><div class="stat-value ${Number(info.ratio)<15000?'risk':'safe'}">${ratio}</div></div>
-            <div class="stat"><div class="stat-label">Can Mint</div><div class="stat-value">${Number(ethers.formatEther(info.mintable)).toFixed(4)} pSunDAI</div></div>
-          `;
-          document.getElementById('systemHealth').textContent = (Number(await vault.systemHealth())/100).toFixed(2)+'%';
-        } catch (err) { document.getElementById('error').textContent = 'Vault error: ' + err.message; }
-      }
-
-      document.getElementById('depositBtn').onclick = async () => {
-        const usd = parseFloat(document.getElementById('usdDeposit').value);
-        if (!usd || usd <= 0) return alert('Enter valid USD amount');
-        try {
-          document.getElementById('depositBtn').textContent = 'Sending...';
-          const tx = await vault.depositPLS({ value: usdToPLS(usd) });
-          await tx.wait();
-          document.getElementById('status').textContent = `Deposited $${usd.toFixed(2)}!`;
-          updateAll();
-        } catch (err) { document.getElementById('error').textContent = err.message; }
-        finally { document.getElementById('depositBtn').textContent = 'Deposit PLS'; }
-      };
-
-      document.getElementById('mintBtn').onclick = async () => {
-        const usd = parseFloat(document.getElementById('usdMint').value);
-        if (!usd || usd <= 0) return alert('Enter valid USD amount');
-        try {
-          document.getElementById('mintBtn').textContent = 'Minting...';
-          const tx = await vault.mint(usdToPSun(usd));
-          await tx.wait();
-          document.getElementById('status').textContent = `Minted $${usd.toFixed(2)} pSunDAI!`;
-          updateAll();
-        } catch (err) { document.getElementById('error').textContent = err.message; }
-        finally { document.getElementById('mintBtn').textContent = 'Mint pSunDAI'; }
-      };
-
-      document.getElementById('repayBtn').onclick = async () => {
-        const usd = parseFloat(document.getElementById('usdRepay').value);
-        if (!usd || usd <= 0) return alert('Enter valid USD amount');
-        try {
-          document.getElementById('repayBtn').textContent = 'Repaying...';
-          await (await token.approve(VAULT, usdToPSun(usd))).wait();
-          const tx = await vault.repay(usdToPSun(usd));
-          await tx.wait();
-          document.getElementById('status').textContent = `Repaid $${usd.toFixed(2)}!`;
-          updateAll();
-        } catch (err) { document.getElementById('error').textContent = err.message; }
-        finally { document.getElementById('repayBtn').textContent = 'Repay Debt'; }
-      };
-
-      document.getElementById('withdrawBtn').onclick = async () => {
-        const usd = parseFloat(document.getElementById('usdWithdraw').value);
-        if (!usd || usd <= 0) return alert('Enter valid USD amount');
-        try {
-          document.getElementById('withdrawBtn').textContent = 'Withdrawing...';
-          const tx = await vault.withdrawPLS(usdToPLS(usd));
-          await tx.wait();
-          document.getElementById('status').textContent = `Withdrew $${usd.toFixed(2)}!`;
-          updateAll();
-        } catch (err) { document.getElementById('error').textContent = err.message; }
-        finally { document.getElementById('withdrawBtn').textContent = 'Withdraw PLS'; }
-      };
-
-      document.getElementById('riskBtn').onclick = async () => {
-        try {
-          const can = await vault.canLiquidate(account);
-          document.getElementById('riskDisplay').innerHTML = can 
-            ? '<span class="risk">LIQUIDATION RISK – ACT NOW!</span>'
-            : '<span class="safe">You are safe from liquidation</span>';
-        } catch (err) { document.getElementById('error').textContent = err.message; }
-      };
-
-      if (window.ethereum?.selectedAddress) connectWallet();
+        if (window.ethereum?.selectedAddress) connectWallet();
+      }).catch(err => alert('Failed to load ABIs: ' + err.message));
     });
   </script>
 </body>
