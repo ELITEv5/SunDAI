@@ -478,18 +478,15 @@
   </div>
 </footer>
 
-<!-- 🌞 Safety Logic (Instant Oracle Updates, Optimized) -->
+<!-- 🌞 Safety Logic (Immediate Visual Update) -->
 <script>
-  let lastOracleStatus = "⏳ Awaiting Oracle...";
-  let lastOracleColor = "#ffd700";
-
   async function checkOracleHealth(immediate = false) {
     const statusEl = document.getElementById("safetyStatus");
     const pokeBtn = document.getElementById("pokeBtn");
 
-    // show cached or immediate status
-    statusEl.textContent = lastOracleStatus;
-    statusEl.style.color = lastOracleColor;
+    // show “checking” right away on every call
+    statusEl.textContent = "🔄 Checking Oracle...";
+    statusEl.style.color = "#ffd700";
 
     if (!oracle) {
       console.warn("Oracle not yet initialized");
@@ -497,69 +494,43 @@
     }
 
     try {
-      // Fetch data in parallel (fastest possible)
-      const [isHealthyRes, priceViewRes] = await Promise.allSettled([
+      const [healthy, result] = await Promise.all([
         oracle.isHealthy(),
-        oracle.peekPriceView(),
+        oracle.peekPriceView()
       ]);
-
-      if (isHealthyRes.status !== "fulfilled" || priceViewRes.status !== "fulfilled") {
-        throw new Error("Oracle data unavailable");
-      }
-
-      const healthy = isHealthyRes.value;
-      const [price, timestamp] = priceViewRes.value;
+      const [price, timestamp] = result;
       const age = Math.floor(Date.now() / 1000 - Number(timestamp));
 
       if (healthy && age < 86400) {
-        lastOracleStatus = `🟢 Vault & Oracle synced – data fresh (${(age / 60).toFixed(1)} min ago)`;
-        lastOracleColor = "#00ff9d";
-        statusEl.innerHTML = lastOracleStatus;
-        statusEl.style.color = lastOracleColor;
+        statusEl.innerHTML =
+          `🟢 Vault & Oracle synced – data fresh (${(age / 60).toFixed(1)} min ago)`;
+        statusEl.style.color = "#00ff9d";
         pokeBtn.disabled = true;
-        pokeBtn.classList.remove("poke-active");
       } else {
-        lastOracleStatus = "🔴 Oracle stale – press <b>Wake Oracle 🌞</b> to refresh";
-        lastOracleColor = "#ff3366";
-        statusEl.innerHTML = lastOracleStatus;
-        statusEl.style.color = lastOracleColor;
+        statusEl.innerHTML =
+          "🔴 Oracle stale – press <b>Wake Oracle 🌞</b> to refresh";
+        statusEl.style.color = "#ff3366";
         pokeBtn.disabled = false;
-        pokeBtn.classList.add("poke-active");
       }
     } catch (e) {
-      console.error("⚠️ Oracle check failed:", e);
-      lastOracleStatus = "⚠️ Oracle check failed: " + e.message;
-      lastOracleColor = "#ff3366";
-      statusEl.textContent = lastOracleStatus;
+      statusEl.textContent = "⚠️ Oracle check failed: " + e.message;
+      statusEl.style.color = "#ff3366";
       pokeBtn.disabled = false;
     }
   }
 
-  // ⚡ Instant feedback & fast polling after wallet connect
+  // Call this the instant wallet connects
   const originalConnectWallet = connectWallet;
   connectWallet = async function () {
     await originalConnectWallet();
-
-    const statusEl = document.getElementById("safetyStatus");
-    const safetyCard = document.getElementById("safetyCard");
-    safetyCard.style.opacity = "1";
-
-    // instant visual feedback
-    statusEl.textContent = "🔄 Checking Oracle...";
-    statusEl.style.color = "#ffd700";
-
-    // check repeatedly until oracle loaded
-    const tryInit = setInterval(async () => {
-      if (oracle) {
-        clearInterval(tryInit);
-        await checkOracleHealth(true);
-        // frequent background refreshes
-        setInterval(checkOracleHealth, 15000);
-      }
-    }, 200);
+    document.getElementById("safetyCard").style.opacity = "1";
+    // call once immediately for instant UI update
+    checkOracleHealth(true);
+    // keep refreshing every 15 seconds
+    setInterval(checkOracleHealth, 15000);
   };
 
-  // 🌞 Wake Oracle manually
+  // Wake Oracle button
   document.getElementById("pokeBtn").onclick = async () => {
     try {
       if (!oracle || !signer) {
@@ -572,9 +543,7 @@
       await tx.wait();
       statusEl.textContent = "✅ Oracle awakened & synced!";
       statusEl.style.color = "#00ff9d";
-      lastOracleStatus = statusEl.textContent;
-      lastOracleColor = "#00ff9d";
-      setTimeout(() => checkOracleHealth(true), 2000);
+      setTimeout(checkOracleHealth, 3000);
     } catch (e) {
       document.getElementById("safetyStatus").textContent = "⚠️ " + e.message;
     }
