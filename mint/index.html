@@ -433,6 +433,16 @@
     };
   </script>
 
+   <!-- 🟢 Safety / Oracle Sync Status -->
+    <div class="card" id="safetyCard">
+      <div id="safetyStatus" style="text-align:center;font-weight:700;color:#ffd700;margin-bottom:8px;">
+        Checking Oracle status...
+      </div>
+      <button class="btn" id="pokeBtn" disabled style="background:#ffaa00;border-color:#ffcc00;">
+        Wake Oracle 🌞
+      </button>
+    </div>
+  </div> <!-- end .container -->
       <footer class="footer">
     <h3>Official Contracts</h3>
     <div class="contracts">
@@ -454,7 +464,49 @@
     </div>
   </footer>
 
-  <!-- 🌌 Nebula Background Style -->
+  <!-- 🌞 Safety Logic -->
+  <script>
+    async function checkOracleHealth() {
+      try {
+        const healthy = await oracle.isHealthy();
+        const { timestamp } = await oracle.peekPriceView();
+        const age = (Date.now()/1000 - Number(timestamp)).toFixed(0);
+
+        const statusEl = document.getElementById("safetyStatus");
+        const pokeBtn = document.getElementById("pokeBtn");
+
+        if (healthy && age < 600) {
+          statusEl.innerHTML = "🟢 Vault & Oracle synced – data fresh (" + age + " s ago)";
+          statusEl.style.color = "#00ff9d";
+          pokeBtn.disabled = true;
+        } else {
+          statusEl.innerHTML = "🔴 Oracle stale – press Wake Oracle 🌞 to refresh";
+          statusEl.style.color = "#ff3366";
+          pokeBtn.disabled = false;
+        }
+      } catch (e) {
+        safetyStatus.textContent = "⚠️ Unable to reach Oracle: " + e.message;
+        pokeBtn.disabled = false;
+      }
+    }
+
+    document.getElementById("pokeBtn").onclick = async () => {
+      try {
+        const tx = await oracle.connect(signer).poke();
+        document.getElementById("safetyStatus").textContent = "⏳ Poking Oracle...";
+        await tx.wait();
+        document.getElementById("safetyStatus").textContent = "✅ Oracle awakened!";
+        checkOracleHealth();
+      } catch (e) {
+        document.getElementById("safetyStatus").textContent = "⚠️ " + e.message;
+      }
+    };
+
+    // Re-check every 2 minutes
+    setInterval(checkOracleHealth, 120000);
+  </script>
+
+  <!-- 🌌 Golden Nebula & Shooting Stars -->
   <style>
     #bg {
       position: fixed;
@@ -467,7 +519,6 @@
     }
   </style>
 
-  <!-- 🌠 Golden Shooting Stars Script -->
   <script>
     const canvas = document.getElementById("bg");
     const ctx = canvas.getContext("2d");
@@ -489,11 +540,11 @@
     }
 
     function spawnMeteor() {
-      if (Math.random() < 0.02) { // 2% chance per frame
+      if (Math.random() < 0.02) {
         meteors.push({
           x: Math.random() * width,
           y: Math.random() * height * 0.5,
-          len: 200 + Math.random() * 100,
+          len: 180 + Math.random() * 120,
           speed: 10 + Math.random() * 5,
           life: 1
         });
@@ -504,31 +555,26 @@
       ctx.fillStyle = "rgba(10,0,30,0.25)";
       ctx.fillRect(0, 0, width, height);
 
-      // 🌌 Rotating galaxy motion
       const angle = Date.now() * 0.00002;
       const cosA = Math.cos(angle), sinA = Math.sin(angle);
 
       for (let s of stars) {
         s.z -= 2;
         if (s.z <= 0) s.z = width;
-
         const rx = s.x * cosA - s.y * sinA;
         const ry = s.x * sinA + s.y * cosA;
         const k = 128 / s.z;
         const px = rx * k + centerX;
         const py = ry * k + centerY;
-
         if (px < 0 || px >= width || py < 0 || py >= height) continue;
-
         const size = (1 - s.z / width) * 2;
-        const hue = 45 + Math.sin(Date.now() * 0.001 + s.x) * 10; // 🌞 gold shift
+        const hue = 45 + Math.sin(Date.now() * 0.001 + s.x) * 10;
         ctx.fillStyle = `hsla(${hue}, 90%, 65%, ${s.o})`;
         ctx.beginPath();
         ctx.arc(px, py, size, 0, 2 * Math.PI);
         ctx.fill();
       }
 
-      // ☄️ Shooting stars
       spawnMeteor();
       for (let m of meteors) {
         ctx.strokeStyle = `rgba(255, 215, 100, ${m.life})`;
@@ -537,14 +583,11 @@
         ctx.moveTo(m.x, m.y);
         ctx.lineTo(m.x - m.len, m.y + m.len * 0.3);
         ctx.stroke();
-
         m.x += m.speed;
         m.y -= m.speed * 0.3;
         m.life -= 0.01;
       }
-
       meteors = meteors.filter(m => m.life > 0);
-
       requestAnimationFrame(draw);
     }
 
