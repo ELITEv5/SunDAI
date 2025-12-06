@@ -1,35 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>pSunDAI - Golden Sun Vault</title>
-  <link rel="icon" href="sundailogo.png" type="image/png">
+  <link rel="icon" href="sundailogo.png" type="image/png" />
   <script src="ethers.umd.min.js"></script>
   <style>
-    body{margin:0;background:#0a001f;color:#ffebd1;font-family:Segoe UI,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;overflow:hidden}
-    canvas{position:fixed;inset:0;pointer-events:none}
-    .box{background:rgba(10,0,30,.8);backdrop-filter:blur(20px);border:2px solid #FF6B00;border-radius:24px;padding:40px 30px;max-width:660px;width:100%;box-shadow:0 0 100px rgba(255,215,0,.6);position:relative;z-index:10}
-    h1{font-size:3.4em;background:linear-gradient(90deg,#FF6B00,#FFD700,#FFA500);-webkit-background-clip:text;color:transparent;text-align:center}
-    .wallet{position:fixed;top:20px;right:20px;background:#111;padding:12px 28px;border:2px solid #FF6B00;border-radius:12px;color:#fff;font-weight:700;cursor:pointer}
-    .wallet.connected{border-color:#FFD700;color:#FFD700}
-    .price{font-size:2.2em;color:#FFD700;text-align:center;margin:20px 0;font-weight:900}
-    .card{background:rgba(255,107,0,.12);border:1px solid rgba(255,107,0,.3);border-radius:16px;padding:20px;margin:15px 0}
-    input{width:100%;padding:16px;background:#110022;border:2px solid rgba(255,107,0,.4);border-radius:12px;color:#fff;font-size:18px;text-align:center;margin:10px 0}
-    .btn{width:100%;padding:18px;background:#FF6B00;color:#000;border:none;border-radius:14px;font-size:18px;font-weight:900;cursor:pointer;margin-top:10px}
-    .btn:hover{background:#FFD700;color:#000}
-    .btn:disabled{background:#555;color:#aaa;cursor:not-allowed}
-    .stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:14px}
-    .stat{background:rgba(255,107,0,.1);padding:12px;border-radius:10px;text-align:center}
-    .label{color:#ffbd70}
-    .value{color:#FFD700;font-weight:900}
-    .risk{color:#ff3366}
-    .safe{color:#00ff9d}
-    .logo{max-width:320px;width:100%;margin:0 auto 20px;display:block;filter:drop-shadow(0 0 30px #FFD700)}
-    .preview{color:#ffbd70;text-align:center;margin:8px 0}
-    .status,.error{text-align:center;margin:10px 0;font-weight:bold}
-    .status{color:#00ff9d}
-    .error{color:#ff3366}
+    body {
+      margin: 0;
+      background: #0a001f;
+      color: #ffebd1;
+      font-family: Segoe UI, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    canvas { position: fixed; inset: 0; pointer-events: none; }
+    .box {
+      background: rgba(10, 0, 30, .8);
+      backdrop-filter: blur(20px);
+      border: 2px solid #FF6B00;
+      border-radius: 24px;
+      padding: 40px 30px;
+      max-width: 660px;
+      width: 100%;
+      box-shadow: 0 0 100px rgba(255, 215, 0, .6);
+      position: relative;
+      z-index: 10;
+    }
+    h1 {
+      font-size: 3.4em;
+      background: linear-gradient(90deg,#FF6B00,#FFD700,#FFA500);
+      -webkit-background-clip: text;
+      color: transparent;
+      text-align: center;
+    }
+    .wallet {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #111;
+      padding: 12px 28px;
+      border: 2px solid #FF6B00;
+      border-radius: 12px;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .wallet.connected { border-color: #FFD700; color: #FFD700; }
+    .price { font-size: 2.2em; color: #FFD700; text-align: center; margin: 20px 0; font-weight: 900; }
+    .card {
+      background: rgba(255,107,0,.12);
+      border: 1px solid rgba(255,107,0,.3);
+      border-radius: 16px;
+      padding: 20px;
+      margin: 15px 0;
+    }
+    input {
+      width: 100%;
+      padding: 16px;
+      background: #110022;
+      border: 2px solid rgba(255,107,0,.4);
+      border-radius: 12px;
+      color: #fff;
+      font-size: 18px;
+      text-align: center;
+      margin: 10px 0;
+    }
+    .btn {
+      width: 100%;
+      padding: 18px;
+      background: #FF6B00;
+      color: #000;
+      border: none;
+      border-radius: 14px;
+      font-size: 18px;
+      font-weight: 900;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .btn:hover { background: #FFD700; color: #000; }
+    .btn:disabled { background: #555; color: #aaa; cursor: not-allowed; }
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 14px; }
+    .stat { background: rgba(255,107,0,.1); padding: 12px; border-radius: 10px; text-align: center; }
+    .label { color: #ffbd70; }
+    .value { color: #FFD700; font-weight: 900; }
+    .risk { color: #ff3366; }
+    .safe { color: #00ff9d; }
+    .logo { max-width: 320px; width: 100%; margin: 0 auto 20px; display: block; filter: drop-shadow(0 0 30px #FFD700); }
+    .preview { color: #ffbd70; text-align: center; margin: 8px 0; }
+    .status, .error { text-align: center; margin: 10px 0; font-weight: bold; }
+    .status { color: #00ff9d; }
+    .error { color: #ff3366; }
   </style>
 </head>
 <body>
@@ -42,117 +107,227 @@
     <div class="status" id="status"></div>
     <div class="error" id="error"></div>
     <div class="card"><div class="stats" id="stats">Connect wallet</div></div>
-    <div class="card"><input id="usdIn" type="number" step="0.01" placeholder="Deposit USD"><div class="preview" id="plsOut"></div><button class="btn" id="deposit" disabled>Deposit PLS</button></div>
-    <div class="card"><input id="usdMint" type="number" step="0.01" placeholder="Mint USD"><button class="btn" id="mint" disabled>Mint pSunDAI</button></div>
-    <div class="card"><input id="usdRepay" type="number" step="0.01" placeholder="Repay USD"><button class="btn" id="repay" disabled>Repay</button></div>
-    <div class="card"><input id="usdOut" type="number" step="0.01" placeholder="Withdraw USD"><div class="preview" id="plsIn"></div><button class="btn" id="withdraw" disabled>Withdraw PLS</button></div>
-    <div class="card"><button class="btn" id="risk" disabled style="background:#ff3366">Check Risk</button><div id="riskText" style="margin-top:15px;text-align:center;font-weight:700"></div></div>
+    <div class="card">
+      <input id="usdIn" type="number" step="0.01" placeholder="Deposit USD">
+      <div class="preview" id="plsOut"></div>
+      <button class="btn" id="deposit" disabled>Deposit PLS</button>
+    </div>
+    <div class="card">
+      <input id="usdMint" type="number" step="0.01" placeholder="Mint USD">
+      <button class="btn" id="mint" disabled>Mint pSunDAI</button>
+    </div>
+    <div class="card">
+      <input id="usdRepay" type="number" step="0.01" placeholder="Repay USD">
+      <button class="btn" id="repay" disabled>Repay</button>
+    </div>
+    <div class="card">
+      <input id="usdOut" type="number" step="0.01" placeholder="Withdraw USD">
+      <div class="preview" id="plsIn"></div>
+      <button class="btn" id="withdraw" disabled>Withdraw PLS</button>
+    </div>
+    <div class="card">
+      <button class="btn" id="risk" disabled style="background:#ff3366">Check Risk</button>
+      <div id="riskText" style="margin-top:15px;text-align:center;font-weight:700"></div>
+    </div>
   </div>
 
-  <script>
-    window.addEventListener("load", () => {
-      const { ethers } = window.ethers;
+  <script type="module">
+    import vaultABI from "./vault-abi.json" assert { type: "json" };
+    import tokenABI from "./token-abi.json" assert { type: "json" };
+    import oracleABI from "./oracle-abi.json" assert { type: "json" };
 
-      const VAULT  = "0xBFd8C212e0A132b2e58d45e0b5ccA3D2009d3778";
-      const TOKEN  = "0x98316280B93F835Ef561C59430270D31e0575A44";
-      const ORACLE = "0xD3c339d4e0b48E77a781dA61724672625b5CD56d";
+    const { ethers } = window.ethers;
 
-      const VAULT_ABI = [{"name":"depositPLS","outputs":[],"stateMutability":"payable","type":"function"},{"name":"mint","inputs":[{"name":"amount","type":"uint256"}],"outputs":[],"stateMutability":"nonpayable","type":"function"},{"name":"repay","inputs":[{"name":"amount","type":"uint256"}],"outputs":[],"stateMutability":"nonpayable","type":"function"},{"name":"withdrawPLS","inputs":[{"name":"amount","type":"uint256"}],"outputs":[],"stateMutability":"nonpayable","type":"function"},{"name":"vaultInfo","inputs":[{"name":"user","type":"address"}],"outputs":[{"name":"collateral","type":"uint256"},{"name":"debt","type":"uint256"},{"name":"collateralUSD","type":"uint256"},{"name":"ratio","type":"uint256"},{"name":"mintable","type":"uint256"},{"name":"oracleHealthy","type":"bool"},{"name":"price","type":"uint256"},{"name":"systemRatio","type":"uint256"}],"stateMutability":"view","type":"function"},{"name":"canLiquidate","inputs":[{"name":"user","type":"string"}],"outputs":[{"name":"","type":"bool"}],"stateMutability":"view","type":"function"}];
+    const VAULT = "0xBFd8C212e0A132b2e58d45e0b5ccA3D2009d3778";
+    const TOKEN = "0x98316280B93F835Ef561C59430270D31e0575A44";
+    const ORACLE = "0xD3c339d4e0b48E77a781dA61724672625b5CD56d";
 
-      const TOKEN_ABI = [{"name":"approve","inputs":[{"name":"spender","type":"address"},{"name":"value","type":"uint256"}],"outputs":[{"name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}];
-      const ORACLE_ABI = [{"name":"peekPriceView","outputs":[{"name":"price","type":"uint256"},{"name":"timestamp","type":"uint256"}],"stateMutability":"view","type":"function"}];
+    let provider, signer, vault, token, oracle, account, price = 0n;
 
-      let provider, signer, vault, token, oracle, account, price = 0n;
-
-      // Nebula background
-      const c = document.getElementById("bg"); const x = c.getContext("2d");
-      let w = c.width = innerWidth, h = c.height = innerHeight, t = 0;
-      window.addEventListener("resize", () => { w = c.width = innerWidth; h = c.height = innerHeight; });
-      (function d(){ x.clearRect(0,0,w,h); t+=0.003;
-        const l = [{s:0.3,c:1.4,o:0.4,h:35},{s:0.5,c:1,o:0.6,h:45},{s:0.8,c:0.7,o:0.5,h:55}];
-        l.forEach(m=>{ const g=x.createLinearGradient(0,0,w,h);
-          g.addColorStop(0,`hsla(${m.h+Math.sin(t*m.s)*10},90%,60%,0)`);
-          g.addColorStop(0.3,`hsla(${m.h+15},95%,70%,${m.o})`);
-          g.addColorStop(0.5,`hsla(${m.h+30},100%,80%,${m.o+0.2})`);
-          g.addColorStop(1,`hsla(${m.h},90%,60%,0)`);
-          x.globalCompositeOperation="screen"; x.filter=`blur(${20*m.c}px)`; x.fillStyle=g; x.fillRect(0,0,w,h);
-        });
-        const p=0.5+0.5*Math.sin(t*2);
-        const sg=x.createRadialGradient(w/2,w/2,0,w/2,w/2,400*p);
-        sg.addColorStop(0,`rgba(255,220,100,${0.8*p})`);
-        sg.addColorStop(1,"rgba(255,100,0,0)");
-        x.filter="blur(80px)"; x.fillStyle=sg; x.fillRect(0,0,w,h);
-        x.filter="none"; x.globalCompositeOperation="source-over";
-        requestAnimationFrame(d);
-      })();
-
-      async function connectWallet() {
-        if (!window.ethereum) return alert("No wallet detected");
-        try {
-          await window.ethereum.request({ method: "eth_requestAccounts" });
-          provider = new ethers.BrowserProvider(window.ethereum);
-          signer = await provider.getSigner();
-          account = await signer.getAddress();
-
-          // Auto-switch to PulseChain
-          try { await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x171" }]}); }
-          catch (e) { if (e.code === 4902) await window.ethereum.request({ method: "wallet_addEthereumChain", params: [{ chainId: "0x171", chainName: "PulseChain", nativeCurrency: { name: "PLS", symbol: "PLS", decimals: 18 }, rpcUrls: ["https://rpc.pulsechain.com"], blockExplorerUrls: ["https://scan.pulsechain.com"] }]}); }
-
-          vault = new ethers.Contract(VAULT, VAULT_ABI, signer);
-          token = new ethers.Contract(TOKEN, TOKEN_ABI, signer);
-          oracle = new ethers.Contract(ORACLE, ORACLE_ABI, provider);
-
-          document.getElementById("walletText").textContent = account.slice(0,6)+"..."+account.slice(-4);
-          document.querySelectorAll(".btn").forEach(b => b.disabled = false);
-          document.getElementById("status").textContent = "Connected! Loading vault...";
-
-          await updatePrice();
-          setInterval(updatePrice, 30000);
-          await loadVault();
-        } catch (e) {
-          document.getElementById("error").textContent = e.message || "Connection failed";
-        }
-      }
-
-      document.getElementById("walletBtn").onclick = connectWallet;
-
-      async function updatePrice() {
-        try { const [p] = await oracle.peekPriceView(); price = p; document.getElementById("price").textContent = "$"+(Number(p)/1e18).toFixed(6)+" per PLS"; }
-        catch { document.getElementById("price").textContent = "Oracle offline"; }
-      }
-
-      function usdToPLS(usd) { return price ? ethers.parseEther(usd.toString()) * 1e18n / price : 0n; }
-      function usdToPSun(usd) { return ethers.parseEther(usd.toString()); }
-
-      ["usdIn","usdOut"].forEach(id => {
-        document.getElementById(id).addEventListener("input", () => {
-          const usd = parseFloat(document.getElementById(id).value) || 0;
-          const pls = usdToPLS(usd);
-          document.getElementById(id==="usdIn"?"plsOut":"plsIn").textContent = usd>0 ? "~ "+Number(ethers.formatEther(pls)).toFixed(6)+" PLS" : "";
-        });
+    // Nebula background animation
+    const c = document.getElementById("bg");
+    const x = c.getContext("2d");
+    let w = c.width = innerWidth, h = c.height = innerHeight, t = 0;
+    window.addEventListener("resize", () => { w = c.width = innerWidth; h = c.height = innerHeight; });
+    (function animate() {
+      x.clearRect(0,0,w,h); t+=0.003;
+      const layers = [{s:0.3,c:1.4,o:0.4,h:35},{s:0.5,c:1,o:0.6,h:45},{s:0.8,c:0.7,o:0.5,h:55}];
+      layers.forEach(m=>{
+        const g=x.createLinearGradient(0,0,w,h);
+        g.addColorStop(0,`hsla(${m.h+Math.sin(t*m.s)*10},90%,60%,0)`);
+        g.addColorStop(0.3,`hsla(${m.h+15},95%,70%,${m.o})`);
+        g.addColorStop(0.5,`hsla(${m.h+30},100%,80%,${m.o+0.2})`);
+        g.addColorStop(1,`hsla(${m.h},90%,60%,0)`);
+        x.globalCompositeOperation="screen"; x.filter=`blur(${20*m.c}px)`; x.fillStyle=g; x.fillRect(0,0,w,h);
       });
+      const p=0.5+0.5*Math.sin(t*2);
+      const sg=x.createRadialGradient(w/2,w/2,0,w/2,w/2,400*p);
+      sg.addColorStop(0,`rgba(255,220,100,${0.8*p})`);
+      sg.addColorStop(1,"rgba(255,100,0,0)");
+      x.filter="blur(80px)"; x.fillStyle=sg; x.fillRect(0,0,w,h);
+      x.filter="none"; x.globalCompositeOperation="source-over";
+      requestAnimationFrame(animate);
+    })();
 
-      async function loadVault() {
+    async function connectWallet() {
+      if (!window.ethereum) return alert("No wallet detected.");
+      try {
+        await window.ethereum.request({ method: "eth_requestAccounts" });
+        provider = new ethers.BrowserProvider(window.ethereum);
+        signer = await provider.getSigner();
+        account = await signer.getAddress();
+
+        // Ensure PulseChain network
         try {
-          const i = await vault.vaultInfo(account);
-          const r = i.ratio > 1e30 ? "Infinite" : (Number(i.ratio)/100).toFixed(2)+"%";
-          document.getElementById("stats").innerHTML = `
-            <div class="stat"><div class="label">Collateral</div><div class="value">${Number(ethers.formatEther(i.collateral)).toFixed(4)} PLS</div></div>
-            <div class="stat"><div class="label">Debt</div><div class="value">${Number(ethers.formatEther(i.debt)).toFixed(4)} pSunDAI</div></div>
-            <div class="stat"><div class="label">Ratio</div><div class="value ${Number(i.ratio)<15000?"risk":"safe"}">${r}</div></div>
-            <div class="stat"><div class="label">Can Mint</div><div class="value">${Number(ethers.formatEther(i.mintable)).toFixed(4)} pSunDAI</div></div>
-          `;
-        } catch (e) { document.getElementById("error").textContent = e.message; }
+          await window.ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: "0x171" }],
+          });
+        } catch (err) {
+          if (err.code === 4902) {
+            await window.ethereum.request({
+              method: "wallet_addEthereumChain",
+              params: [{
+                chainId: "0x171",
+                chainName: "PulseChain",
+                nativeCurrency: { name: "PLS", symbol: "PLS", decimals: 18 },
+                rpcUrls: ["https://rpc.pulsechain.com"],
+                blockExplorerUrls: ["https://scan.pulsechain.com"],
+              }],
+            });
+          }
+        }
+
+        vault = new ethers.Contract(VAULT, vaultABI, signer);
+        token = new ethers.Contract(TOKEN, tokenABI, signer);
+        oracle = new ethers.Contract(ORACLE, oracleABI, provider);
+
+        document.getElementById("walletText").textContent = `${account.slice(0,6)}...${account.slice(-4)}`;
+        document.querySelectorAll(".btn").forEach(b => b.disabled = false);
+        document.getElementById("status").textContent = "Connected! Loading vault...";
+
+        await updatePrice();
+        setInterval(updatePrice, 30000);
+        await loadVault();
+      } catch (err) {
+        console.error(err);
+        document.getElementById("error").textContent = err.message || "Connection failed";
       }
+    }
 
-      document.getElementById("deposit").onclick = async () => { const u = parseFloat(document.getElementById("usdIn").value); if(!u)return alert("Enter amount"); try{document.getElementById("deposit").textContent="Sending...";await(await vault.depositPLS({value:usdToPLS(u)})).wait();document.getElementById("status").textContent="Deposited!";loadVault();}catch(e){document.getElementById("error").textContent=e.message;}finally{document.getElementById("deposit").textContent="Deposit PLS";}};
-      document.getElementById("mint").onclick = async () => { const u = parseFloat(document.getElementById("usdMint").value); if(!u)return alert("Enter amount"); try{document.getElementById("mint").textContent="Minting...";await(await vault.mint(usdToPSun(u))).wait();document.getElementById("status").textContent="Minted!";loadVault();}catch(e){document.getElementById("error").textContent=e.message;}finally{document.getElementById("mint").textContent="Mint pSunDAI";}};
-      document.getElementById("repay").onclick = async () => { const u = parseFloat(document.getElementById("usdRepay").value); if(!u)return alert("Enter amount"); try{document.getElementById("repay").textContent="Repaying...";await(await token.approve(VAULT,usdToPSun(u))).wait();await(await vault.repay(usdToPSun(u))).wait();document.getElementById("status").textContent="Repaid!";loadVault();}catch(e){document.getElementById("error").textContent=e.message;}finally{document.getElementById("repay").textContent="Repay Debt";}};
-      document.getElementById("withdraw").onclick = async () => { const u = parseFloat(document.getElementById("usdOut").value); if(!u)return alert("Enter amount"); try{document.getElementById("withdraw").textContent="Withdrawing...";await(await vault.withdrawPLS(usdToPLS(u))).wait();document.getElementById("status").textContent="Withdrew!";loadVault();}catch(e){document.getElementById("error").textContent=e.message;}finally{document.getElementById("withdraw").textContent="Withdraw PLS";}};
-      document.getElementById("risk").onclick = async () => { try{const c=await vault.canLiquidate(account);document.getElementById("riskText").innerHTML=c?'<span class="risk">LIQUIDATION RISK!</span>':'<span class="safe">You are safe</span>';}catch(e){document.getElementById("error").textContent=e.message;}};
+    document.getElementById("walletBtn").onclick = connectWallet;
 
-      if (window.ethereum?.selectedAddress) connectWallet();
+    async function updatePrice() {
+      try {
+        const [p] = await oracle.getPriceWithTimestamp();
+        price = p;
+        if (price === 0n) throw new Error("Oracle returned 0 price");
+        document.getElementById("price").textContent = "$" + (Number(price)/1e18).toFixed(6) + " per PLS";
+      } catch (err) {
+        console.error(err);
+        document.getElementById("price").textContent = "Oracle offline";
+      }
+    }
+
+    function usdToPLS(usd) { return price ? ethers.parseEther(usd.toString()) * 1e18n / price : 0n; }
+    function usdToPSun(usd) { return ethers.parseEther(usd.toString()); }
+
+    ["usdIn","usdOut"].forEach(id => {
+      document.getElementById(id).addEventListener("input", () => {
+        const usd = parseFloat(document.getElementById(id).value) || 0;
+        const pls = usdToPLS(usd);
+        document.getElementById(id==="usdIn"?"plsOut":"plsIn").textContent =
+          usd>0 ? "~ "+Number(ethers.formatEther(pls)).toFixed(6)+" PLS" : "";
+      });
     });
+
+    async function loadVault() {
+      try {
+        const i = await vault.vaultInfo(account);
+        const r = i.ratio > 1e30 ? "∞" : (Number(i.ratio)/100).toFixed(2)+"%";
+        document.getElementById("stats").innerHTML = `
+          <div class="stat"><div class="label">Collateral</div><div class="value">${Number(ethers.formatEther(i.collateral)).toFixed(4)} PLS</div></div>
+          <div class="stat"><div class="label">Debt</div><div class="value">${Number(ethers.formatEther(i.debt)).toFixed(4)} pSunDAI</div></div>
+          <div class="stat"><div class="label">Ratio</div><div class="value ${Number(i.ratio)<15000?"risk":"safe"}">${r}</div></div>
+          <div class="stat"><div class="label">Can Mint</div><div class="value">${Number(ethers.formatEther(i.mintable)).toFixed(4)} pSunDAI</div></div>
+        `;
+      } catch (err) {
+        console.error(err);
+        document.getElementById("error").textContent = err.message;
+      }
+    }
+
+    document.getElementById("deposit").onclick = async () => {
+      const u = parseFloat(document.getElementById("usdIn").value);
+      if (!u) return alert("Enter amount");
+      try {
+        document.getElementById("deposit").textContent="Sending...";
+        await (await vault.depositPLS({ value: usdToPLS(u) })).wait();
+        document.getElementById("status").textContent="Deposited!";
+        loadVault();
+      } catch (e) {
+        document.getElementById("error").textContent=e.message;
+      } finally {
+        document.getElementById("deposit").textContent="Deposit PLS";
+      }
+    };
+
+    document.getElementById("mint").onclick = async () => {
+      const u = parseFloat(document.getElementById("usdMint").value);
+      if (!u) return alert("Enter amount");
+      try {
+        document.getElementById("mint").textContent="Minting...";
+        await (await vault.mint(usdToPSun(u))).wait();
+        document.getElementById("status").textContent="Minted!";
+        loadVault();
+      } catch (e) {
+        document.getElementById("error").textContent=e.message;
+      } finally {
+        document.getElementById("mint").textContent="Mint pSunDAI";
+      }
+    };
+
+    document.getElementById("repay").onclick = async () => {
+      const u = parseFloat(document.getElementById("usdRepay").value);
+      if (!u) return alert("Enter amount");
+      try {
+        document.getElementById("repay").textContent="Repaying...";
+        await (await token.approve(VAULT, usdToPSun(u))).wait();
+        await (await vault.repay(usdToPSun(u))).wait();
+        document.getElementById("status").textContent="Repaid!";
+        loadVault();
+      } catch (e) {
+        document.getElementById("error").textContent=e.message;
+      } finally {
+        document.getElementById("repay").textContent="Repay";
+      }
+    };
+
+    document.getElementById("withdraw").onclick = async () => {
+      const u = parseFloat(document.getElementById("usdOut").value);
+      if (!u) return alert("Enter amount");
+      try {
+        document.getElementById("withdraw").textContent="Withdrawing...";
+        await (await vault.withdrawPLS(usdToPLS(u))).wait();
+        document.getElementById("status").textContent="Withdrew!";
+        loadVault();
+      } catch (e) {
+        document.getElementById("error").textContent=e.message;
+      } finally {
+        document.getElementById("withdraw").textContent="Withdraw PLS";
+      }
+    };
+
+    document.getElementById("risk").onclick = async () => {
+      try {
+        const c = await vault.canLiquidate(account);
+        document.getElementById("riskText").innerHTML =
+          c ? '<span class="risk">LIQUIDATION RISK!</span>' :
+              '<span class="safe">You are safe</span>';
+      } catch (e) {
+        document.getElementById("error").textContent = e.message;
+      }
+    };
   </script>
 </body>
 </html>
