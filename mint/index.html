@@ -485,7 +485,7 @@
       const statusEl = document.getElementById("safetyStatus");
       const pokeBtn = document.getElementById("pokeBtn");
 
-      if (healthy && age < 600) {
+      if (healthy && age < 86400) {
         statusEl.innerHTML = `🟢 Vault & Oracle synced – data fresh (${age}s ago)`;
         statusEl.style.color = "#00ff9d";
         pokeBtn.disabled = true;
