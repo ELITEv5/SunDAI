@@ -49,6 +49,7 @@
       color: #fff;
       font-weight: 700;
       cursor: pointer;
+      z-index: 20;
     }
     .wallet.connected { border-color: #FFD700; color: #FFD700; }
     .price { font-size: 2.2em; color: #FFD700; text-align: center; margin: 20px 0; font-weight: 900; }
@@ -131,26 +132,44 @@
     </div>
   </div>
 
-  <script type="module">
-    import vaultABI from "./vault-abi.json" assert { type: "json" };
-    import tokenABI from "./token-abi.json" assert { type: "json" };
-    import oracleABI from "./oracle-abi.json" assert { type: "json" };
-
+  <script>
+  window.addEventListener("load", async () => {
     const { ethers } = window.ethers;
+    console.log("Ethers.js loaded ✅");
 
-    const VAULT = "0xBFd8C212e0A132b2e58d45e0b5ccA3D2009d3778";
-    const TOKEN = "0x98316280B93F835Ef561C59430270D31e0575A44";
+    const VAULT  = "0xBFd8C212e0A132b2e58d45e0b5ccA3D2009d3778";
+    const TOKEN  = "0x98316280B93F835Ef561C59430270D31e0575A44";
     const ORACLE = "0xD3c339d4e0b48E77a781dA61724672625b5CD56d";
+
+    async function getABI(file) {
+      const res = await fetch(file);
+      if (!res.ok) throw new Error(`Failed to load ABI: ${file}`);
+      return await res.json();
+    }
+
+    let vaultABI, tokenABI, oracleABI;
+    try {
+      [vaultABI, tokenABI, oracleABI] = await Promise.all([
+        getABI("vault-abi.json"),
+        getABI("token-abi.json"),
+        getABI("oracle-abi.json")
+      ]);
+      console.log("ABIs loaded ✅");
+    } catch (err) {
+      document.getElementById("error").textContent = "Error loading ABI files.";
+      console.error(err);
+      return;
+    }
 
     let provider, signer, vault, token, oracle, account, price = 0n;
 
-    // Nebula background animation
+    // Background Animation
     const c = document.getElementById("bg");
     const x = c.getContext("2d");
     let w = c.width = innerWidth, h = c.height = innerHeight, t = 0;
     window.addEventListener("resize", () => { w = c.width = innerWidth; h = c.height = innerHeight; });
     (function animate() {
-      x.clearRect(0,0,w,h); t+=0.003;
+      x.clearRect(0, 0, w, h); t += 0.003;
       const layers = [{s:0.3,c:1.4,o:0.4,h:35},{s:0.5,c:1,o:0.6,h:45},{s:0.8,c:0.7,o:0.5,h:55}];
       layers.forEach(m=>{
         const g=x.createLinearGradient(0,0,w,h);
@@ -169,20 +188,18 @@
       requestAnimationFrame(animate);
     })();
 
+    // Wallet connection
     async function connectWallet() {
-      if (!window.ethereum) return alert("No wallet detected.");
+      if (!window.ethereum) return alert("No wallet detected. Please install MetaMask or Rabby.");
       try {
         await window.ethereum.request({ method: "eth_requestAccounts" });
         provider = new ethers.BrowserProvider(window.ethereum);
         signer = await provider.getSigner();
         account = await signer.getAddress();
 
-        // Ensure PulseChain network
+        // PulseChain network
         try {
-          await window.ethereum.request({
-            method: "wallet_switchEthereumChain",
-            params: [{ chainId: "0x171" }],
-          });
+          await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x171" }] });
         } catch (err) {
           if (err.code === 4902) {
             await window.ethereum.request({
@@ -192,8 +209,8 @@
                 chainName: "PulseChain",
                 nativeCurrency: { name: "PLS", symbol: "PLS", decimals: 18 },
                 rpcUrls: ["https://rpc.pulsechain.com"],
-                blockExplorerUrls: ["https://scan.pulsechain.com"],
-              }],
+                blockExplorerUrls: ["https://scan.pulsechain.com"]
+              }]
             });
           }
         }
@@ -202,7 +219,7 @@
         token = new ethers.Contract(TOKEN, tokenABI, signer);
         oracle = new ethers.Contract(ORACLE, oracleABI, provider);
 
-        document.getElementById("walletText").textContent = `${account.slice(0,6)}...${account.slice(-4)}`;
+        document.getElementById("walletText").textContent = account.slice(0,6)+"..."+account.slice(-4);
         document.querySelectorAll(".btn").forEach(b => b.disabled = false);
         document.getElementById("status").textContent = "Connected! Loading vault...";
 
@@ -211,7 +228,7 @@
         await loadVault();
       } catch (err) {
         console.error(err);
-        document.getElementById("error").textContent = err.message || "Connection failed";
+        document.getElementById("error").textContent = err.message || "Connection failed.";
       }
     }
 
@@ -221,8 +238,7 @@
       try {
         const [p] = await oracle.getPriceWithTimestamp();
         price = p;
-        if (price === 0n) throw new Error("Oracle returned 0 price");
-        document.getElementById("price").textContent = "$" + (Number(price)/1e18).toFixed(6) + " per PLS";
+        document.getElementById("price").textContent = "$" + (Number(p)/1e18).toFixed(6) + " per PLS";
       } catch (err) {
         console.error(err);
         document.getElementById("price").textContent = "Oracle offline";
@@ -249,85 +265,13 @@
           <div class="stat"><div class="label">Collateral</div><div class="value">${Number(ethers.formatEther(i.collateral)).toFixed(4)} PLS</div></div>
           <div class="stat"><div class="label">Debt</div><div class="value">${Number(ethers.formatEther(i.debt)).toFixed(4)} pSunDAI</div></div>
           <div class="stat"><div class="label">Ratio</div><div class="value ${Number(i.ratio)<15000?"risk":"safe"}">${r}</div></div>
-          <div class="stat"><div class="label">Can Mint</div><div class="value">${Number(ethers.formatEther(i.mintable)).toFixed(4)} pSunDAI</div></div>
-        `;
+          <div class="stat"><div class="label">Can Mint</div><div class="value">${Number(ethers.formatEther(i.mintable)).toFixed(4)} pSunDAI</div></div>`;
       } catch (err) {
         console.error(err);
         document.getElementById("error").textContent = err.message;
       }
     }
-
-    document.getElementById("deposit").onclick = async () => {
-      const u = parseFloat(document.getElementById("usdIn").value);
-      if (!u) return alert("Enter amount");
-      try {
-        document.getElementById("deposit").textContent="Sending...";
-        await (await vault.depositPLS({ value: usdToPLS(u) })).wait();
-        document.getElementById("status").textContent="Deposited!";
-        loadVault();
-      } catch (e) {
-        document.getElementById("error").textContent=e.message;
-      } finally {
-        document.getElementById("deposit").textContent="Deposit PLS";
-      }
-    };
-
-    document.getElementById("mint").onclick = async () => {
-      const u = parseFloat(document.getElementById("usdMint").value);
-      if (!u) return alert("Enter amount");
-      try {
-        document.getElementById("mint").textContent="Minting...";
-        await (await vault.mint(usdToPSun(u))).wait();
-        document.getElementById("status").textContent="Minted!";
-        loadVault();
-      } catch (e) {
-        document.getElementById("error").textContent=e.message;
-      } finally {
-        document.getElementById("mint").textContent="Mint pSunDAI";
-      }
-    };
-
-    document.getElementById("repay").onclick = async () => {
-      const u = parseFloat(document.getElementById("usdRepay").value);
-      if (!u) return alert("Enter amount");
-      try {
-        document.getElementById("repay").textContent="Repaying...";
-        await (await token.approve(VAULT, usdToPSun(u))).wait();
-        await (await vault.repay(usdToPSun(u))).wait();
-        document.getElementById("status").textContent="Repaid!";
-        loadVault();
-      } catch (e) {
-        document.getElementById("error").textContent=e.message;
-      } finally {
-        document.getElementById("repay").textContent="Repay";
-      }
-    };
-
-    document.getElementById("withdraw").onclick = async () => {
-      const u = parseFloat(document.getElementById("usdOut").value);
-      if (!u) return alert("Enter amount");
-      try {
-        document.getElementById("withdraw").textContent="Withdrawing...";
-        await (await vault.withdrawPLS(usdToPLS(u))).wait();
-        document.getElementById("status").textContent="Withdrew!";
-        loadVault();
-      } catch (e) {
-        document.getElementById("error").textContent=e.message;
-      } finally {
-        document.getElementById("withdraw").textContent="Withdraw PLS";
-      }
-    };
-
-    document.getElementById("risk").onclick = async () => {
-      try {
-        const c = await vault.canLiquidate(account);
-        document.getElementById("riskText").innerHTML =
-          c ? '<span class="risk">LIQUIDATION RISK!</span>' :
-              '<span class="safe">You are safe</span>';
-      } catch (e) {
-        document.getElementById("error").textContent = e.message;
-      }
-    };
+  });
   </script>
 </body>
 </html>
