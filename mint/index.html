@@ -540,95 +540,46 @@
   };
 </script>
 
-<!-- 🌌 Golden Nebula & Shooting Stars -->
+<!-- 🌌 Golden Nebula Drift Background -->
+<style>
+  #bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: radial-gradient(circle at 25% 25%, rgba(255,190,80,0.15), transparent 60%),
+                radial-gradient(circle at 75% 70%, rgba(255,130,40,0.12), transparent 60%),
+                radial-gradient(circle at 50% 50%, rgba(110,0,150,0.18), transparent 70%);
+    transition: background 5s ease;
+  }
+</style>
 
-  <style>
-    #bg {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-      background: radial-gradient(circle at 25% 25%, rgba(255,180,60,0.12), transparent 60%),
-                  radial-gradient(circle at 75% 70%, rgba(255,120,0,0.15), transparent 60%),
-                  radial-gradient(circle at 50% 50%, rgba(90,0,120,0.15), transparent 70%);
-    }
-  </style>
+<script>
+  const bg = document.getElementById("bg");
+  let t = 0;
 
-  <script>
-    const canvas = document.getElementById("bg");
-    const ctx = canvas.getContext("2d");
-    let stars = [], meteors = [];
-    let width, height, centerX, centerY;
+  function animateNebula() {
+    t += 0.001;
 
-    function resize() {
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
-      centerX = width / 2;
-      centerY = height / 2;
-      stars = Array.from({ length: 250 }, () => ({
-        x: Math.random() * width - centerX,
-        y: Math.random() * height - centerY,
-        z: Math.random() * width,
-        o: 0.5 + Math.random() * 0.5
-      }));
-      meteors = [];
-    }
+    const x1 = 25 + Math.sin(t * 0.8) * 12;
+    const y1 = 25 + Math.cos(t * 0.9) * 8;
+    const x2 = 75 + Math.cos(t * 0.6) * 12;
+    const y2 = 70 + Math.sin(t * 0.7) * 8;
+    const x3 = 50 + Math.sin(t * 0.4) * 8;
+    const y3 = 50 + Math.cos(t * 0.5) * 8;
 
-    function spawnMeteor() {
-      if (Math.random() < 0.02) {
-        meteors.push({
-          x: Math.random() * width,
-          y: Math.random() * height * 0.5,
-          len: 180 + Math.random() * 120,
-          speed: 10 + Math.random() * 5,
-          life: 1
-        });
-      }
-    }
+    bg.style.background = `
+      radial-gradient(circle at ${x1}% ${y1}%, rgba(255,190,80,0.15), transparent 60%),
+      radial-gradient(circle at ${x2}% ${y2}%, rgba(255,130,40,0.12), transparent 60%),
+      radial-gradient(circle at ${x3}% ${y3}%, rgba(110,0,150,0.18), transparent 70%)
+    `;
 
-    function draw() {
-      ctx.fillStyle = "rgba(10,0,30,0.25)";
-      ctx.fillRect(0, 0, width, height);
-      const angle = Date.now() * 0.00002;
-      const cosA = Math.cos(angle), sinA = Math.sin(angle);
+    requestAnimationFrame(animateNebula);
+  }
 
-      for (let s of stars) {
-        s.z -= 2;
-        if (s.z <= 0) s.z = width;
-        const rx = s.x * cosA - s.y * sinA;
-        const ry = s.x * sinA + s.y * cosA;
-        const k = 128 / s.z;
-        const px = rx * k + centerX;
-        const py = ry * k + centerY;
-        if (px < 0 || px >= width || py < 0 || py >= height) continue;
-        const size = (1 - s.z / width) * 2;
-        const hue = 45 + Math.sin(Date.now() * 0.001 + s.x) * 10;
-        ctx.fillStyle = `hsla(${hue}, 90%, 65%, ${s.o})`;
-        ctx.beginPath();
-        ctx.arc(px, py, size, 0, 2 * Math.PI);
-        ctx.fill();
-      }
+  animateNebula();
+</script>
 
-      spawnMeteor();
-      for (let m of meteors) {
-        ctx.strokeStyle = `rgba(255, 215, 100, ${m.life})`;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(m.x, m.y);
-        ctx.lineTo(m.x - m.len, m.y + m.len * 0.3);
-        ctx.stroke();
-        m.x += m.speed;
-        m.y -= m.speed * 0.3;
-        m.life -= 0.01;
-      }
-      meteors = meteors.filter(m => m.life > 0);
-      requestAnimationFrame(draw);
-    }
-
-    window.addEventListener("resize", resize);
-    resize();
-    draw();
-  </script>
 
 </body>
 </html>
