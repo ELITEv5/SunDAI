@@ -223,31 +223,71 @@
       return [v,t,o];
     }
 
-    const c=document.getElementById("bg"),x=c.getContext("2d");
-    let w=c.width=innerWidth,h=c.height=innerHeight,t=0;
-    window.addEventListener("resize",()=>{w=c.width=innerWidth;h=c.height=innerHeight});
-    (function draw(){
-      x.clearRect(0,0,w,h);t+=0.003;
-      const l=[{s:0.3,c:1.4,o:0.4,h:35},{s:0.5,c:1,o:0.6,h:45},{s:0.8,c:0.7,o:0.5,h:55}];
-      l.forEach(m=>{
-        const g=x.createLinearGradient(0,0,w,h);
-        g.addColorStop(0,`hsla(${m.h+Math.sin(t*m.s)*10},90%,60%,0)`);
-        g.addColorStop(0.3,`hsla(${m.h+15},95%,70%,${m.o})`);
-        g.addColorStop(0.5,`hsla(${m.h+30},100%,80%,${m.o+0.2})`);
-        g.addColorStop(1,`hsla(${m.h},90%,60%,0)`);
-        x.globalCompositeOperation="screen";
-        x.filter=`blur(${20*m.c}px)`;
-        x.fillStyle=g;x.fillRect(0,0,w,h);
-      });
-      const p=0.5+0.5*Math.sin(t*2);
-      const sg=x.createRadialGradient(w/2,w/2,0,w/2,w/2,400*p);
-      sg.addColorStop(0,`rgba(255,220,100,${0.8*p})`);
-      sg.addColorStop(1,"rgba(255,100,0,0)");
-      x.filter="blur(80px)";
-      x.fillStyle=sg;x.fillRect(0,0,w,h);
-      x.filter="none";x.globalCompositeOperation="source-over";
-      requestAnimationFrame(draw);
-    })();
+    // 🌌 Cosmic animated background — Pulsing Supernova effect
+const c = document.getElementById("bg");
+const ctx = c.getContext("2d");
+let w = (c.width = window.innerWidth);
+let h = (c.height = window.innerHeight);
+let stars = [];
+
+function initStars() {
+  stars = [];
+  for (let i = 0; i < 400; i++) {
+    stars.push({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      z: Math.random() * w,
+      o: Math.random(),
+    });
+  }
+}
+
+function drawStars() {
+  ctx.fillStyle = "rgba(5, 0, 20, 0.35)";
+  ctx.fillRect(0, 0, w, h);
+
+  const cx = w / 2, cy = h / 2;
+  const t = Date.now() * 0.001;
+  const pulse = 0.6 + 0.4 * Math.sin(t * 2.0);
+
+  for (let i = 0; i < stars.length; i++) {
+    let s = stars[i];
+    s.z -= 2;
+    if (s.z <= 0) s.z = w;
+
+    const k = 128.0 / s.z;
+    const px = s.x * k + cx;
+    const py = s.y * k + cy;
+
+    if (px >= 0 && px <= w && py >= 0 && py <= h) {
+      const shade = (1 - s.z / w) * 255;
+      ctx.fillStyle = `rgba(${100 + shade * 0.3}, ${100 + shade * 0.1}, ${255}, ${s.o * 0.8})`;
+      ctx.fillRect(px, py, pulse * 2, pulse * 2);
+    }
+  }
+
+  // 🌠 Supernova pulse
+  const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, 400 + 100 * pulse);
+  gradient.addColorStop(0, `rgba(160, 120, 255, ${0.4 * pulse})`);
+  gradient.addColorStop(0.3, `rgba(100, 60, 220, ${0.2 * pulse})`);
+  gradient.addColorStop(1, "rgba(0,0,40,0)");
+  ctx.globalCompositeOperation = "screen";
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, w, h);
+  ctx.globalCompositeOperation = "source-over";
+
+  requestAnimationFrame(drawStars);
+}
+
+window.addEventListener("resize", () => {
+  w = c.width = window.innerWidth;
+  h = c.height = window.innerHeight;
+  initStars();
+});
+
+initStars();
+drawStars();
+
 
     window.connectWallet = async function(){
       try {
