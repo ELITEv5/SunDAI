@@ -418,7 +418,7 @@
       plsOneClick.textContent=`≈ ${Math.round(Number(ethers.formatEther(pls)))} PLS → ${mintUSD.toFixed(2)} pSunDAI (at 155%)`;
     });
 
-    oneClickBtn.onclick = async()=>{
+        oneClickBtn.onclick = async()=>{
       const usd=parseFloat(usdOneClick.value);
       if(!usd)return alert("Enter amount");
       try{
@@ -431,9 +431,8 @@
       }catch(e){ error.textContent=e.message; }
       finally{ oneClickBtn.textContent="1-Click Auto Mint (155%)"; }
     };
-  </script>
 
-   <!-- 🟢 Safety / Oracle Sync Status -->
+    <!-- 🟢 Safety / Oracle Sync Status -->
     <div class="card" id="safetyCard">
       <div id="safetyStatus" style="text-align:center;font-weight:700;color:#ffd700;margin-bottom:8px;">
         Checking Oracle status...
@@ -442,8 +441,11 @@
         Wake Oracle 🌞
       </button>
     </div>
+  </script>
+
   </div> <!-- end .container -->
-      <footer class="footer">
+
+  <footer class="footer">
     <h3>Official Contracts</h3>
     <div class="contracts">
       <div><span class="label">pSunDAI Token:</span>
@@ -469,41 +471,52 @@
     async function checkOracleHealth() {
       try {
         const healthy = await oracle.isHealthy();
-        const { timestamp } = await oracle.peekPriceView();
-        const age = (Date.now()/1000 - Number(timestamp)).toFixed(0);
+        const [ , timestamp ] = await oracle.peekPriceView();
+        const age = Math.floor(Date.now()/1000 - Number(timestamp));
 
         const statusEl = document.getElementById("safetyStatus");
         const pokeBtn = document.getElementById("pokeBtn");
 
         if (healthy && age < 600) {
-          statusEl.innerHTML = "🟢 Vault & Oracle synced – data fresh (" + age + " s ago)";
+          statusEl.innerHTML = `🟢 Vault & Oracle synced – data fresh (${age}s ago)`;
           statusEl.style.color = "#00ff9d";
           pokeBtn.disabled = true;
         } else {
-          statusEl.innerHTML = "🔴 Oracle stale – press Wake Oracle 🌞 to refresh";
+          statusEl.innerHTML = "🔴 Oracle stale – press <b>Wake Oracle 🌞</b> to refresh";
           statusEl.style.color = "#ff3366";
           pokeBtn.disabled = false;
         }
       } catch (e) {
-        safetyStatus.textContent = "⚠️ Unable to reach Oracle: " + e.message;
-        pokeBtn.disabled = false;
+        document.getElementById("safetyStatus").textContent = "⚠️ Oracle check failed: " + e.message;
+        document.getElementById("pokeBtn").disabled = false;
       }
     }
 
     document.getElementById("pokeBtn").onclick = async () => {
       try {
         const tx = await oracle.connect(signer).poke();
-        document.getElementById("safetyStatus").textContent = "⏳ Poking Oracle...";
+        const statusEl = document.getElementById("safetyStatus");
+        statusEl.textContent = "⏳ Sending wake-up...";
         await tx.wait();
-        document.getElementById("safetyStatus").textContent = "✅ Oracle awakened!";
-        checkOracleHealth();
+        statusEl.textContent = "✅ Oracle awakened & synced!";
+        statusEl.style.color = "#00ff9d";
+        setTimeout(checkOracleHealth, 5000);
       } catch (e) {
         document.getElementById("safetyStatus").textContent = "⚠️ " + e.message;
       }
     };
 
-    // Re-check every 2 minutes
-    setInterval(checkOracleHealth, 120000);
+    // 🕐 Re-check every 2 minutes
+    setInterval(() => {
+      if (oracle) checkOracleHealth();
+    }, 120000);
+
+    // Run after wallet connection
+    const _connectWallet = connectWallet;
+    connectWallet = async function() {
+      await _connectWallet();
+      await checkOracleHealth();
+    };
   </script>
 
   <!-- 🌌 Golden Nebula & Shooting Stars -->
@@ -554,7 +567,6 @@
     function draw() {
       ctx.fillStyle = "rgba(10,0,30,0.25)";
       ctx.fillRect(0, 0, width, height);
-
       const angle = Date.now() * 0.00002;
       const cosA = Math.cos(angle), sinA = Math.sin(angle);
 
