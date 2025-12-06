@@ -7,9 +7,6 @@
   <link rel="icon" href="https://i.imgur.com/8v5V9wK.png" type="image/png">
   <meta name="theme-color" content="#FF6B00">
 
-  <!-- Ethers from CDN – always works -->
-  <script src="https://cdn.ethers.io/lib/ethers-6.13.1.umd.min.js"></script>
-
   <style>
     :root{--primary:#FF6B00;--accent:#FFD700;--bg:#0a001f;--card:rgba(255,107,0,0.12);--glow:rgba(255,215,0,0.6);--text:#ffebd1}
     *{margin:0;padding:0;box-sizing:border-box}
@@ -34,17 +31,18 @@
     .safe{color:#00ff9d}
     .logo{max-width:320px;width:100%;margin:0 auto 20px;display:block;filter:drop-shadow(0 0 30px var(--glow))}
     .preview{color:#ffbd70;font-size:14px;text-align:center;margin:8px 0}
+    #loading{font-size:1.4em;color:#aaa;text-align:center;margin:40px 0}
     @media(max-width:768px){h1{font-size:2.4em}.stats-grid{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
   <canvas id="cosmos-bg"></canvas>
 
-  <div class="wallet-button" onclick="connectWallet()">
-    <span id="walletText">Connect Wallet</span>
+  <div class="wallet-button" id="walletBtn">
+    <span id="walletText">Loading ethers.js...</span>
   </div>
 
-  <div class="container">
+  <div class="container" id="app" style="display:none">
     <img src="https://i.imgur.com/8v5V9wK.png" alt="pSunDAI" class="logo">
     <h1>pSunDAI Vault</h1>
     <p class="subtitle">Autonomous • 150% PLS Collateral • Golden Sun Energy</p>
@@ -86,10 +84,65 @@
     </div>
   </div>
 
+  <div id="loading">Loading ethers.js from CDN...</div>
+
   <script>
-    // Wait for ethers to load
-    window.addEventListener('load', () => {
-      const { ethers } = window.ethers;
+    // Load ethers.js safely with fallback
+    function loadEthers() {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.ethers.io/lib/ethers-6.13.1.umd.min.js';
+        script.onload = () => {
+          if (window.ethers) resolve(window.ethers);
+          else reject('ethers not loaded');
+        };
+        script.onerror = () => {
+          // Fallback to jsDelivr
+          const fallback = document.createElement('script');
+          fallback.src = 'https://cdn.jsdelivr.net/npm/ethers@6.13.1/dist/ethers.umd.min.js';
+          fallback.onload = () => resolve(window.ethers);
+          fallback.onerror = () => reject('Failed to load ethers');
+          document.head.appendChild(fallback);
+        };
+        document.head.appendChild(script);
+      });
+    }
+
+    // Nebula background
+    const canvas = document.getElementById('cosmos-bg');
+    const ctx = canvas.getContext('2d');
+    let w, h, time = 0;
+    function resize(){w=canvas.width=innerWidth;h=canvas.height=innerHeight;}
+    resize(); window.addEventListener('resize', resize);
+    function draw(){
+      ctx.clearRect(0,0,w,h); time+=0.003;
+      const layers = [{s:0.3,c:1.4,o:0.4,h:35},{s:0.5,c:1,o:0.6,h:45},{s:0.8,c:0.7,o:0.5,h:55}];
+      layers.forEach(l=>{const t=time*l.s;const g=ctx.createLinearGradient(0,0,w,h);
+        g.addColorStop(0,`hsla(${l.h+Math.sin(t)*10},90%,60%,0)`);
+        g.addColorStop(0.3,`hsla(${l.h+15},95%,70%,${l.o})`);
+        g.addColorStop(0.5,`hsla(${l.h+30},100%,80%,${l.o+0.2})`);
+        g.addColorStop(0.7,`hsla(${l.h+15},95%,70%,${l.o})`);
+        g.addColorStop(1,`hsla(${l.h},90%,60%,0)`);
+        ctx.globalCompositeOperation='screen';ctx.filter=`blur(${20*l.c}px)`;
+        ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+      });
+      const p=0.5+0.5*Math.sin(time*2);
+      const sx=w*0.5+Math.cos(time*0.7)*w*0.1;
+      const sy=h*0.5+Math.sin(time*0.5)*h*0.1;
+      const sg=ctx.createRadialGradient(sx,sy,0,sx,sy,400*p);
+      sg.addColorStop(0,`rgba(255,220,100,${0.8*p})`);
+      sg.addColorStop(0.4,`rgba(255,160,0,${0.4*p})`);
+      sg.addColorStop(1,'rgba(255,100,0,0)');
+      ctx.filter='blur(80px)';ctx.fillStyle=sg;ctx.fillRect(0,0,w,h);
+      ctx.filter='none';ctx.globalCompositeOperation='source-over';
+      requestAnimationFrame(draw);
+    }
+    draw();
+
+    // Main app
+    loadEthers().then(ethers => {
+      document.getElementById('loading').remove();
+      document.getElementById('app').style.display = 'block';
 
       const VAULT = '0xBFd8C212e0A132b2e58d45e0b5ccA3D2009d3778';
       const TOKEN = '0x98316280B93F835Ef561C59430270D31e0575A44';
@@ -103,46 +156,14 @@
 
       let provider, signer, vault, token, oracle, account, price = 0n;
 
-      // Golden Sun Nebula Background
-      const canvas = document.getElementById('cosmos-bg');
-      const ctx = canvas.getContext('2d');
-      let w, h, time = 0;
-      function resize(){w=canvas.width=innerWidth;h=canvas.height=innerHeight;}
-      resize(); window.addEventListener('resize', resize);
-      const layers = [{s:0.3,c:1.4,o:0.4,h:35},{s:0.5,c:1,o:0.6,h:45},{s:0.8,c:0.7,o:0.5,h:55}];
-      function draw(){
-        ctx.clearRect(0,0,w,h); time+=0.003;
-        layers.forEach(l=>{const t=time*l.s;const g=ctx.createLinearGradient(0,0,w,h);
-          g.addColorStop(0,`hsla(${l.h+Math.sin(t)*10},90%,60%,0)`);
-          g.addColorStop(0.3,`hsla(${l.h+15},95%,70%,${l.o})`);
-          g.addColorStop(0.5,`hsla(${l.h+30},100%,80%,${l.o+0.2})`);
-          g.addColorStop(0.7,`hsla(${l.h+15},95%,70%,${l.o})`);
-          g.addColorStop(1,`hsla(${l.h},90%,60%,0)`);
-          ctx.globalCompositeOperation='screen';ctx.filter=`blur(${20*l.c}px)`;
-          ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
-        });
-        const p=0.5+0.5*Math.sin(time*2);
-        const sx=w*0.5+Math.cos(time*0.7)*w*0.1;
-        const sy=h*0.5+Math.sin(time*0.5)*h*0.1;
-        const sg=ctx.createRadialGradient(sx,sy,0,sx,sy,400*p);
-        sg.addColorStop(0,`rgba(255,220,100,${0.8*p})`);
-        sg.addColorStop(0.4,`rgba(255,160,0,${0.4*p})`);
-        sg.addColorStop(1,'rgba(255,100,0,0)');
-        ctx.filter='blur(80px)';ctx.fillStyle=sg;ctx.fillRect(0,0,w,h);
-        ctx.filter='none';ctx.globalCompositeOperation='source-over';
-        requestAnimationFrame(draw);
-      }
-      draw();
-
       window.connectWallet = async function() {
-        if (!window.ethereum) return alert('Install MetaMask or any Web3 wallet');
+        if (!window.ethereum) return alert('Install MetaMask or any wallet');
         try {
           await window.ethereum.request({ method: 'eth_requestAccounts' });
           provider = new ethers.BrowserProvider(window.ethereum);
           signer = await provider.getSigner();
           account = await signer.getAddress();
 
-          // Switch to PulseChain
           try { await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x171' }]}); }
           catch (e) { if (e.code === 4902) await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{ chainId: '0x171', chainName: 'PulseChain', nativeCurrency: { name: 'PLS', symbol: 'PLS', decimals: 18 }, rpcUrls: ['https://rpc.pulsechain.com'], blockExplorerUrls: ['https://scan.pulsechain.com'] }]}); }
 
@@ -158,6 +179,8 @@
           await updateAll();
         } catch (err) { alert(err.message); }
       };
+
+      document.getElementById('walletBtn').onclick = connectWallet;
 
       async function updatePrice() {
         try { const [p] = await oracle.peekPriceView(); price = p; document.getElementById('priceDisplay').textContent = `$${(Number(p)/1e18).toFixed(6)} per PLS`; }
@@ -195,8 +218,10 @@
       document.getElementById('withdrawBtn').onclick = async () => { const usd = parseFloat(document.getElementById('usdWithdraw').value); if(!usd)return alert('Enter amount'); await (await vault.withdrawPLS(usdToPLS(usd))).wait(); alert(`Withdrew $${usd.toFixed(2)}`); updateAll(); };
       document.getElementById('riskBtn').onclick = async () => { const can = await vault.canLiquidate(account); document.getElementById('riskDisplay').innerHTML = can ? '<span class="risk">LIQUIDATION RISK!</span>' : '<span class="safe">You are safe</span>'; };
 
-      // Auto-connect
       if (window.ethereum?.selectedAddress) connectWallet();
+    }).catch(err => {
+      document.getElementById('loading').innerHTML = 'Failed to load ethers.js<br>Please check your internet connection';
+      console.error(err);
     });
   </script>
 </body>
