@@ -271,12 +271,14 @@
     };
 
     async function updatePrice(){
-      try {
-        const [p] = await oracle.peekPriceView();
-        price=p;
-        priceDisplay.textContent="$"+(Number(p)/1e18).toFixed(6)+" per PLS";
-      } catch { priceDisplay.textContent="Oracle offline"; }
-    }
+  try {
+    const [p] = await oracle.peekPriceView();
+    price = p;
+    document.getElementById("price").textContent = "$" + (Number(p) / 1e18).toFixed(6) + " per PLS";
+  } catch {
+    document.getElementById("price").textContent = "Oracle offline";
+  }
+}
 
     function usdToPLS(usd){ if(!price)return 0n; const usdWei=ethers.parseEther(usd.toString()); return (usdWei*(10n**18n))/price; }
     function usdToPSun(usd){ return ethers.parseEther(usd.toString()); }
