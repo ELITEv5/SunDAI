@@ -509,10 +509,21 @@
   const originalConnectWallet = connectWallet;
   connectWallet = async function() {
     await originalConnectWallet();
-    setTimeout(() => {
+    // Run immediately once oracle is initialized
+if (oracle) {
+  await checkOracleHealth();
+  document.getElementById("safetyCard").style.opacity = "1";
+} else {
+  console.warn("⏳ Waiting for oracle initialization...");
+  const waitOracle = setInterval(() => {
+    if (oracle) {
+      clearInterval(waitOracle);
       checkOracleHealth();
       document.getElementById("safetyCard").style.opacity = "1";
-    }, 1500);
+    }
+  }, 500);
+}
+
   };
 
   // 🔁 Re-check every 2 minutes
