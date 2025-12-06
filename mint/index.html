@@ -486,7 +486,7 @@
       const pokeBtn = document.getElementById("pokeBtn");
 
       if (healthy && age < 86400) {
-        statusEl.innerHTML = `🟢 Vault & Oracle synced – data fresh (${age}s ago)`;
+        statusEl.innerHTML = `🟢 Vault & Oracle synced – data fresh (${(age/60).toFixed(1)} min ago)`;
         statusEl.style.color = "#00ff9d";
         pokeBtn.disabled = true;
         pokeBtn.classList.remove("poke-active");
@@ -505,33 +505,31 @@
     }
   }
 
-  // 🟡 Ensure it runs after wallet connect
   const originalConnectWallet = connectWallet;
   connectWallet = async function() {
     await originalConnectWallet();
-    // Run immediately once oracle is initialized
-if (oracle) {
-  await checkOracleHealth();
-  document.getElementById("safetyCard").style.opacity = "1";
-} else {
-  console.warn("⏳ Waiting for oracle initialization...");
-  const waitOracle = setInterval(() => {
-    if (oracle) {
-      clearInterval(waitOracle);
-      checkOracleHealth();
-      document.getElementById("safetyCard").style.opacity = "1";
-    }
-  }, 500);
-}
 
+    if (oracle) {
+      document.getElementById("safetyCard").style.opacity = "1";
+      document.getElementById("safetyStatus").textContent = "🔄 Checking Oracle...";
+      await checkOracleHealth();
+    } else {
+      console.warn("⏳ Waiting for oracle initialization...");
+      const waitOracle = setInterval(() => {
+        if (oracle) {
+          clearInterval(waitOracle);
+          document.getElementById("safetyCard").style.opacity = "1";
+          document.getElementById("safetyStatus").textContent = "🔄 Checking Oracle...";
+          checkOracleHealth();
+        }
+      }, 500);
+    }
   };
 
-  // 🔁 Re-check every 2 minutes
   setInterval(() => {
     if (oracle) checkOracleHealth();
   }, 120000);
 
-  // 🌞 Wake Oracle button logic
   document.getElementById("pokeBtn").onclick = async () => {
     try {
       if (!oracle || !signer) {
@@ -544,12 +542,13 @@ if (oracle) {
       await tx.wait();
       statusEl.textContent = "✅ Oracle awakened & synced!";
       statusEl.style.color = "#00ff9d";
-      setTimeout(checkOracleHealth, 5000);
+      setTimeout(checkOracleHealth, 2000); // ⏱ faster refresh
     } catch (e) {
       document.getElementById("safetyStatus").textContent = "⚠️ " + e.message;
     }
   };
 </script>
+
 
 <!-- 🌌 Golden Nebula Drift Background -->
 <style>
