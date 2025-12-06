@@ -402,6 +402,13 @@
     "stateMutability": "view"
   },
   {
+    "name": "poke",
+    "type": "function",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
     "name": "setVault",
     "type": "function",
     "inputs": [
