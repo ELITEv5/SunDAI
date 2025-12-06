@@ -356,19 +356,35 @@
       });
     });
 
-    async function loadVault(){
-      try {
-        const i = await vault.vaultInfo(account);
-        const ratioValue = Number(i.ratio); // already in percent
-        let ratioClass = ratioValue<150?"risk":ratioValue<170?"warn":"safe";
-        const ratioDisplay = ratioNum>1e30?"∞":ratioValue.toFixed(2)+"%";
-        stats.innerHTML = `
-          <div class="stat"><div class="label">Collateral</div><div class="value">${Math.round(Number(ethers.formatEther(i.collateral)))} PLS</div></div>
-          <div class="stat"><div class="label">Debt</div><div class="value">${Number(ethers.formatEther(i.debt)).toFixed(2)} pSunDAI</div></div>
-          <div class="stat"><div class="label">Ratio</div><div class="value ${ratioClass}">${ratioDisplay}</div></div>
-          <div class="stat"><div class="label">Can Mint</div><div class="value">${Number(ethers.formatEther(i.mintable)).toFixed(2)} pSunDAI</div></div>`;
-      } catch(e){ error.textContent=e.message; }
-    }
+   async function loadVault(){
+  try {
+    const i = await vault.vaultInfo(account);
+    const ratioValue = Number(i.ratio); // already in percent
+    let ratioClass = ratioValue < 150 ? "risk" : ratioValue < 170 ? "warn" : "safe";
+    const ratioDisplay = ratioValue > 1e6 ? "∞" : ratioValue.toFixed(2) + "%";
+
+    stats.innerHTML = `
+      <div class="stat">
+        <div class="label">Collateral</div>
+        <div class="value">${Math.round(Number(ethers.formatEther(i.collateral)))} PLS</div>
+      </div>
+      <div class="stat">
+        <div class="label">Debt</div>
+        <div class="value">${Number(ethers.formatEther(i.debt)).toFixed(2)} pSunDAI</div>
+      </div>
+      <div class="stat">
+        <div class="label">Ratio</div>
+        <div class="value ${ratioClass}">${ratioDisplay}</div>
+      </div>
+      <div class="stat">
+        <div class="label">Can Mint</div>
+        <div class="value">${Number(ethers.formatEther(i.mintable)).toFixed(2)} pSunDAI</div>
+      </div>
+    `;
+  } catch (e) {
+    error.textContent = e.message;
+  }
+}
 
     walletBtn.onclick = connectWallet;
 
