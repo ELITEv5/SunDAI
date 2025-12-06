@@ -54,11 +54,13 @@
     <div class="status" id="status"></div>
     <div class="error" id="error"></div>
     <div class="card"><div class="stats" id="stats">Connect wallet</div></div>
+    
 <div class="card">
   <input id="usdOneClick" type="number" step="0.01" placeholder="Deposit & Auto Mint (USD)">
   <div class="preview" id="plsOneClick"></div>
   <button class="btn" id="oneClickBtn" disabled>1-Click Auto Mint (155%)</button>
 </div>
+
     <div class="card">
       <input id="usdIn" type="number" step="0.01" placeholder="Deposit USD">
       <div class="preview" id="plsOut"></div>
@@ -209,9 +211,18 @@
     // --- One-Click Auto Mint (155%) ---
 document.getElementById("usdOneClick").addEventListener("input", () => {
   const usd = parseFloat(document.getElementById("usdOneClick").value) || 0;
+  if (!usd || !price) {
+    document.getElementById("plsOneClick").textContent = "";
+    return;
+  }
+
   const pls = usdToPLS(usd);
+  const mintUSD = usd / 1.55; // maintain 155% ratio
+  const plsText = Number(ethers.formatEther(pls)).toFixed(6);
+  const mintText = mintUSD.toFixed(6);
+
   document.getElementById("plsOneClick").textContent =
-    usd > 0 ? "≈ " + Number(ethers.formatEther(pls)).toFixed(6) + " PLS" : "";
+    `≈ ${plsText} PLS → ${mintText} pSunDAI (at 155%)`;
 });
 
 document.getElementById("oneClickBtn").onclick = async () => {
@@ -222,12 +233,12 @@ document.getElementById("oneClickBtn").onclick = async () => {
     document.getElementById("oneClickBtn").textContent = "Processing...";
     const plsValue = usdToPLS(usd);
 
-    // contract call — deposits PLS and mints automatically to ~155%
+    // contract call — deposits PLS and auto-mints
     const tx = await vault.depositAndAutoMintPLS({ value: plsValue });
     await tx.wait();
 
     document.getElementById("status").textContent =
-      `Deposited ${usd.toFixed(2)} USD worth of PLS and auto-minted at 155% ratio.`;
+      `Deposited ${usd.toFixed(2)} USD worth of PLS and auto-minted ${(usd / 1.55).toFixed(2)} pSunDAI (155%).`;
     await loadVault();
   } catch (e) {
     console.error(e);
