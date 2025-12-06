@@ -54,7 +54,11 @@
     <div class="status" id="status"></div>
     <div class="error" id="error"></div>
     <div class="card"><div class="stats" id="stats">Connect wallet</div></div>
-
+<div class="card">
+  <input id="usdOneClick" type="number" step="0.01" placeholder="Deposit & Auto Mint (USD)">
+  <div class="preview" id="plsOneClick"></div>
+  <button class="btn" id="oneClickBtn" disabled>1-Click Auto Mint (155%)</button>
+</div>
     <div class="card">
       <input id="usdIn" type="number" step="0.01" placeholder="Deposit USD">
       <div class="preview" id="plsOut"></div>
@@ -76,11 +80,6 @@
       <div class="preview" id="plsIn"></div>
       <button class="btn" id="withdraw" disabled>Withdraw PLS</button>
     </div>
-    <div class="card">
-  <input id="usdOneClick" type="number" step="0.01" placeholder="Deposit & Auto Mint (USD)">
-  <div class="preview" id="plsOneClick"></div>
-  <button class="btn" id="oneClickBtn" disabled>1-Click Auto Mint (155%)</button>
-</div>
     <div class="card">
       <button class="btn" id="risk" disabled style="background:#ff3366">Check Risk</button>
       <div id="riskText" style="margin-top:15px;text-align:center;font-weight:700"></div>
