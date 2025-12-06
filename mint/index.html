@@ -433,7 +433,7 @@
     };
   </script>
 
-    <footer class="footer">
+      <footer class="footer">
     <h3>Official Contracts</h3>
     <div class="contracts">
       <div><span class="label">pSunDAI Token:</span>
@@ -461,16 +461,17 @@
       inset: 0;
       z-index: 0;
       pointer-events: none;
-      background: radial-gradient(circle at 30% 30%, rgba(90,0,120,0.25), transparent 60%),
-                  radial-gradient(circle at 70% 70%, rgba(255,120,0,0.15), transparent 60%);
+      background: radial-gradient(circle at 25% 25%, rgba(255,180,60,0.12), transparent 60%),
+                  radial-gradient(circle at 75% 70%, rgba(255,120,0,0.15), transparent 60%),
+                  radial-gradient(circle at 50% 50%, rgba(90,0,120,0.15), transparent 70%);
     }
   </style>
 
-  <!-- 🌠 Animated Starfield Script -->
+  <!-- 🌠 Golden Shooting Stars Script -->
   <script>
     const canvas = document.getElementById("bg");
     const ctx = canvas.getContext("2d");
-    let stars = [];
+    let stars = [], meteors = [];
     let width, height, centerX, centerY;
 
     function resize() {
@@ -478,19 +479,33 @@
       height = canvas.height = window.innerHeight;
       centerX = width / 2;
       centerY = height / 2;
-      stars = Array.from({ length: 300 }, () => ({
+      stars = Array.from({ length: 250 }, () => ({
         x: Math.random() * width - centerX,
         y: Math.random() * height - centerY,
         z: Math.random() * width,
         o: 0.5 + Math.random() * 0.5
       }));
+      meteors = [];
+    }
+
+    function spawnMeteor() {
+      if (Math.random() < 0.02) { // 2% chance per frame
+        meteors.push({
+          x: Math.random() * width,
+          y: Math.random() * height * 0.5,
+          len: 200 + Math.random() * 100,
+          speed: 10 + Math.random() * 5,
+          life: 1
+        });
+      }
     }
 
     function draw() {
       ctx.fillStyle = "rgba(10,0,30,0.25)";
       ctx.fillRect(0, 0, width, height);
 
-      const angle = Date.now() * 0.00002; // 🌌 slow galaxy rotation
+      // 🌌 Rotating galaxy motion
+      const angle = Date.now() * 0.00002;
       const cosA = Math.cos(angle), sinA = Math.sin(angle);
 
       for (let s of stars) {
@@ -506,12 +521,29 @@
         if (px < 0 || px >= width || py < 0 || py >= height) continue;
 
         const size = (1 - s.z / width) * 2;
-        const hue = 270 + Math.sin(Date.now() * 0.001 + s.x) * 60;
-        ctx.fillStyle = `hsla(${hue}, 80%, 70%, ${s.o})`;
+        const hue = 45 + Math.sin(Date.now() * 0.001 + s.x) * 10; // 🌞 gold shift
+        ctx.fillStyle = `hsla(${hue}, 90%, 65%, ${s.o})`;
         ctx.beginPath();
         ctx.arc(px, py, size, 0, 2 * Math.PI);
         ctx.fill();
       }
+
+      // ☄️ Shooting stars
+      spawnMeteor();
+      for (let m of meteors) {
+        ctx.strokeStyle = `rgba(255, 215, 100, ${m.life})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(m.x, m.y);
+        ctx.lineTo(m.x - m.len, m.y + m.len * 0.3);
+        ctx.stroke();
+
+        m.x += m.speed;
+        m.y -= m.speed * 0.3;
+        m.life -= 0.01;
+      }
+
+      meteors = meteors.filter(m => m.life > 0);
 
       requestAnimationFrame(draw);
     }
