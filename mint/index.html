@@ -210,6 +210,49 @@ input:focus {
   color: #ff3366; /* Red – danger */
   text-shadow: 0 0 8px rgba(255,51,102,0.5);
 }
+/* 🌞 Official Contract Footer */
+.footer {
+  text-align: center;
+  margin: 40px 0 20px;
+  padding: 20px 10px;
+  font-size: 0.85em;
+  color: #ffbd70;
+  border-top: 1px solid rgba(255, 215, 0, 0.15);
+  width: 100%;
+  max-width: 800px;
+}
+
+.footer h3 {
+  margin-bottom: 10px;
+  color: #ffd700;
+  letter-spacing: 0.5px;
+  font-size: 1.1em;
+}
+
+.contracts {
+  display: inline-block;
+  text-align: left;
+  line-height: 1.6;
+}
+
+.contracts a {
+  color: #ffebd1;
+  text-decoration: none;
+  font-family: monospace;
+  word-break: break-all;
+  transition: color 0.2s ease;
+}
+
+.contracts a:hover {
+  color: #ffd700;
+}
+
+.contracts .label {
+  color: #ff6b00;
+  font-weight: 700;
+  display: inline-block;
+  width: 140px;
+}
 
   </style>
 </head>
@@ -407,17 +450,22 @@ draw();
       });
     });
 
-    async function loadVault(){
+   async function loadVault(){
   try {
     const i = await vault.vaultInfo(account);
     const ratioNum = Number(i.ratio);
     let ratioValue;
-    
-    // Auto-detect scaling (1e18 vs 1e4)
-    if (ratioNum > 1e14) ratioValue = ratioNum / 1e16; // ratio scaled by 1e18
-    else ratioValue = ratioNum / 100; // ratio scaled by 1e4
 
-    // Determine color zones
+    // Detect whether ratio is scaled by 1e4 (old vaults) or 1e18 (newer ones)
+    if (ratioNum > 1e10) {
+      // ratio returned like 1.55e20 → divide by 1e16 to get 155.00
+      ratioValue = ratioNum / 1e16;
+    } else {
+      // ratio returned like 15500 → divide by 100 to get 155.00
+      ratioValue = ratioNum / 100;
+    }
+
+    // Assign color class based on safety thresholds
     let ratioClass = "safe";
     if (ratioValue < 150) ratioClass = "risk";
     else if (ratioValue < 170) ratioClass = "warn";
@@ -430,7 +478,9 @@ draw();
       <div class="stat"><div class="label">Ratio</div><div class="value ${ratioClass}">${ratioDisplay}</div></div>
       <div class="stat"><div class="label">Can Mint</div><div class="value">${Number(ethers.formatEther(i.mintable)).toFixed(2)} pSunDAI</div></div>
     `;
-  } catch(e){ error.textContent = e.message; }
+  } catch(e){
+    error.textContent = e.message;
+  }
 }
 
     walletBtn.onclick=connectWallet;
