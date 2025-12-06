@@ -8,25 +8,16 @@
   <meta name="description" content="Autonomous 150% PLS-Collateralized Stable Asset on PulseChain." />
   <meta name="theme-color" content="#FF6B00" />
   <script src="ethers.umd.min.js"></script>
-
   <style>
     body {
       margin: 0;
       background: #0a001f;
       color: #ffebd1;
-      font-family: Segoe UI, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      font-family: "Segoe UI", sans-serif;
       min-height: 100vh;
-      overflow-y: auto;
+      overflow-x: hidden;
     }
-    canvas {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-    }
+    canvas { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
     .wallet {
       position: fixed;
       top: 20px;
@@ -42,11 +33,7 @@
       transition: all 0.2s ease;
     }
     .wallet:hover { background: #222; }
-    .wallet.connected {
-      border-color: #ffd700;
-      color: #ffd700;
-    }
-
+    .wallet.connected { border-color: #ffd700; color: #ffd700; }
     .container {
       background: rgba(10, 0, 30, 0.8);
       backdrop-filter: blur(20px);
@@ -56,51 +43,23 @@
       padding: 30px 25px;
       max-width: 480px;
       width: 90%;
-      margin: 80px 0;
+      margin: 80px auto 20px;
       position: relative;
       z-index: 10;
     }
-
-.logo {
-  display: block;
-  max-width: 240px;
-  margin: 0 auto 10px;
-  animation: pulseGlow 4s ease-in-out infinite;
-  transform-origin: center;
-}
-
-/* 🌠 Soft pulsating glow effect — cosmic aura */
-@keyframes pulseGlow {
-  0% {
-    filter: drop-shadow(0 0 10px rgba(180, 120, 255, 0.5));
-  }
-  50% {
-    filter: drop-shadow(0 0 35px rgba(255, 180, 255, 0.85));
-  }
-  100% {
-    filter: drop-shadow(0 0 10px rgba(180, 120, 255, 0.5));
-  }
-}
-
-
-
-    h1 {
-      text-align: center;
-      font-size: 2em;
-      background: linear-gradient(90deg, #ff6b00, #ffd700, #ffa500);
-      -webkit-background-clip: text;
-      color: transparent;
-      margin-bottom: 8px;
+    .logo {
+      display: block;
+      max-width: 240px;
+      margin: 0 auto 10px;
+      animation: pulseGlow 4s ease-in-out infinite;
     }
-
-    .price {
-      text-align: center;
-      color: #ffd700;
-      font-weight: 800;
-      font-size: 1.2em;
-      margin-bottom: 10px;
+    @keyframes pulseGlow {
+      0%, 100% { filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5)); }
+      50% { filter: drop-shadow(0 0 35px rgba(255, 215, 0, 0.85)); }
     }
-
+    h1 { text-align: center; font-size: 2em; background: linear-gradient(90deg, #ff6b00, #ffd700, #ffa500); -webkit-background-clip: text; color: transparent; margin-bottom: 8px; }
+    h2 { text-align: center; font-size: 1.1em; color: #ffd700; margin-bottom: 20px; font-weight: normal; }
+    .price { text-align: center; color: #ffd700; font-weight: 800; font-size: 1.2em; margin-bottom: 10px; }
     .card {
       background: rgba(255, 107, 0, 0.1);
       border: 1px solid rgba(255, 107, 0, 0.3);
@@ -108,61 +67,33 @@
       padding: 16px;
       margin-bottom: 12px;
     }
-
-    input,
-.btn {
-  width: 100%;
-  display: block;
-  box-sizing: border-box;
-  font-size: 1em;
-  font-weight: 700;
-  text-align: center;
-  border-radius: 10px;
-  padding: 14px; /* unified padding */
-  transition: all 0.2s ease;
-}
-
-/* ✏️ Input field styling */
-input {
-  background: #110022;
-  border: 2px solid rgba(255, 107, 0, 0.4);
-  color: #fff;
-}
-input:focus {
-  border-color: #ffd700;
-  outline: none;
-}
-
-/* 🔘 Button styling */
-.btn {
-  background: #ff6b00;
-  border: 2px solid transparent;
-  color: #000;
-  cursor: pointer;
-}
-.btn:hover {
-  background: #ffd700;
-  transform: translateY(-2px);
-}
-.btn:disabled {
-  background: #444;
-  color: #999;
-  cursor: not-allowed;
-  border-color: transparent;
-}
-
-/* 🧩 Fix spacing between input and button in each card */
-.card input + .btn {
-  margin-top: 8px;
-}
-
-    .preview {
-      color: #ffbd70;
+    input, .btn {
+      width: 100%;
+      display: block;
+      box-sizing: border-box;
+      font-size: 1em;
+      font-weight: 700;
       text-align: center;
-      font-size: 0.9em;
-      margin-top: 4px;
+      border-radius: 10px;
+      padding: 14px;
+      transition: all 0.2s ease;
     }
-
+    input {
+      background: #110022;
+      border: 2px solid rgba(255, 107, 0, 0.4);
+      color: #fff;
+    }
+    input:focus { border-color: #ffd700; outline: none; }
+    .btn {
+      background: #ff6b00;
+      border: 2px solid transparent;
+      color: #000;
+      cursor: pointer;
+    }
+    .btn:hover { background: #ffd700; transform: translateY(-2px); }
+    .btn:disabled { background: #444; color: #999; cursor: not-allowed; }
+    .card input + .btn { margin-top: 8px; }
+    .preview { color: #ffbd70; text-align: center; font-size: 0.9em; margin-top: 4px; }
     .stats {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -170,128 +101,45 @@ input:focus {
       text-align: center;
       font-size: 0.9em;
     }
-    .stat {
-      background: rgba(255, 107, 0, 0.12);
-      padding: 10px;
-      border-radius: 10px;
-    }
+    .stat { background: rgba(255, 107, 0, 0.12); padding: 10px; border-radius: 10px; }
     .label { color: #ffbd70; }
     .value { color: #ffd700; font-weight: 700; }
-    .risk { color: #ff3366; }
-    .safe { color: #00ff9d; }
-
-    .status, .error {
-      text-align: center;
-      font-weight: bold;
-      margin-top: 10px;
-    }
+    .value.safe { color: #00ff9d; text-shadow: 0 0 8px rgba(0,255,157,0.5); }
+    .value.warn { color: #ffcc00; text-shadow: 0 0 8px rgba(255,204,0,0.5); }
+    .value.risk { color: #ff3366; text-shadow: 0 0 8px rgba(255,51,102,0.5); }
+    .status, .error { text-align: center; font-weight: bold; margin-top: 10px; }
     .status { color: #00ff9d; }
     .error { color: #ff3366; }
-
-    @media (max-width: 600px) {
-      .container { padding: 20px 15px; }
-      input, .btn { font-size: 0.95em; padding: 12px; }
+    .footer {
+      text-align: center;
+      margin: 40px 0 20px;
+      padding: 20px 10px;
+      font-size: 0.85em;
+      color: #ffbd70;
+      border-top: 1px solid rgba(255, 215, 0, 0.15);
+      width: 100%;
+      max-width: 800px;
     }
-    /* 🔵 Ratio Color States */
-.value.safe {
-  color: #00ff9d; /* Green – safe */
-  text-shadow: 0 0 8px rgba(0,255,157,0.5);
-}
-
-.value.warn {
-  color: #ffcc00; /* Yellow – watch zone */
-  text-shadow: 0 0 8px rgba(255,204,0,0.5);
-}
-
-.value.risk {
-  color: #ff3366; /* Red – danger */
-  text-shadow: 0 0 8px rgba(255,51,102,0.5);
-}
-/* 🌞 Official Contract Footer */
-.footer {
-  text-align: center;
-  margin: 40px 0 20px;
-  padding: 20px 10px;
-  font-size: 0.85em;
-  color: #ffbd70;
-  border-top: 1px solid rgba(255, 215, 0, 0.15);
-  width: 100%;
-  max-width: 800px;
-}
-
-.footer h3 {
-  margin-bottom: 10px;
-  color: #ffd700;
-  letter-spacing: 0.5px;
-  font-size: 1.1em;
-}
-
-/* 💬 Contract section */
-.contracts {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-  text-align: left;
-  line-height: 1.6;
-  word-wrap: break-word;
-  overflow-wrap: anywhere;
-  padding: 0 10px;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-.contracts a {
-  color: #ffebd1;
-  text-decoration: none;
-  font-family: monospace;
-  word-break: break-all;
-  display: inline-block;
-  max-width: 100%;
-  overflow-wrap: anywhere;
-  transition: color 0.2s ease;
-}
-
-.contracts a:hover {
-  color: #ffd700;
-}
-
-.contracts .label {
-  color: #ff6b00;
-  font-weight: 700;
-  display: block;
-  margin-bottom: 2px;
-}
-
-/* 📱 Mobile adjustments */
-@media (max-width: 480px) {
-  .contracts {
-    font-size: 0.75em;
-    gap: 8px;
-  }
-  .contracts a {
-    font-size: 0.75em;
-  }
-}
-
+    .footer h3 { margin-bottom: 10px; color: #ffd700; letter-spacing: 0.5px; font-size: 1.1em; }
+    .contracts { display: flex; flex-direction: column; gap: 10px; text-align: left; line-height: 1.6; }
+    .contracts a { color: #ffebd1; text-decoration: none; font-family: monospace; word-break: break-all; }
+    .contracts a:hover { color: #ffd700; }
+    .contracts .label { color: #ff6b00; font-weight: 700; display: block; margin-bottom: 2px; }
+    @media (max-width: 480px) { .contracts { font-size: 0.75em; } }
   </style>
 </head>
-
 <body>
   <canvas id="bg"></canvas>
   <div class="wallet" id="walletBtn"><span id="walletText">Connect Wallet</span></div>
-
   <div class="container">
-    <img src="sundailogo.png" class="logo" alt="SunDAI Logo" />
-    <h1>SunDAI</h1> 
+    <img src="sundailogo.png" class="logo" alt="pSunDAI" />
+    <h1>pSunDAI</h1>
     <h2>Autonomous Stable Asset</h2>
     <div class="price" id="price">Loading price...</div>
     <div class="status" id="status"></div>
     <div class="error" id="error"></div>
-
     <div class="card"><div class="stats" id="stats">Connect wallet</div></div>
 
-    <!-- 1-Click Auto Mint -->
     <div class="card">
       <input id="usdOneClick" type="number" step="0.01" placeholder="Deposit & Auto Mint (USD)" />
       <div class="preview" id="plsOneClick"></div>
@@ -326,228 +174,151 @@ input:focus {
     </div>
   </div>
 
-  <script>
-    const { ethers } = window.ethers;
-    const VAULT = "0x8F4d720d1b97c478d4232B2264a1edc566B23d7B";
-    const TOKEN = "0xb54a634194a69B3839F16F73Cf783F55680dbc64";
-    const ORACLE = "0x9c4b448520D17D3dD8a2046fEA011c7b40E88Fe5";
-
-    let provider, signer, vault, token, oracle, account, price = 0n;
-
-    async function loadABIs(){
-      const v = await fetch("vault-abi.json").then(r=>r.json());
-      const t = await fetch("token-abi.json").then(r=>r.json());
-      const o = await fetch("oracle-abi.json").then(r=>r.json());
-      return [v,t,o];
-    }
-
-    // 🌌 Full Cosmic Field Background (Supernova across entire screen)
-const c = document.getElementById("bg");
-const ctx = c.getContext("2d");
-let w = (c.width = window.innerWidth);
-let h = (c.height = window.innerHeight);
-let stars = [];
-
-function initStars() {
-  stars = [];
-  for (let i = 0; i < 600; i++) {
-    stars.push({
-      x: Math.random() * w,
-      y: Math.random() * h,
-      z: Math.random() * w,
-      size: Math.random() * 1.5 + 0.3,
-      speed: Math.random() * 0.7 + 0.3,
-      hue: 200 + Math.random() * 80, // bluish-purple tone
-      o: Math.random() * 0.8 + 0.2
-    });
-  }
-}
-
-function draw() {
-  // subtle moving gradient background
-  const t = Date.now() * 0.0001;
-  const grad = ctx.createLinearGradient(
-    w * Math.sin(t * 0.7),
-    h * Math.cos(t * 0.5),
-    w,
-    h
-  );
-  grad.addColorStop(0, `hsl(${220 + 40 * Math.sin(t)}, 80%, 5%)`);
-  grad.addColorStop(0.5, `hsl(${260 + 60 * Math.sin(t * 1.5)}, 60%, 8%)`);
-  grad.addColorStop(1, `hsl(${200 + 20 * Math.cos(t)}, 70%, 10%)`);
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, w, h);
-
-  // star field movement
-  for (let i = 0; i < stars.length; i++) {
-    let s = stars[i];
-    s.z -= s.speed * 2;
-    if (s.z <= 0) s.z = w;
-    const k = 128.0 / s.z;
-    const px = s.x * k + w / 2;
-    const py = s.y * k + h / 2;
-
-    if (px >= 0 && px <= w && py >= 0 && py <= h) {
-      const twinkle = 0.6 + 0.4 * Math.sin(t * 40 + i);
-      ctx.fillStyle = `hsla(${s.hue}, 100%, ${60 + 20 * Math.sin(t + i)}%, ${s.o * twinkle})`;
-      ctx.fillRect(px, py, s.size, s.size);
-    }
-  }
-
-  // multi-layer supernova glow (covers entire screen)
-  const pulse = 0.4 + 0.3 * Math.sin(Date.now() * 0.0015);
-  const g = ctx.createRadialGradient(
-    w / 2 + 100 * Math.sin(t * 2),
-    h / 2 + 100 * Math.cos(t * 1.5),
-    0,
-    w / 2,
-    h / 2,
-    Math.max(w, h)
-  );
-  g.addColorStop(0, `rgba(160, 100, 255, ${0.25 * pulse})`);
-  g.addColorStop(0.3, `rgba(80, 40, 180, ${0.15 * pulse})`);
-  g.addColorStop(0.7, `rgba(20, 10, 60, ${0.1 * pulse})`);
-  g.addColorStop(1, "rgba(0,0,20,0)");
-  ctx.globalCompositeOperation = "screen";
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, w, h);
-  ctx.globalCompositeOperation = "source-over";
-
-  requestAnimationFrame(draw);
-}
-
-window.addEventListener("resize", () => {
-  w = c.width = window.innerWidth;
-  h = c.height = window.innerHeight;
-  initStars();
-});
-
-initStars();
-draw();
-
-
-
-    window.connectWallet = async function(){
-      try {
-        const [VAULT_ABI,TOKEN_ABI,ORACLE_ABI] = await loadABIs();
-        if(window.ethereum){
-          await window.ethereum.request({method:"eth_requestAccounts"});
-          provider = new ethers.BrowserProvider(window.ethereum);
-        } else { alert("No browser wallet found."); return; }
-        signer = await provider.getSigner();
-        account = await signer.getAddress();
-        vault = new ethers.Contract(VAULT, VAULT_ABI, signer);
-        token = new ethers.Contract(TOKEN, TOKEN_ABI, signer);
-        oracle = new ethers.Contract(ORACLE, ORACLE_ABI, provider);
-        walletText.textContent = account.slice(0,6)+"..."+account.slice(-4);
-        walletBtn.classList.add("connected");
-        document.querySelectorAll(".btn").forEach(b=>b.disabled=false);
-        status.textContent = "Connected!";
-        await updatePrice();
-        await loadVault();
-      } catch(e){ error.textContent=e.message; }
-    };
-
-    async function updatePrice(){
-  try {
-    const [p] = await oracle.peekPriceView();
-    price = p;
-    document.getElementById("price").textContent = "$" + (Number(p) / 1e18).toFixed(6) + " per PLS";
-  } catch {
-    document.getElementById("price").textContent = "Oracle offline";
-  }
-}
-
-    function usdToPLS(usd){ if(!price)return 0n; const usdWei=ethers.parseEther(usd.toString()); return (usdWei*(10n**18n))/price; }
-    function usdToPSun(usd){ return ethers.parseEther(usd.toString()); }
-
-    ["usdIn","usdOut"].forEach(id=>{
-      document.getElementById(id).addEventListener("input",()=>{
-        const usd=parseFloat(document.getElementById(id).value)||0;
-        const pls=usdToPLS(usd);
-        const text=usd>0?`≈ ${Math.round(Number(ethers.formatEther(pls)))} PLS`:"";
-        document.getElementById(id==="usdIn"?"plsOut":"plsIn").textContent=text;
-      });
-    });
-
-   async function loadVault(){
-  try {
-    const i = await vault.vaultInfo(account);
-    const ratioNum = Number(i.ratio);
-    let ratioValue;
-
-    if (ratioNum > 1e8) {
-  ratioValue = ratioNum / 1e16; // 1e18-scaled
-} else {
-  ratioValue = ratioNum / 100;  // 1e4-scaled
-}
-
-    // Assign color class based on safety thresholds
-    let ratioClass = "safe";
-    if (ratioValue < 150) ratioClass = "risk";
-    else if (ratioValue < 170) ratioClass = "warn";
-
-    const ratioDisplay = ratioNum > 1e30 ? "∞" : ratioValue.toFixed(2) + "%";
-
-    stats.innerHTML = `
-      <div class="stat"><div class="label">Collateral</div><div class="value">${Math.round(Number(ethers.formatEther(i.collateral)))} PLS</div></div>
-      <div class="stat"><div class="label">Debt</div><div class="value">${Number(ethers.formatEther(i.debt)).toFixed(2)} pSunDAI</div></div>
-      <div class="stat"><div class="label">Ratio</div><div class="value ${ratioClass}">${ratioDisplay}</div></div>
-      <div class="stat"><div class="label">Can Mint</div><div class="value">${Number(ethers.formatEther(i.mintable)).toFixed(2)} pSunDAI</div></div>
-    `;
-  } catch(e){
-    error.textContent = e.message;
-  }
-}
-
-    walletBtn.onclick=connectWallet;
-    deposit.onclick=async()=>{const u=parseFloat(usdIn.value);if(!u)return alert("Enter amount");await(await vault.depositPLS({value:usdToPLS(u)})).wait();loadVault();};
-    mint.onclick=async()=>{const u=parseFloat(usdMint.value);if(!u)return alert("Enter amount");await(await vault.mint(usdToPSun(u))).wait();loadVault();};
-    repay.onclick=async()=>{const u=parseFloat(usdRepay.value);if(!u)return alert("Enter amount");await(await token.approve(VAULT,usdToPSun(u))).wait();await(await vault.repay(usdToPSun(u))).wait();loadVault();};
-    withdraw.onclick=async()=>{const u=parseFloat(usdOut.value);if(!u)return alert("Enter amount");await(await vault.withdrawPLS(usdToPLS(u))).wait();loadVault();};
-    risk.onclick=async()=>{const c=await vault.canLiquidate(account);riskText.innerHTML=c?'<span class="risk">⚠️ LIQUIDATION RISK ⚠️</span>':'<span class="safe">You are safe 🌞</span>';};
-
-    usdOneClick.addEventListener("input",()=>{
-      const usd=parseFloat(usdOneClick.value)||0;
-      if(!usd||!price){plsOneClick.textContent="";return;}
-      const pls=usdToPLS(usd);
-      const mintUSD=usd/1.55;
-      plsOneClick.textContent=`≈ ${Math.round(Number(ethers.formatEther(pls)))} PLS → ${mintUSD.toFixed(2)} pSunDAI (at 155%)`;
-    });
-
-    oneClickBtn.onclick=async()=>{
-      const usd=parseFloat(usdOneClick.value);
-      if(!usd)return alert("Enter amount");
-      try{
-        oneClickBtn.textContent="Processing...";
-        const plsValue=usdToPLS(usd);
-        const tx=await vault.depositAndAutoMintPLS({value:plsValue});
-        await tx.wait();
-        status.textContent=`Deposited ${usd.toFixed(2)} USD and auto-minted ${(usd/1.55).toFixed(2)} pSunDAI`;
-        loadVault();
-      }catch(e){error.textContent=e.message;}finally{oneClickBtn.textContent="1-Click Auto Mint (155%)";}
-    };
-  </script>
-    <!-- 🔗 Official Contract Addresses -->
   <footer class="footer">
     <h3>Official Contracts</h3>
     <div class="contracts">
-      <div><span class="label">pSunDAI Token:</span> 
-        <a href="https://scan.pulsechain.com/address/0xb54a634194a69B3839F16F73Cf783F55680dbc64" target="_blank">
-          0xb54a634194a69B3839F16F73Cf783F55680dbc64
+      <div><span class="label">pSunDAI Token:</span>
+        <a href="https://scan.pulsechain.com/address/0x98316280B93F835Ef561C59430270D31e0575A44" target="_blank">
+          0x98316280B93F835Ef561C59430270D31e0575A44
         </a>
       </div>
-      <div><span class="label">Vault:</span> 
-        <a href="https://scan.pulsechain.com/address/0x8F4d720d1b97c478d4232B2264a1edc566B23d7B" target="_blank">
-          0x8F4d720d1b97c478d4232B2264a1edc566B23d7B
+      <div><span class="label">Vault:</span>
+        <a href="https://scan.pulsechain.com/address/0xBFd8C212e0A132b2e58d45e0b5ccA3D2009d3778" target="_blank">
+          0xBFd8C212e0A132b2e58d45e0b5ccA3D2009d3778
         </a>
       </div>
-      <div><span class="label">Oracle:</span> 
-        <a href="https://scan.pulsechain.com/address/0x9c4b448520D17D3dD8a2046fEA011c7b40E88Fe5" target="_blank">
-          0x9c4b448520D17D3dD8a2046fEA011c7b40E88Fe5
+      <div><span class="label">Oracle:</span>
+        <a href="https://scan.pulsechain.com/address/0xD3c339d4e0b48E77a781dA61724672625b5CD56d" target="_blank">
+          0xD3c339d4e0b48E77a781dA61724672625b5CD56d
         </a>
       </div>
     </div>
   </footer>
+
+  <script>
+    window.addEventListener("load", () => {
+      const { ethers } = window.ethers;
+
+      const VAULT  = "0xBFd8C212e0A132b2e58d45e0b5ccA3D2009d3778";
+      const TOKEN  = "0x98316280B93F835Ef561C59430270D31e0575A44";
+      const ORACLE = "0xD3c339d4e0b48E77a781dA61724672625b5CD56d";
+
+      const VAULT_ABI = [{"inputs":[{"internalType":"address","name":"_wpls","type":"address"},{"internalType":"address","name":"_psundai","type":"address"},{"internalType":"address","name":"_oracle","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"name":"depositPLS","outputs":[],"stateMutability":"payable","type":"function"},{"name":"mint","inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"outputs":[],"stateMutability":"nonpayable","type":"function"},{"name":"repay","inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"outputs":[],"stateMutability":"nonpayable","type":"function"},{"name":"withdrawPLS","inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"outputs":[],"stateMutability":"nonpayable","type":"function"},{"name":"vaultInfo","inputs":[{"internalType":"address","name":"user","type":"address"}],"outputs":[{"internalType":"uint256","name":"collateral","type":"uint256"},{"internalType":"uint256","name":"debt","type":"uint256"},{"internalType":"uint256","name":"collateralUSD","type":"uint256"},{"internalType":"uint256","name":"ratio","type":"uint256"},{"internalType":"uint256","name":"mintable","type":"uint256"},{"internalType":"bool","name":"oracleHealthy","type":"bool"},{"internalType":"uint256","name":"price","type":"uint256"},{"internalType":"uint256","name":"systemRatio","type":"uint256"}],"stateMutability":"view","type":"function"},{"name":"canLiquidate","inputs":[{"internalType":"address","name":"user","type":"address"}],"outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"}];
+
+      const TOKEN_ABI = [{"name":"approve","inputs":[{"name":"spender","type":"address"},{"name":"value","type":"uint256"}],"outputs":[{"name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}];
+      const ORACLE_ABI = [{"name":"peekPriceView","outputs":[{"name":"price","type":"uint256"},{"name":"timestamp","type":"uint256"}],"stateMutability":"view","type":"function"}];
+
+      let provider, signer, vault, token, oracle, account, price = 0n;
+
+      // Cosmic background
+      const c = document.getElementById("bg"); const x = c.getContext("2d");
+      let w = c.width = innerWidth, h = c.height = innerHeight, t = 0;
+      window.addEventListener("resize", () => { w = c.width = innerWidth; h = c.height = innerHeight; });
+      (function draw(){
+        x.clearRect(0,0,w,h); t+=0.003;
+        const l = [{s:0.3,c:1.4,o:0.4,h:35},{s:0.5,c:1,o:0.6,h:45},{s:0.8,c:0.7,o:0.5,h:55}];
+        l.forEach(m=>{const g=x.createLinearGradient(0,0,w,h);
+          g.addColorStop(0,`hsla(${m.h+Math.sin(t*m.s)*10},90%,60%,0)`);
+          g.addColorStop(0.3,`hsla(${m.h+15},95%,70%,${m.o})`);
+          g.addColorStop(0.5,`hsla(${m.h+30},100%,80%,${m.o+0.2})`);
+          g.addColorStop(1,`hsla(${m.h},90%,60%,0)`);
+          x.globalCompositeOperation="screen";x.filter=`blur(${20*m.c}px)`;x.fillStyle=g;x.fillRect(0,0,w,h);
+        });
+        const p=0.5+0.5*Math.sin(t*2);
+        const sg=x.createRadialGradient(w/2,h/2,0,w/2,h/2,400*p);
+        sg.addColorStop(0,`rgba(255,220,100,${0.8*p})`);
+        sg.addColorStop(1,"rgba(255,100,0,0)");
+        x.filter="blur(80px)";x.fillStyle=sg;x.fillRect(0,0,w,h);
+        x.filter="none";x.globalCompositeOperation="source-over";
+        requestAnimationFrame(draw);
+      })();
+
+      async function connectWallet() {
+        if (!window.ethereum) return alert("Install MetaMask/Rabby");
+        try {
+          await window.ethereum.request({ method: "eth_requestAccounts" });
+          provider = new ethers.BrowserProvider(window.ethereum);
+          signer = await provider.getSigner();
+          account = await signer.getAddress();
+
+          try { await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x171" }]}); }
+          catch (e) { if (e.code === 4902) await window.ethereum.request({ method: "wallet_addEthereumChain", params: [{ chainId: "0x171", chainName: "PulseChain", nativeCurrency: { name: "PLS", symbol: "PLS", decimals: 18 }, rpcUrls: ["https://rpc.pulsechain.com"], blockExplorerUrls: ["https://scan.pulsechain.com"] }]}); }
+
+          vault = new ethers.Contract(VAULT, VAULT_ABI, signer);
+          token = new ethers.Contract(TOKEN, TOKEN_ABI, signer);
+          oracle = new ethers.Contract(ORACLE, ORACLE_ABI, provider);
+
+          document.getElementById("walletText").textContent = account.slice(0,6)+"..."+account.slice(-4);
+          document.querySelectorAll(".btn").forEach(b => b.disabled = false);
+          document.getElementById("status").textContent = "Connected!";
+          await updatePrice();
+          setInterval(updatePrice, 30000);
+          await loadVault();
+        } catch (e) { document.getElementById("error").textContent = e.message; }
+      }
+
+      async function updatePrice() {
+        try { const [p] = await oracle.peekPriceView(); price = p; document.getElementById("price").textContent = "$"+(Number(p)/1e18).toFixed(6)+" per PLS"; }
+        catch { document.getElementById("price").textContent = "Oracle offline"; }
+      }
+
+      function usdToPLS(usd) { return price ? ethers.parseEther(usd.toString()) * 1e18n / price : 0n; }
+      function usdToPSun(usd) { return ethers.parseEther(usd.toString()); }
+
+      ["usdIn","usdOut","usdOneClick"].forEach(id => {
+        document.getElementById(id).addEventListener("input", () => {
+          const usd = parseFloat(document.getElementById(id).value) || 0;
+          if (id === "usdOneClick" && usd > 0) {
+            const pls = usdToPLS(usd);
+            const mintUSD = usd / 1.55;
+            document.getElementById("plsOneClick").textContent = `~ ${Number(ethers.formatEther(pls)).toFixed(4)} PLS → ${mintUSD.toFixed(2)} pSunDAI (155%)`;
+          } else {
+            const pls = usdToPLS(usd);
+            document.getElementById(id==="usdIn"?"plsOut":"plsIn").textContent = usd>0 ? `~ ${Number(ethers.formatEther(pls)).toFixed(6)} PLS` : "";
+          }
+        });
+      });
+
+      async function loadVault() {
+        try {
+          const i = await vault.vaultInfo(account);
+          const ratio = i.ratio > 1e30 ? "Infinite" : (Number(i.ratio)/100).toFixed(2)+"%";
+          let ratioClass = "safe";
+          if (Number(i.ratio) < 15000) ratioClass = "risk";
+          else if (Number(i.ratio) < 17000) ratioClass = "warn";
+          document.getElementById("stats").innerHTML = `
+            <div class="stat"><div class="label">Collateral</div><div class="value">${Number(ethers.formatEther(i.collateral)).toFixed(4)} PLS</div></div>
+            <div class="stat"><div class="label">Debt</div><div class="value">${Number(ethers.formatEther(i.debt)).toFixed(4)} pSunDAI</div></div>
+            <div class="stat"><div class="label">Ratio</div><div class="value ${ratioClass}">${ratio}</div></div>
+            <div class="stat"><div class="label">Can Mint</div><div class="value">${Number(ethers.formatEther(i.mintable)).toFixed(4)} pSunDAI</div></div>
+          `;
+        } catch (e) { document.getElementById("error").textContent = e.message; }
+      }
+
+      document.getElementById("walletBtn").onclick = connectWallet;
+      document.getElementById("deposit").onclick = async () => { const u = parseFloat(document.getElementById("usdIn").value); if(!u)return alert("Enter amount"); try{document.getElementById("deposit").textContent="Sending...";await(await vault.depositPLS({value:usdToPLS(u)})).wait();document.getElementById("status").textContent="Deposited!";loadVault();}catch(e){document.getElementById("error").textContent=e.message;}finally{document.getElementById("deposit").textContent="Deposit PLS";}};
+      document.getElementById("mint").onclick = async () => { const u = parseFloat(document.getElementById("usdMint").value); if(!u)return alert("Enter amount"); try{document.getElementById("mint").textContent="Minting...";await(await vault.mint(usdToPSun(u))).wait();document.getElementById("status").textContent="Minted!";loadVault();}catchall(e){document.getElementById("error").textContent=e.message;}finally{document.getElementById("mint").textContent="Mint pSunDAI";}};
+      document.getElementById("repay").onclick = async () => { const u = parseFloat(document.getElementById("usdRepay").value); if(!u)return alert("Enter amount"); try{document.getElementById("repay").textContent="Repaying...";await(await token.approve(VAULT,usdToPSun(u))).wait();await(await vault.repay(usdToPSun(u))).wait();document.getElementById("status").textContent="Repaid!";loadVault();}catch(e){document.getElementById("error").textContent=e.message;}finally{document.getElementById("repay").textContent="Repay";}};
+      document.getElementById("withdraw").onclick = async () => { const u = parseFloat(document.getElementById("usdOut").value); if(!u)return alert("Enter amount"); try{document.getElementById("withdraw").textContent="Withdrawing...";await(await vault.withdrawPLS(usdToPLS(u))).wait();document.getElementById("status").textContent="Withdrew!";loadVault();}catch(e){document.getElementById("error").textContent=e.message;}finally{document.getElementById("withdraw").textContent="Withdraw PLS";}};
+      document.getElementById("risk").onclick = async () => { try{const c=await vault.canLiquidate(account);document.getElementById("riskText").innerHTML=c?'<span class="risk">LIQUIDATION RISK!</span>':'<span class="safe">You are safe</span>';}catch(e){document.getElementById("error").textContent=e.message;}};
+
+      // 1-Click Auto Mint
+      document.getElementById("oneClickBtn").onclick = async () => {
+        const usd = parseFloat(document.getElementById("usdOneClick").value);
+        if (!usd) return alert("Enter amount");
+        try {
+          document.getElementById("oneClickBtn").textContent = "Processing...";
+          const plsValue = usdToPLS(usd);
+          const tx = await vault.depositAndAutoMintPLS({ value: plsValue });
+          await tx.wait();
+          document.getElementById("status").textContent = `Auto-minted ${(usd/1.55).toFixed(2)} pSunDAI!`;
+          loadVault();
+        } catch (e) { document.getElementById("error").textContent = e.message; }
+        finally { document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)"; }
+      };
+
+      if (window.ethereum?.selectedAddress) connectWallet();
+    });
+  </script>
 </body>
 </html>
