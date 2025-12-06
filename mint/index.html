@@ -52,7 +52,7 @@
       backdrop-filter: blur(20px);
       border: 2px solid #ff6b00;
       border-radius: 20px;
-      box-shadow: 0 0 80px rgba(255, 215, 0, 0.5);
+      box-shadow: 0 0 40px rgba(255, 215, 0, 0.25);
       padding: 30px 25px;
       max-width: 480px;
       width: 90%;
@@ -60,14 +60,6 @@
       position: relative;
       z-index: 10;
     }
-
-    .logo {
-  display: block;
-  max-width: 240px;
-  margin: 0 auto 10px;
-  animation: floatGlow 6s ease-in-out infinite;
-  transform-origin: center;
-}
 
 .logo {
   display: block;
@@ -117,31 +109,53 @@
       margin-bottom: 12px;
     }
 
-    input {
-      width: 100%;
-      padding: 12px;
-      background: #110022;
-      border: 2px solid rgba(255, 107, 0, 0.4);
-      border-radius: 10px;
-      color: #fff;
-      font-size: 1em;
-      text-align: center;
-      transition: border 0.2s ease;
-    }
-    input:focus { border-color: #ffd700; outline: none; }
+    input,
+.btn {
+  width: 100%;
+  display: block;
+  box-sizing: border-box;
+  font-size: 1em;
+  font-weight: 700;
+  text-align: center;
+  border-radius: 10px;
+  padding: 14px; /* unified padding */
+  transition: all 0.2s ease;
+}
 
-    .btn {
-      width: 100%;
-      padding: 14px;
-      background: #ff6b00;
-      color: #000;
-      border: none;
-      border-radius: 10px;
-      font-size: 1em;
-      font-weight: 800;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
+/* ✏️ Input field styling */
+input {
+  background: #110022;
+  border: 2px solid rgba(255, 107, 0, 0.4);
+  color: #fff;
+}
+input:focus {
+  border-color: #ffd700;
+  outline: none;
+}
+
+/* 🔘 Button styling */
+.btn {
+  background: #ff6b00;
+  border: 2px solid transparent;
+  color: #000;
+  cursor: pointer;
+}
+.btn:hover {
+  background: #ffd700;
+  transform: translateY(-2px);
+}
+.btn:disabled {
+  background: #444;
+  color: #999;
+  cursor: not-allowed;
+  border-color: transparent;
+}
+
+/* 🧩 Fix spacing between input and button in each card */
+.card input + .btn {
+  margin-top: 8px;
+}
+
     .btn:hover { background: #ffd700; transform: translateY(-2px); }
     .btn:disabled { background: #444; color: #999; cursor: not-allowed; }
 
