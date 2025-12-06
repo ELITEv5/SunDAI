@@ -156,9 +156,6 @@ input:focus {
   margin-top: 8px;
 }
 
-    .btn:hover { background: #ffd700; transform: translateY(-2px); }
-    .btn:disabled { background: #444; color: #999; cursor: not-allowed; }
-
     .preview {
       color: #ffbd70;
       text-align: center;
@@ -264,7 +261,7 @@ input:focus {
   <div class="container">
     <img src="sundailogo.png" class="logo" alt="SunDAI Logo" />
     <h1>SunDAI</h1> 
-    <h1>Autonomous Stable Asset</h1>
+    <h2>Autonomous Stable Asset</h2>
     <div class="price" id="price">Loading price...</div>
     <div class="status" id="status"></div>
     <div class="error" id="error"></div>
@@ -456,14 +453,11 @@ draw();
     const ratioNum = Number(i.ratio);
     let ratioValue;
 
-    // Detect whether ratio is scaled by 1e4 (old vaults) or 1e18 (newer ones)
-    if (ratioNum > 1e10) {
-      // ratio returned like 1.55e20 → divide by 1e16 to get 155.00
-      ratioValue = ratioNum / 1e16;
-    } else {
-      // ratio returned like 15500 → divide by 100 to get 155.00
-      ratioValue = ratioNum / 100;
-    }
+    if (ratioNum > 1e8) {
+  ratioValue = ratioNum / 1e16; // 1e18-scaled
+} else {
+  ratioValue = ratioNum / 100;  // 1e4-scaled
+}
 
     // Assign color class based on safety thresholds
     let ratioClass = "safe";
