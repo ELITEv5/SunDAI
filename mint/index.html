@@ -311,17 +311,19 @@
 
 
   <script>
-    // Detect ethers global across versions
-    const ethers =
-      (window.ethers && window.ethers.Contract) ? window.ethers :
-      window.ethers?.ethers ?? null;
-    if (!ethers) alert("⚠️ Ethers not loaded correctly. Check ethers.umd.min.js version.");
+    // 📦 Clean ethers detection (for UMD build)
+const ethers = window.ethers;
+if (!ethers || !ethers.Contract) {
+  alert("⚠️ Ethers not loaded correctly. Check ethers.umd.min.js version.");
+}
 
-    const VAULT  = "0xaCA12077AfB17eFDb1d14789B0dAB2f964160545";
-    const TOKEN  = "0x5FA721CA7014747d246C9Ec6984f1dE9ea12c450";
-    const ORACLE = "0x8C9Dd02E93281B6e8Cf7f822BB54E83f2037FaF1";
+// 🎯 Contract addresses
+const VAULT  = "0xaCA12077AfB17eFDb1d14789B0dAB2f964160545";
+const TOKEN  = "0x5FA721CA7014747d246C9Ec6984f1dE9ea12c450";
+const ORACLE = "0x8C9Dd02E93281B6e8Cf7f822BB54E83f2037FaF1";
 
-    window.provider = null;
+// 🌐 Globals
+window.provider = null;
 window.signer = null;
 window.vault = null;
 window.token = null;
@@ -329,66 +331,90 @@ window.oracle = null;
 window.account = null;
 window.price = 0n;
 
+// 🔢 Constants
+const DECIMALS = 10n ** 18n;
 
-    async function loadABIs(){
-      const v = await fetch("vault-abi.json").then(r=>r.json());
-      const t = await fetch("token-abi.json").then(r=>r.json());
-      const o = await fetch("oracle-abi.json").then(r=>r.json());
-      return [v,t,o];
+// 📜 Load all ABIs
+async function loadABIs() {
+  const v = await fetch("vault-abi.json").then(r => r.json());
+  const t = await fetch("token-abi.json").then(r => r.json());
+  const o = await fetch("oracle-abi.json").then(r => r.json());
+  return [v, t, o];
+}
+
+// 👛 Connect wallet and load contracts
+async function connectWallet() {
+  try {
+    if (!window.ethereum) {
+      alert("No wallet detected. Please install MetaMask.");
+      return;
     }
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+    provider = new ethers.BrowserProvider(window.ethereum);
+    signer = await provider.getSigner();
+    account = await signer.getAddress();
 
-    async function connectWallet(){
-      try {
-        if(!window.ethereum){ alert("No wallet detected. Please install MetaMask."); return; }
-        await window.ethereum.request({method:"eth_requestAccounts"});
-        provider = new ethers.BrowserProvider(window.ethereum);
-        signer = await provider.getSigner();
-        account = await signer.getAddress();
+    const network = await provider.getNetwork();
+    status.textContent = `Connected to ${network.name}`;
+    walletText.textContent = account.slice(0, 6) + "..." + account.slice(-4);
+    walletBtn.classList.add("connected");
+    document.querySelectorAll(".btn").forEach(b => b.disabled = false);
 
-        const network = await provider.getNetwork();
-        status.textContent = `Connected to ${network.name}`;
-        walletText.textContent = account.slice(0,6)+"..."+account.slice(-4);
-        walletBtn.classList.add("connected");
-        document.querySelectorAll(".btn").forEach(b=>b.disabled=false);
+    const [VAULT_ABI, TOKEN_ABI, ORACLE_ABI] = await loadABIs();
+    vault  = new ethers.Contract(VAULT, VAULT_ABI, signer);
+    token  = new ethers.Contract(TOKEN, TOKEN_ABI, signer);
+    oracle = new ethers.Contract(ORACLE, ORACLE_ABI, provider);
 
-        const [VAULT_ABI,TOKEN_ABI,ORACLE_ABI] = await loadABIs();
-        vault  = new ethers.Contract(VAULT, VAULT_ABI, signer);
-        token  = new ethers.Contract(TOKEN, TOKEN_ABI, signer);
-        oracle = new ethers.Contract(ORACLE, ORACLE_ABI, provider);
+    await updatePrice();
+    await loadVault();
+    setInterval(updatePrice, 60000);
+  } catch (e) {
+    console.error(e);
+    error.textContent = e.message;
+  }
+}
 
-        await updatePrice();
-        await loadVault();
-        setInterval(updatePrice, 60000);
-      } catch(e){ console.error(e); error.textContent = e.message; }
-    }
+// 📈 Update oracle price
+async function updatePrice() {
+  try {
+    const [p] = await oracle.peekPriceView();
+    price = p;
+    document.getElementById("price").textContent =
+      "$" + (Number(price) / 1e18).toFixed(6) + " per PLS";
+  } catch {
+    document.getElementById("price").textContent = "Oracle offline";
+  }
+}
 
-    async function updatePrice(){
-      try {
-        const [p] = await oracle.peekPriceView();
-        price = p;
-        document.getElementById("price").textContent = "$" + (Number(p)/1e18).toFixed(6) + " per PLS";
-      } catch {
-        document.getElementById("price").textContent = "Oracle offline";
-      }
-    }
+// 🔁 Conversions
+function usdToPLS(usd) {
+  if (!price) return 0n;
+  const usdWei = ethers.parseUnits(usd.toString(), 18); // USD with 18 decimals
+  return (usdWei * DECIMALS) / price;
+}
 
-    function usdToPLS(usd){ if(!price)return 0n; const usdWei=ethers.parseEther(usd.toString()); return (usdWei*(10n**18n))/price; }
-    function usdToPSun(usd){ return ethers.parseEther(usd.toString()); }
+function usdToPSun(usd) {
+  return ethers.parseUnits(usd.toString(), 18);
+}
 
-    ["usdIn","usdOut"].forEach(id=>{
-      document.getElementById(id).addEventListener("input",()=>{
-        const usd=parseFloat(document.getElementById(id).value)||0;
-        const pls=usdToPLS(usd);
-        const text=usd>0?`≈ ${Math.round(Number(ethers.formatEther(pls)))} PLS`:"";
-        document.getElementById(id==="usdIn"?"plsOut":"plsIn").textContent=text;
-      });
-    });
+// 🔁 Update live previews on input
+["usdIn", "usdOut"].forEach(id => {
+  document.getElementById(id).addEventListener("input", () => {
+    const usd = parseFloat(document.getElementById(id).value) || 0;
+    const pls = usdToPLS(usd);
+    const text = usd > 0
+      ? `≈ ${Math.round(Number(ethers.formatEther(pls)))} PLS`
+      : "";
+    document.getElementById(id === "usdIn" ? "plsOut" : "plsIn").textContent = text;
+  });
+});
 
-   async function loadVault(){
+// 📦 Load vault info to UI
+async function loadVault() {
   try {
     const i = await vault.vaultInfo(account);
-    const ratioValue = Number(i.ratio); // already in percent
-    let ratioClass = ratioValue < 150 ? "risk" : ratioValue < 170 ? "warn" : "safe";
+    const ratioValue = Number(i.ratio);
+    const ratioClass = ratioValue < 150 ? "risk" : ratioValue < 170 ? "warn" : "safe";
     const ratioDisplay = ratioValue > 1e6 ? "∞" : ratioValue.toFixed(2) + "%";
 
     stats.innerHTML = `
@@ -414,7 +440,7 @@ window.price = 0n;
   }
 }
 
-    walletBtn.onclick = connectWallet;
+walletBtn.onclick = connectWallet;
 
     deposit.onclick = async()=>{
       const u=parseFloat(usdIn.value); if(!u)return alert("Enter amount");
