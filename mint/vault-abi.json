@@ -564,7 +564,7 @@
       {
         "name": "",
         "type": "address",
-        "internalType": "contract pSunDAI"
+        "internalType": "contract pSunDAI_ASA"
       }
     ],
     "stateMutability": "view"
