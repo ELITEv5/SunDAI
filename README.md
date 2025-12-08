@@ -1,125 +1,101 @@
-# 🌞 SunDAI ASA — Autonomous Stable Asset
-
+# SunDAI ASA — Autonomous Stable Asset
 > **The World’s First Fully Autonomous Stable Asset Vault.**  
 > Built on PulseChain. Designed for every chain.  
 > Developed by **ELITE TEAM6**.
 
 ---
 
-## 🧠 Overview
+## Overview
+**SunDAI ASA** is a completely autonomous, immutable vault system that lets anyone mint **pSunDAI** — a decentralized, USD-pegged stable asset — by locking PLS as collateral.
 
-**SunDAI ASA** is an **Autonomous Stable Asset (ASA)** — a fully on-chain, immutable vault system that enables users to mint a decentralized stable asset (**pSunDAI**) by locking native collateral such as **PLS**, **wETH**, **HEX**, or other on-chain assets.
+No admins. No keepers. No governance. No upgrades.  
+Just pure math, on-chain collateral, and self-healing code.
 
-Unlike fiat-backed stablecoins, **SunDAI is algorithmic, collateralized, and self-governing** — no keys, no banks, no off-chain dependency.
-
-SunDAI runs on math, collateral, and immutable code.
-
----
-
-## ⚙️ Key Features
-
-| Feature | Description |
-|----------|--------------|
-| 🧱 **Immutable Vaults** | Each user has a unique, keyless vault. No admin intervention required. |
-| 🧮 **Autonomous Oracle System** | Self-refreshing oracle with ±10% clamp protection and stale-price fallback. |
-| 💎 **Full Autonomy** | No governance keys. No pausable contracts. No upgrades. 100% autonomous. |
-| 💰 **0.5% Annual Stability Fee** | Accrued automatically per vault — no interest rates, no custodians. |
-| ⚖️ **Safe Collateralization (150%)** | Over-collateralized design protects against volatility and depegging. |
-| 🔥 **Liquidation Auctions** | Fair, time-based liquidation rewards keep vaults balanced without admin action. |
-| ⚡ **One-Click UX** | Deposit+Mint and Repay+Withdraw in a single transaction. |
-| 🌍 **Chain-Agnostic Architecture** | Built to support native assets across EVM-compatible chains (PLS, ETH, BNB, etc.). |
+**SunDAI runs forever.**
 
 ---
 
-## 🧩 Core Contracts
+## Key Features (v5.3 Immortal Edition)
 
-| Contract | Description |
-|-----------|-------------|
-| `pSunDAI_ASA_Token.sol` | ERC-20 stable asset token (Autonomous Stable Asset). |
-| `pSunDAI_Stable_Vaultv3.sol` | Core vault logic — handles deposits, minting, repayment, withdrawals, and liquidations. |
-| `pSunDAIoraclePLSX3.sol` | Oracle contract that aggregates stable pair data and clamps volatility. |
-
-All contracts are immutable and deployed without admin ownership.  
-
----
-
-## 🔒 Security & Design
-
-SunDAI ASA is engineered for **complete autonomy and transparency**:
-- No upgradeable proxies.
-- No admin or owner functions.
-- No centralized minting.
-- No emergency control.
-- Immutable after deployment.
-
-If the oracle stops updating, users can still:
-- Repay debt.  
-- Withdraw collateral (if debt = 0).  
-- Liquidate unsafe vaults.
-
-This ensures **liveness, solvency, and permissionless safety** under all conditions.
+| Feature                        | Description                                                                                       |
+|--------------------------------|---------------------------------------------------------------------------------------------------|
+| Immutable Vaults               | Every user owns a personal, keyless vault. No one can pause, freeze, or rug it.                  |
+| Hybrid Oracle (v4.1)           | Median-filtered TWAP + spot hybrid across 5 PulseX stable pools. Self-refreshing with every mint. |
+| Smart Volatility Guard         | ±10% price clamp with **asymmetric cooldown** (4h on dumps, 1h on pumps) + instant recovery when price stabilizes. |
+| Full Autonomy                  | No admin keys, no pausable functions, no upgrades. 100% immortal.                                |
+| 0.5% Annual Stability Fee      | Accrues only when you interact — fair, gas-efficient, and automatic.                             |
+| 150% Collateral Ratio          | Safe over-collateralization. Liquidation at 110%.                                                 |
+| Dynamic Liquidation Auctions   | 2%–5% bonus, time-weighted. Anyone can liquidate unsafe vaults.                                  |
+| One-Click UX                   | Deposit+Mint, Repay+Auto-Withdraw, Repay to Health, Mint Max, Withdraw Max Safe — all in one click. |
+| Chain-Agnostic Design          | Ready for PLS, wETH, HEX, and any EVM chain.                                                     |
 
 ---
 
-## 🧠 Economic Model
+## Live Contracts (v5.3 Immortal — December 2025)
 
-- **Collateral Ratio:** 150% (minting), 110% (liquidation threshold).  
-- **Stability Fee:** 0.5% annualized, automatically accrued.  
-- **Liquidation Bonus:** 2%–5% dynamic, time-weighted.  
-- **System Pause:** Automatic minting halt if global ratio < 130%.  
+| Contract           | Address                                    | Explorer Link |
+|--------------------|--------------------------------------------|---------------|
+| **pSunDAI Token**  | `0xA39Ae3eC7435CD30508FA439378478EA9cAB91dD` | [View](https://scan.pulsechain.com/address/0xA39Ae3eC7435CD30508FA439378478EA9cAB91dD) |
+| **Vault**          | `0xE61569D135b98B2530AEB5287F9122B98b3D35d0` | [View](https://scan.pulsechain.com/address/0xE61569D135b98B2530AEB5287F9122B98b3D35d0) |
+| **Hybrid Oracle**  | `0x4DDCC8de4f0DA14647F6bD2388553526308599c3` | [View](https://scan.pulsechain.com/address/0x4DDCC8de4f0DA14647F6bD2388553526308599c3) |
 
-All parameters are **hardcoded and immutable** — no DAO votes or admin adjustments.
-
----
-
-## 💬 Example Workflow
-
-1. Deposit **WPLS** (or native wrapped token).  
-2. Mint **pSunDAI** up to 66% of your collateral value.  
-3. Repay any amount of pSunDAI at any time.  
-4. Withdraw collateral once debt is cleared.  
-5. Vault auto-rebalances and accrues minimal stability fees.
+All contracts are **verified** and **immutable**.
 
 ---
 
-## 🌐 Official Links
+## Security & Autonomy
+SunDAI v5.3 is engineered to survive anything:
+- No upgradeability
+- No owner functions
+- No emergency pauses
+- Even if the oracle stops forever, you can always repay and withdraw your collateral
+- Verified source code on PulseScan
 
-- 🌞 **Website:** [https://www.sundaitoken.com](https://www.sundaitoken.com)  
-- 📜 **Docs:** [https://github.com/ELITEv5/SunDAI](https://github.com/ELITEv5/SunDAI)  
-- 🧑‍💻 **Developers:** dev@sundaitoken.com  
-- 🧠 **Whitepaper: https://github.com/ELITEv5/SunDAI/blob/main/SunDAI_Whitepaper_2025.md
+Audited logic. Battle-tested on mainnet.
 
 ---
 
-## 🪙 License
+## Economic Model (Immutable Parameters)
+- **Collateral Ratio:** 150% (minting)
+- **Liquidation Threshold:** 110%
+- **Stability Fee:** 0.5% per year (auto-accrued)
+- **Liquidation Bonus:** 2%–5% (time-weighted)
+- **Global Health Halt:** Minting pauses if system ratio < 130%
 
-```text
+No votes. No changes. Ever.
+
+---
+
+## Example Workflow
+1. Connect wallet → see live PLS price
+2. Enter $ amount → **One-Click Deposit + Auto-Mint** (155% buffer)
+3. Use pSunDAI anywhere on PulseChain
+4. Need to exit? **Repay & Auto-Withdraw Excess PLS** in one click
+5. Want perfect safety? Click **“Repay to Safe Health (150%+)”**
+
+Zero math. Zero stress.
+
+---
+
+## Official Links
+- **Website & Vault UI:** https://www.sundaitoken.com
+- **Live Dashboard:** https://www.sundaitoken.com
+- **GitHub:** https://github.com/ELITEv5/SunDAI
+- **Developers:** dev@sundaitoken.com
+- **Whitepaper:** https://github.com/ELITEv5/SunDAI/blob/main/SunDAI_Whitepaper_2025.md
+
+---
+
+## License
 MIT License
-
-Copyright (c) 2025 ELITE TEAM6  
-SunDAI Autonomous Stable Asset (ASA)  
-Website: https://www.sundaitoken.com  
+Copyright © 2025 ELITE TEAM6
+SunDAI Autonomous Stable Asset (ASA)
+Website: https://www.sundaitoken.com
 Contact: dev@sundaitoken.com
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-🏁 “Built for Freedom.”
-No banks. No custodians. No permission.
+Permission is hereby granted, free of charge, to any person obtaining a copy...
+[Full MIT text]
+text**“Built for Freedom.”**  
+No banks. No custodians. No permission.  
 Only math, code, and collateral.
 
 — SunDAI ASA by ELITE TEAM6
