@@ -81,8 +81,22 @@
     .contracts a:hover { color: #ffd700; }
     .contracts .label { color: #ff6b00; font-weight: 700; display: block; margin-bottom: 2px; }
     @media (max-width: 480px) { .contracts { font-size: 0.75em; gap: 8px; } .contracts a { font-size: 0.75em; } }
-    #bg { opacity: 0; animation: fadeIn 2s ease forwards; }
+
+    /* GOLDEN SUN NEBULA — UPGRADED */
+    #bg {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0;
+      pointer-events: none; background-repeat: no-repeat; background-size: cover;
+      transition: background 1s ease; opacity: 0;
+      animation: fadeIn 2s ease forwards, solarPulse 8s ease-in-out infinite;
+    }
     @keyframes fadeIn { to { opacity: 1; } }
+    @keyframes solarPulse {
+      0%, 100% { filter: brightness(1) hue-rotate(0deg); }
+      50% { filter: brightness(1.3) hue-rotate(45deg); }
+    }
+    .container:hover ~ #bg {
+      filter: brightness(1.4) saturate(1.2);
+    }
   </style>
 </head>
 <body>
@@ -96,40 +110,33 @@
     <div class="status" id="status"></div>
     <div class="error" id="error"></div>
     <div class="card"><div class="stats" id="stats">Connect wallet to begin</div></div>
-
     <div class="card">
       <input id="usdOneClick" type="number" step="0.01" placeholder="Deposit & Auto Mint (USD)" />
       <div class="preview" id="plsOneClick"></div>
-      <button class="btn" id="oneClickBtn" disabled>1-Click Auto Mint</button>
+      <button class="btn" id="oneClickBtn" disabled>1-Click Auto Mint (155%)</button>
     </div>
-
     <div class="card">
       <input id="usdIn" type="number" step="0.01" placeholder="Deposit USD value" />
       <div class="preview" id="plsOut"></div>
       <button class="btn" id="deposit" disabled>Deposit PLS</button>
     </div>
-
     <div class="card">
       <input id="usdMint" type="number" step="0.01" placeholder="Mint USD amount" />
       <button class="btn" id="mint" disabled>Mint pSunDAI</button>
     </div>
-
     <div class="card">
       <input id="usdRepay" type="number" step="0.01" placeholder="Repay USD amount" />
       <button class="btn" id="repay" disabled>Repay Debt</button>
     </div>
-
     <div class="card">
       <input id="usdOut" type="number" step="0.01" placeholder="Withdraw USD value" />
       <div class="preview" id="plsIn"></div>
       <button class="btn" id="withdraw" disabled>Withdraw PLS</button>
     </div>
-
     <div class="card">
       <button class="btn" id="risk" disabled style="background:#ff3366">Check Liquidation Risk</button>
       <div id="riskText" style="margin-top:10px;text-align:center;font-weight:700"></div>
     </div>
-
     <div class="card" id="safetyCard" style="margin-top: 12px;">
       <div id="safetyStatus" style="text-align:center;font-weight:700;color:#ffd700;margin-bottom:8px;">
         Wake up Oracle for Most Current Price
@@ -139,7 +146,6 @@
       </button>
     </div>
   </div>
-
   <footer class="footer">
     <h3>Official Contracts</h3>
     <div class="contracts">
@@ -161,16 +167,14 @@
     </div>
   </footer>
 
+  <!-- ALL YOUR LOGIC + FIXED 155% + GOLDEN SUN NEBULA -->
   <script>
     const ethers = window.ethers;
     if (!ethers || !ethers.Contract) alert("Ethers.js failed to load");
-
     const VAULT = "0xd44cac3E0FdA5c3E6883F2cA890FdD2374397146";
     const TOKEN = "0x8DCFFc6a88400c8642c9b7fe332535CD37626b85";
     const ORACLE = "0xd8651823e2b8e1a53e6f7d54d7ed5DdDEB62DC27";
-
     let provider, signer, vault, token, oracle, account, price = 0n, minRatio = 15500n;
-
     const DECIMALS = 10n ** 18n;
     const status = document.getElementById("status");
     const error = document.getElementById("error");
@@ -194,7 +198,6 @@
         provider = new ethers.BrowserProvider(window.ethereum);
         signer = await provider.getSigner();
         account = await signer.getAddress();
-
         const network = await provider.getNetwork();
         if (Number(network.chainId) !== 369) {
           try {
@@ -206,19 +209,17 @@
             return alert("Please switch to PulseChain (chainId 369)");
           }
         }
-
         const [VAULT_ABI, TOKEN_ABI, ORACLE_ABI] = await loadABIs();
         vault = new ethers.Contract(VAULT, VAULT_ABI, signer);
         token = new ethers.Contract(TOKEN, TOKEN_ABI, signer);
         oracle = new ethers.Contract(ORACLE, ORACLE_ABI, provider);
 
-       minRatio = await vault.COLLATERAL_RATIO(); // 150 for actual calculations
-document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)"; // UX buffer
+        minRatio = await vault.COLLATERAL_RATIO();
+        document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
 
         walletText.textContent = account.slice(0,6) + "..." + account.slice(-4);
         walletBtn.classList.add("connected");
         document.querySelectorAll(".btn").forEach(b => b.disabled = false);
-
         await Promise.all([updatePrice(), loadVault()]);
         setInterval(updatePrice, 60000);
       } catch (e) {
@@ -230,11 +231,8 @@ document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
     async function updatePrice() {
       try {
         let p, t;
-        try {
-          [p, t] = await oracle.getPriceWithTimestamp();
-        } catch {
-          [p, t] = await oracle.peekPriceView();
-        }
+        try { [p, t] = await oracle.getPriceWithTimestamp(); }
+        catch { [p, t] = await oracle.peekPriceView(); }
         const age = Math.floor(Date.now()/1000) - Number(t);
         if (age > 86400) throw new Error("Oracle data stale");
         price = p;
@@ -258,7 +256,6 @@ document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
         const ratio = Number(i.ratio);
         const ratioClass = ratio < 150 ? "risk" : ratio < 170 ? "warn" : "safe";
         const ratioDisplay = ratio > 1e6 ? "∞" : ratio.toFixed(2) + "%";
-
         stats.innerHTML = `
           <div class="stat"><div class="label">Collateral</div><div class="value">${Math.round(Number(ethers.formatEther(i.collateral)))} PLS</div></div>
           <div class="stat"><div class="label">Debt</div><div class="value">${Number(ethers.formatEther(i.debt)).toFixed(2)} pSunDAI</div></div>
@@ -289,7 +286,6 @@ document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
       }
     }
 
-    // Live previews
     ["usdIn", "usdOut", "usdOneClick"].forEach(id => {
       document.getElementById(id).addEventListener("input", () => {
         const usd = parseFloat(document.getElementById(id).value) || 0;
@@ -298,12 +294,11 @@ document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
           return;
         }
         const pls = usdToPLS(usd);
-        const ratio = Number(minRatio) / 100;
-        const mintable = usd / (ratio / 100);
-
         if (id === "usdOneClick") {
+          const plsRounded = Math.round(Number(ethers.formatEther(pls)));
+          const mintable = usd / 1.55;
           document.getElementById("plsOneClick").textContent =
-            `≈ ${Math.round(Number(ethers.formatEther(pls)))} PLS → ${mintable.toFixed(2)} pSunDAI (at ${ratio.toFixed(1)}%)`;
+            `≈ ${plsRounded} PLS → ${mintable.toFixed(2)} pSunDAI (at 155%)`;
         } else {
           document.getElementById(id === "usdIn" ? "plsOut" : "plsIn").textContent =
             `≈ ${Math.round(Number(ethers.formatEther(pls)))} PLS`;
@@ -311,7 +306,6 @@ document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
       });
     });
 
-    // Actions
     document.getElementById("deposit").onclick = () => withLoading(document.getElementById("deposit"), async () => {
       const u = parseFloat(document.getElementById("usdIn").value);
       if (!u || u <= 0) throw new Error("Enter amount");
@@ -350,12 +344,12 @@ document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
       const plsValue = usdToPLS(usd);
       const tx = await vault.depositAndAutoMintPLS({ value: plsValue });
       await tx.wait();
-      status.textContent = `Minted ${(usd / (Number(minRatio)/10000)).toFixed(2)} pSunDAI at ${(Number(minRatio)/100).toFixed(1)}%`;
+      status.textContent = `Minted ${(usd / 1.55).toFixed(2)} pSunDAI at 155% collateral`;
     });
 
     walletBtn.onclick = connectWallet;
 
-    // Oracle Safety Logic (unchanged — already perfect)
+    // Oracle Safety Logic
     window.addEventListener("load", () => {
       async function waitForOracle(ms = 10000) {
         const start = Date.now();
@@ -410,25 +404,28 @@ document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
       };
     });
 
-    // Nebula Background (unchanged — beautiful)
+    // GOLDEN SUN NEBULA — FINAL
     const bg = document.getElementById("bg");
     let t = 0, mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
-    function animate() {
-      t += 0.004;
+    function animateSolarNebula() {
+      t += 0.005;
       mouseX += (targetX - mouseX) * 0.05;
       mouseY += (targetY - mouseY) * 0.05;
-      const x1 = 25 + Math.sin(t * 0.7) * 20 + mouseX * 15;
-      const y1 = 25 + Math.cos(t * 0.8) * 15 + mouseY * 10;
-      const x2 = 75 + Math.cos(t * 0.5) * 18 - mouseX * 12;
-      const y2 = 70 + Math.sin(t * 0.6) * 14 - mouseY * 10;
-      const x3 = 50 + Math.sin(t * 0.3) * 15 + mouseX * 10;
-      const y3 = 50 + Math.cos(t * 0.4) * 12 + mouseY * 10;
+      const sunX = 50 + Math.sin(t * 0.3) * 5 + mouseX * 5;
+      const sunY = 50 + Math.cos(t * 0.4) * 5 + mouseY * 5;
+      const x1 = 20 + Math.sin(t * 0.8) * 25 + mouseX * 20;
+      const y1 = 30 + Math.cos(t * 0.9) * 20 + mouseY * 15;
+      const x2 = 80 + Math.cos(t * 0.6) * 25 - mouseX * 20;
+      const y2 = 70 + Math.sin(t * 0.7) * 20 - mouseY * 15;
+      const x3 = sunX + Math.sin(t * 0.2) * 15;
+      const y3 = sunY + Math.cos(t * 0.3) * 15;
       bg.style.background = `
-        radial-gradient(circle at ${x1}% ${y1}%, rgba(255,200,100,0.20), transparent 65%),
-        radial-gradient(circle at ${x2}% ${y2}%, rgba(255,130,40,0.16), transparent 65%),
-        radial-gradient(circle at ${x3}% ${y3}%, rgba(120,0,180,0.22), transparent 75%)
+        radial-gradient(circle at ${sunX}% ${sunY}%, rgba(255, 215, 0, 0.35) 0%, rgba(255, 215, 0, 0.15) 40%, transparent 70%),
+        radial-gradient(ellipse at ${x1}% ${y1}%, rgba(255, 215, 0, 0.25) 0%, rgba(255, 165, 0, 0.18) 50%, transparent 80%),
+        radial-gradient(ellipse at ${x2}% ${y2}%, rgba(255, 140, 0, 0.22) 0%, rgba(255, 107, 0, 0.15) 50%, transparent 80%),
+        radial-gradient(circle at ${x3}% ${y3}%, rgba(255, 215, 0, 0.10) 0%, transparent 100%)
       `;
-      requestAnimationFrame(animate);
+      requestAnimationFrame(animateSolarNebula);
     }
     window.addEventListener("mousemove", e => {
       targetX = (e.clientX / innerWidth - 0.5);
@@ -437,7 +434,7 @@ document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
     window.addEventListener("deviceorientation", e => {
       if (e.gamma && e.beta) { targetX = e.gamma/45; targetY = e.beta/45; }
     });
-    animate();
+    animateSolarNebula();
   </script>
 </body>
 </html>
