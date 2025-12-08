@@ -220,7 +220,56 @@
       return [v, t, o];
     }
 
-    async function connectWallet() {
+    // === HELPER FUNCTIONS for Oracle Health Check ===
+async function waitForOracle(ms = 10000) {
+  const start = Date.now();
+  while ((!window.oracle || !window.oracle.isHealthy) && Date.now() - start < ms)
+    await new Promise(r => setTimeout(r, 300));
+  if (!window.oracle) throw new Error("Oracle not ready");
+  return window.oracle;
+}
+
+async function safeCall(p, t = 4000) {
+  return Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error("timeout")), t))]);
+}
+
+async function checkOracleHealth() {
+  const el = document.getElementById("safetyStatus");
+  const btn = document.getElementById("pokeBtn");
+  try {
+    const o = await waitForOracle();
+    el.textContent = "Checking Oracle...";
+    el.style.color = "#ffd700";
+    btn.disabled = true;
+
+    let p, ts;
+    try {
+      [p, ts] = await o.callStatic.getPriceWithTimestamp();
+    } catch {
+      [p, ts] = await safeCall(o.peekPriceView(), 3000);
+    }
+
+    const healthy = await safeCall(o.isHealthy(), 3000);
+    const age = Math.floor(Date.now() / 1000) - Number(ts);
+
+    if (healthy && age < 86400) {
+      el.innerHTML = `Vault & Oracle synced – fresh (${(age / 60).toFixed(1)} min ago)`;
+      el.style.color = "#00ff9d";
+      btn.disabled = true;
+    } else {
+      el.innerHTML = "Oracle stale – press <b>Wake Oracle</b>";
+      el.style.color = "#ff3366";
+      btn.disabled = false;
+    }
+  } catch (e) {
+    el.textContent = "Oracle error";
+    el.style.color = "#ff3366";
+    btn.disabled = false;
+  }
+}
+
+// === FIXED connectWallet() FUNCTION ===
+async function connectWallet() {
   try {
     if (!window.ethereum) return alert("Please install MetaMask");
     await window.ethereum.request({ method: "eth_requestAccounts" });
@@ -255,11 +304,11 @@
     await Promise.all([updatePrice(), loadVault()]);
     setInterval(updatePrice, 60000);
 
-    // ✅ THESE LINES SHOULD BE HERE — inside the function
+    // ✅ Auto-load safety + stats
     document.getElementById("safetyCard").style.opacity = "1";
     await checkOracleHealth();
     setInterval(checkOracleHealth, 20000);
-    
+
     await loadGlobalStats();
     setInterval(loadGlobalStats, 60000);
 
@@ -268,6 +317,7 @@
     console.error(e);
   }
 }
+
 
     async function loadGlobalStats() {
   try {
@@ -279,7 +329,7 @@
 
     const collNum = Number(ethers.formatEther(totalColl));
     const debtNum = Number(ethers.formatEther(totalDebt));
-    const healthNum = Number(health); // ✅ FIXED HERE
+    const healthNum = Number(health) / 1;
 
     document.getElementById("totalColl").textContent = collNum.toFixed(0) + " PLS";
     document.getElementById("totalDebt").textContent = debtNum.toFixed(0) + " pSunDAI";
