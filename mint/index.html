@@ -402,37 +402,67 @@
       };
     });
 
-    // GOLDEN SUN NEBULA — FINAL
-    const bg = document.getElementById("bg");
-    let t = 0, mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
-    function animateSolarNebula() {
-      t += 0.005;
-      mouseX += (targetX - mouseX) * 0.05;
-      mouseY += (targetY - mouseY) * 0.05;
-      const sunX = 50 + Math.sin(t * 0.3) * 5 + mouseX * 5;
-      const sunY = 50 + Math.cos(t * 0.4) * 5 + mouseY * 5;
-      const x1 = 20 + Math.sin(t * 0.8) * 25 + mouseX * 20;
-      const y1 = 30 + Math.cos(t * 0.9) * 20 + mouseY * 15;
-      const x2 = 80 + Math.cos(t * 0.6) * 25 - mouseX * 20;
-      const y2 = 70 + Math.sin(t * 0.7) * 20 - mouseY * 15;
-      const x3 = sunX + Math.sin(t * 0.2) * 15;
-      const y3 = sunY + Math.cos(t * 0.3) * 15;
-      bg.style.background = `
-        radial-gradient(circle at ${sunX}% ${sunY}%, rgba(255, 215, 0, 0.35) 0%, rgba(255, 215, 0, 0.15) 40%, transparent 70%),
-        radial-gradient(ellipse at ${x1}% ${y1}%, rgba(255, 215, 0, 0.25) 0%, rgba(255, 165, 0, 0.18) 50%, transparent 80%),
-        radial-gradient(ellipse at ${x2}% ${y2}%, rgba(255, 140, 0, 0.22) 0%, rgba(255, 107, 0, 0.15) 50%, transparent 80%),
-        radial-gradient(circle at ${x3}% ${y3}%, rgba(255, 215, 0, 0.10) 0%, transparent 100%)
-      `;
-      requestAnimationFrame(animateSolarNebula);
+    <script>
+  const bg = document.getElementById("bg");
+  let t = 0, mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
+
+  function animateSolarCore() {
+    t += 0.004;
+    mouseX += (targetX - mouseX) * 0.06;
+    mouseY += (targetY - mouseY) * 0.06;
+
+    const sunX = 50 + Math.sin(t * 0.3) * 4 + mouseX * 6;
+    const sunY = 50 + Math.cos(t * 0.4) * 4 + mouseY * 6;
+
+    const flare1x = 15 + Math.sin(t * 0.7) * 30 + mouseX * 25;
+    const flare1y = 25 + Math.cos(t * 0.8) * 25 + mouseY * 18;
+    const flare2x = 85 + Math.cos(t * 0.5) * 30 - mouseX * 25;
+    const flare2y = 70 + Math.sin(t * 0.6) * 25 - mouseY * 18;
+
+    bg.style.background = `
+      /* Blinding white-gold sun core */
+      radial-gradient(circle at ${sunX}% ${sunY}%, 
+        rgba(255, 255, 255, 0.95) 0%,
+        rgba(255, 252, 240, 0.8) 18%,
+        rgba(255, 245, 180, 0.5) 35%,
+        rgba(255, 235, 140, 0.2) 55%,
+        transparent 80%),
+
+      /* Pure white flares */
+      radial-gradient(ellipse at ${flare1x}% ${flare1y}%,
+        rgba(255, 255, 255, 0.7) 0%,
+        rgba(255, 255, 240, 0.4) 40%,
+        rgba(255, 245, 200, 0.15) 70%,
+        transparent 90%),
+
+      radial-gradient(ellipse at ${flare2x}% ${flare2y}%,
+        rgba(255, 255, 255, 0.7) 0%,
+        rgba(255, 255, 240, 0.4) 40%,
+        rgba(255, 245, 200, 0.15) 70%,
+        transparent 90%),
+
+      /* Soft white-gold halo */
+      radial-gradient(circle at ${sunX}% ${sunY}%,
+        rgba(255, 255, 245, 0.18) 0%,
+        rgba(255, 250, 220, 0.08) 50%,
+        transparent 100%)
+    `;
+
+    requestAnimationFrame(animateSolarCore);
+  }
+
+  window.addEventListener("mousemove", e => {
+    targetX = (e.clientX / innerWidth - 0.5);
+    targetY = (e.clientY / innerHeight - 0.5);
+  });
+  window.addEventListener("deviceorientation", e => {
+    if (e.gamma !== null && e.beta !== null) {
+      targetX = e.gamma / 45;
+      targetY = e.beta / 45;
     }
-    window.addEventListener("mousemove", e => {
-      targetX = (e.clientX / innerWidth - 0.5);
-      targetY = (e.clientY / innerHeight - 0.5);
-    });
-    window.addEventListener("deviceorientation", e => {
-      if (e.gamma && e.beta) { targetX = e.gamma/45; targetY = e.beta/45; }
-    });
-    animateSolarNebula();
-  </script>
+  });
+
+  animateSolarCore();
+</script>
 </body>
 </html>
