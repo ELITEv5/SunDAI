@@ -1,96 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pSunDAI – Golden Sun Vault</title>
-  <link rel="icon" href="sundailogo.png" type="image/png" />
-  <meta name="description" content="Autonomous 150% PLS-Collateralized Stable Asset on PulseChain." />
-  <meta name="theme-color" content="#FF6B00" />
-  <meta name="robots" content="index,follow" />
-  <meta name="author" content="SunDAI Protocol" />
-  <script src="ethers.umd.min.js"></script>
-  <style>
-    body {
-      margin: 0;
-      background: #0a001f;
-      color: #ffebd1;
-      font-family: Segoe UI, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-      overflow-y: auto;
-    }
-    canvas { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
-    .wallet {
-      position: fixed; top: 20px; right: 20px; background: #111; padding: 10px 22px;
-      border: 2px solid #ff6b00; border-radius: 10px; color: #fff; font-weight: 700;
-      cursor: pointer; z-index: 9999; transition: all 0.2s ease; pointer-events: auto;
-    }
-    .wallet:hover { background: #222; }
-    .wallet.connected { border-color: #ffd700; color: #ffd700; }
-    .container {
-      background: rgba(10, 0, 30, 0.8); backdrop-filter: blur(20px);
-      border: 2px solid #ff6b00; border-radius: 20px;
-      box-shadow: 0 0 40px rgba(255, 215, 0, 0.25); padding: 30px 25px;
-      max-width: 480px; width: 90%; margin: 80px 0; position: relative; z-index: 10;
-    }
-    .logo { display: block; max-width: 240px; margin: 0 auto 10px;
-      animation: pulseGlow 4s ease-in-out infinite; transform-origin: center; }
-    @keyframes pulseGlow {
-      0% { filter: drop-shadow(0 0 10px rgba(180, 120, 255, 0.5)); }
-      50% { filter: drop-shadow(0 0 35px rgba(255, 180, 255, 0.85)); }
-      100% { filter: drop-shadow(0 0 10px rgba(180, 120, 255, 0.5)); }
-    }
-    h1 { text-align: center; font-size: 2em; background: linear-gradient(90deg, #ff6b00, #ffd700, #ffa500);
-      -webkit-background-clip: text; color: transparent; margin-bottom: 8px; }
-    h2 { text-align: center; color: #ffebd1; font-size: 1.1em; margin-top: 0; }
-    .price { text-align: center; color: #ffd700; font-weight: 800; font-size: 1.2em; margin-bottom: 10px; }
-    .card { background: rgba(255, 107, 0, 0.1); border: 1px solid rgba(255, 107, 0, 0.3);
-      border-radius: 14px; padding: 16px; margin-bottom: 12px; transition: box-shadow .2s ease; }
-    .card:hover { box-shadow: 0 0 12px rgba(255,215,0,0.15); }
-    input, .btn { width: 100%; display: block; box-sizing: border-box; font-size: 1em;
-      font-weight: 700; text-align: center; border-radius: 10px; padding: 14px; transition: all 0.2s ease; }
-    input { background: #110022; border: 2px solid rgba(255, 107, 0, 0.4); color: #fff; }
-    input:focus { border-color: #ffd700; outline: none; }
-    .btn { background: #ff6b00; border: 2px solid transparent; color: #000; cursor: pointer; }
-    .btn:hover:not(:disabled) { background: #ffd700; transform: translateY(-2px); }
-    .btn:disabled { background: #444; color: #999; cursor: not-allowed; border-color: transparent; }
-    .card input + .btn { margin-top: 8px; }
-    .preview { color: #ffbd70; text-align: center; font-size: 0.9em; margin-top: 4px; }
-    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center; font-size: 0.9em; }
-    .stat { background: rgba(255, 107, 0, 0.12); padding: 10px; border-radius: 10px; }
-    .label { color: #ffbd70; }
-    .value { color: #ffd700; font-weight: 700; }
-    .status, .error { text-align: center; font-weight: bold; margin-top: 10px; transition: opacity .4s ease; }
-    .status { color: #00ff9d; }
-    .error { color: #ff3366; }
-    .value.safe { color: #00ff9d; text-shadow: 0 0 8px rgba(0,255,157,0.5); }
-    .value.warn { color: #ffcc00; text-shadow: 0 0 8px rgba(255,204,0,0.5); }
-    .value.risk { color: #ff3366; text-shadow: 0 0 8px rgba(255,51,102,0.5); }
-    .footer { text-align: center; margin: 40px 0 20px; padding: 20px 10px; font-size: 0.85em;
-      color: #ffbd70; border-top: 1px solid rgba(255, 215, 0, 0.15); width: 100%; max-width: 800px; z-index: 5; }
-    .footer h3 { margin-bottom: 10px; color: #ffd700; letter-spacing: 0.5px; font-size: 1.1em; }
-    .contracts { display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
-      text-align: left; line-height: 1.6; word-wrap: break-word; overflow-wrap: anywhere;
-      padding: 0 10px; max-width: 100%; box-sizing: border-box; }
-    .contracts a { color: #ffebd1; text-decoration: none; font-family: monospace;
-      word-break: break-all; display: inline-block; max-width: 100%; overflow-wrap: anywhere;
-      transition: color 0.2s ease; }
-    .contracts a:hover { color: #ffd700; }
-    .contracts .label { color: #ff6b00; font-weight: 700; display: block; margin-bottom: 2px; }
-    @media (max-width: 480px) { .contracts { font-size: 0.75em; gap: 8px; } .contracts a { font-size: 0.75em; } }
-    #bg { opacity: 0; animation: fadeIn 2s ease forwards; }
-    @keyframes fadeIn { to { opacity: 1; } }
-    /* Popup Modal */
-.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; display: none; align-items: center; justify-content: center; }
-.modal-content { background: #110022; border: 2px solid #ff6b00; border-radius: 10px; padding: 20px; max-width: 400px; color: #ffebd1; }
-.modal-content h3 { color: #ffd700; }
-.modal-content ul { list-style: disc; padding-left: 20px; }
-.close { color: #ff3366; float: right; font-size: 1.5em; cursor: pointer; }
-  </style>
-</head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>pSunDAI – Golden Sun Vault</title>
+<link rel="icon" href="sundailogo.png" type="image/png" />
+<meta name="description" content="Autonomous 150% PLS-Collateralized Stable Asset on PulseChain." />
+<meta name="theme-color" content="#FF6B00" />
+<meta name="robots" content="index,follow" />
+<meta name="author" content="SunDAI Protocol" />
+<script src="ethers.umd.min.js"></script>
+<style>
+body {
+margin: 0;
+background: #0a001f;
+color: #ffebd1;
+font-family: Segoe UI, sans-serif;
+display: flex;
+flex-direction: column;
+align-items: center;
+min-height: 100vh;
+overflow-y: auto;
+}
+canvas { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+.wallet {
+position: fixed; top: 20px; right: 20px; background: #111; padding: 10px 22px;
+border: 2px solid #ff6b00; border-radius: 10px; color: #fff; font-weight: 700;
+cursor: pointer; z-index: 9999; transition: all 0.2s ease; pointer-events: auto;
+}
+.wallet:hover { background: #222; }
+.wallet.connected { border-color: #ffd700; color: #ffd700; }
+.container {
+background: rgba(10, 0, 30, 0.8); backdrop-filter: blur(20px);
+border: 2px solid #ff6b00; border-radius: 20px;
+box-shadow: 0 0 40px rgba(255, 215, 0, 0.25); padding: 30px 25px;
+max-width: 480px; width: 90%; margin: 80px 0; position: relative; z-index: 10;
+}
+.logo { display: block; max-width: 240px; margin: 0 auto 10px;
+animation: pulseGlow 4s ease-in-out infinite; transform-origin: center; }
+@keyframes pulseGlow {
+0% { filter: drop-shadow(0 0 10px rgba(180, 120, 255, 0.5)); }
+50% { filter: drop-shadow(0 0 35px rgba(255, 180, 255, 0.85)); }
+100% { filter: drop-shadow(0 0 10px rgba(180, 120, 255, 0.5)); }
+}
+h1 { text-align: center; font-size: 2em; background: linear-gradient(90deg, #ff6b00, #ffd700, #ffa500);
+-webkit-background-clip: text; color: transparent; margin-bottom: 8px; }
+h2 { text-align: center; color: #ffebd1; font-size: 1.1em; margin-top: 0; }
+.price { text-align: center; color: #ffd700; font-weight: 800; font-size: 1.2em; margin-bottom: 10px; }
+.card { background: rgba(255, 107, 0, 0.1); border: 1px solid rgba(255, 107, 0, 0.3);
+border-radius: 14px; padding: 16px; margin-bottom: 12px; transition: box-shadow .2s ease; }
+.card:hover { box-shadow: 0 0 12px rgba(255,215,0,0.15); }
+input, .btn { width: 100%; display: block; box-sizing: border-box; font-size: 1em;
+font-weight: 700; text-align: center; border-radius: 10px; padding: 14px; transition: all 0.2s ease; }
+input { background: #110022; border: 2px solid rgba(255, 107, 0, 0.4); color: #fff; }
+input:focus { border-color: #ffd700; outline: none; }
+.btn { background: #ff6b00; border: 2px solid transparent; color: #000; cursor: pointer; }
+.btn:hover:not(:disabled) { background: #ffd700; transform: translateY(-2px); }
+.btn:disabled { background: #444; color: #999; cursor: not-allowed; border-color: transparent; }
+.card input + .btn { margin-top: 8px; }
+.preview { color: #ffbd70; text-align: center; font-size: 0.9em; margin-top: 4px; }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center; font-size: 0.9em; }
+.stat { background: rgba(255, 107, 0, 0.12); padding: 10px; border-radius: 10px; }
+.label { color: #ffbd70; }
+.value { color: #ffd700; font-weight: 700; }
+.status, .error { text-align: center; font-weight: bold; margin-top: 10px; transition: opacity .4s ease; }
+.status { color: #00ff9d; }
+.error { color: #ff3366; }
+.value.safe { color: #00ff9d; text-shadow: 0 0 8px rgba(0,255,157,0.5); }
+.value.warn { color: #ffcc00; text-shadow: 0 0 8px rgba(255,204,0,0.5); }
+.value.risk { color: #ff3366; text-shadow: 0 0 8px rgba(255,51,102,0.5); }
+.footer { text-align: center; margin: 40px 0 20px; padding: 20px 10px; font-size: 0.85em;
+color: #ffbd70; border-top: 1px solid rgba(255, 215, 0, 0.15); width: 100%; max-width: 800px; z-index: 5; }
+.footer h3 { margin-bottom: 10px; color: #ffd700; letter-spacing: 0.5px; font-size: 1.1em; }
+.contracts { display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
+text-align: left; line-height: 1.6; word-wrap: break-word; overflow-wrap: anywhere;
+padding: 0 10px; max-width: 100%; box-sizing: border-box; }
+.contracts a { color: #ffebd1; text-decoration: none; font-family: monospace;
+word-break: break-all; display: inline-block; max-width: 100%; overflow-wrap: anywhere;
+transition: color 0.2s ease; }
+.contracts a:hover { color: #ffd700; }
+.contracts .label { color: #ff6b00; font-weight: 700; display: block; margin-bottom: 2px; }
 <body>
   <div id="bg"></div>
   <div class="wallet" id="walletBtn"><span id="walletText">Connect Wallet</span></div>
