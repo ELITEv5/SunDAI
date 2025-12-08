@@ -295,24 +295,20 @@ document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
     const target = document.getElementById(
       id === "usdOneClick" ? "plsOneClick" : id === "usdIn" ? "plsOut" : "plsIn"
     );
-
     if (!usd || !price) {
       target.textContent = "";
       return;
     }
 
-    const pls = usdToPLS(usd);
-    const plsNum = Number(ethers.formatEther(pls)); // PLS as float
-    const priceNum = Number(price) / 1e18;
-    const usdValue = plsNum * priceNum;
-
-    const ratio = Number(minRatio) / 100;
-    const mintable = usdValue / (ratio / 100);
+    // CRITICAL: Use the already-scaled price (price is now real USD per PLS)
+    const plsWei = usdToPLS(usd);
+    const plsNum = Number(ethers.formatEther(plsWei));
 
     if (id === "usdOneClick") {
-      target.textContent = `≈ ${Math.round(plsNum)} PLS → ${mintable.toFixed(2)} pSunDAI (at ${ratio.toFixed(1)}%)`;
+      const mintable = usd / 1.55; // 155% buffer — correct
+      target.textContent = `≈ ${plsNum.toLocaleString(undefined, {maximumFractionDigits: 0})} PLS → ${mintable.toFixed(2)} pSunDAI (at 155%)`;
     } else {
-      target.textContent = `≈ ${Math.round(plsNum)} PLS`;
+      target.textContent = `≈ ${plsNum.toLocaleString(undefined, {maximumFractionDigits: 0})} PLS`;
     }
   });
 });
