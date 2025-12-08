@@ -544,6 +544,10 @@ howToBtn.onclick = () => modal.style.display = "flex";
 modal.onclick = e => {
   if (e.target.className === "modal" || e.target.className === "close") modal.style.display = "none";
 };
+    window.addEventListener("load", () => {
+  connectWallet(); // ← Automatically connect on load
+});
+
   </script>
 </body>
 </html>
