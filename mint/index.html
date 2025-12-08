@@ -83,6 +83,12 @@
     @media (max-width: 480px) { .contracts { font-size: 0.75em; gap: 8px; } .contracts a { font-size: 0.75em; } }
     #bg { opacity: 0; animation: fadeIn 2s ease forwards; }
     @keyframes fadeIn { to { opacity: 1; } }
+    /* Popup Modal */
+.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; display: none; align-items: center; justify-content: center; }
+.modal-content { background: #110022; border: 2px solid #ff6b00; border-radius: 10px; padding: 20px; max-width: 400px; color: #ffebd1; }
+.modal-content h3 { color: #ffd700; }
+.modal-content ul { list-style: disc; padding-left: 20px; }
+.close { color: #ff3366; float: right; font-size: 1.5em; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -96,6 +102,10 @@
     <div class="status" id="status"></div>
     <div class="error" id="error"></div>
     <div class="card"><div class="stats" id="stats">Connect wallet to begin</div></div>
+    <!-- HOW TO BUTTON -->
+<div class="card" style="margin-bottom:12px">
+  <button class="btn" id="howToBtn" style="background:#ffaa00;color:#000;font-weight:800">How to Use SunDAI</button>
+</div>
 
     <div class="card">
       <input id="usdOneClick" type="number" step="0.01" placeholder="Deposit & Auto Mint (USD)" />
@@ -441,6 +451,36 @@ document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
       if (e.gamma && e.beta) { targetX = e.gamma/45; targetY = e.beta/45; }
     });
     animate();
+    // HOW TO POPUP — FIXED
+const howToBtn = document.getElementById("howToBtn");
+const modal = document.createElement("div");
+modal.className = "modal";
+modal.innerHTML = `
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h3>How to Use SunDAI Vault</h3>
+    <ol>
+      <li><strong>Connect Wallet:</strong> Click top right. Use MetaMask/Rabby on PulseChain.</li>
+      <li><strong>Check Price:</strong> Top shows PLS/USD. Wake oracle if stale.</li>
+      <li><strong>Deposit:</strong> Enter USD → "Deposit PLS" to lock collateral.</li>
+      <li><strong>Mint:</strong> Enter USD → "Mint pSunDAI" (keep ratio >150%).</li>
+      <li><strong>1-Click Mint:</strong> Deposit + Mint in one tx (155% safe buffer).</li>
+      <li><strong>Monitor:</strong> Stats show ratio. Click "Check Risk" for safety.</li>
+      <li><strong>Repay:</strong> Enter pSunDAI → "Repay Debt".</li>
+      <li><strong>Pro Repay:</strong> "Repay to Health" or "Repay & Withdraw Excess".</li>
+      <li><strong>Withdraw:</strong> Enter USD → "Withdraw PLS" (if safe).</li>
+      <li><strong>Pro Withdraw:</strong> "Withdraw Max Safe" for max without risk.</li>
+      <li><strong>Emergency:</strong> If no debt + 30 days inactive → "Emergency Unlock".</li>
+    </ol>
+    <p><strong>Safety:</strong> Keep ratio >150%. 0.5% fee on debt. Questions? dev@sundaitoken.com</p>
+  </div>
+`;
+document.body.appendChild(modal);
+
+howToBtn.onclick = () => modal.style.display = "flex";
+modal.onclick = e => {
+  if (e.target.className === "modal" || e.target.className === "close") modal.style.display = "none";
+};
   </script>
 </body>
 </html>
