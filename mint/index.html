@@ -144,18 +144,18 @@
     <h3>Official Contracts</h3>
     <div class="contracts">
       <div><span class="label">pSunDAI Token:</span>
-        <a href="https://scan.pulsechain.com/address/0x8DCFFc6a88400c8642c9b7fe332535CD37626b85" target="_blank">
-          0x
+        <a href="https://scan.pulsechain.com/address/0xA39Ae3eC7435CD30508FA439378478EA9cAB91dD" target="_blank">
+          0xA39Ae3eC7435CD30508FA439378478EA9cAB91dD
         </a>
       </div>
       <div><span class="label">Vault:</span>
-        <a href="https://scan.pulsechain.com/address/0xd44cac3E0FdA5c3E6883F2cA890FdD2374397146" target="_blank">
-          0x
+        <a href="https://scan.pulsechain.com/address/0xE61569D135b98B2530AEB5287F9122B98b3D35d0" target="_blank">
+          0xE61569D135b98B2530AEB5287F9122B98b3D35d0
         </a>
       </div>
       <div><span class="label">Oracle:</span>
-        <a href="https://scan.pulsechain.com/address/0xd8651823e2b8e1a53e6f7d54d7ed5DdDEB62DC27" target="_blank">
-          0x
+        <a href="https://scan.pulsechain.com/address/0x4DDCC8de4f0DA14647F6bD2388553526308599c3" target="_blank">
+          0x4DDCC8de4f0DA14647F6bD2388553526308599c3
         </a>
       </div>
     </div>
@@ -165,9 +165,9 @@
     const ethers = window.ethers;
     if (!ethers || !ethers.Contract) alert("Ethers.js failed to load");
 
-    const VAULT = "";
-    const TOKEN = "";
-    const ORACLE = "";
+    const VAULT = "0xE61569D135b98B2530AEB5287F9122B98b3D35d0";
+    const TOKEN = "0xA39Ae3eC7435CD30508FA439378478EA9cAB91dD";
+    const ORACLE = "0x4DDCC8de4f0DA14647F6bD2388553526308599c3";
 
     let provider, signer, vault, token, oracle, account, price = 0n, minRatio = 15500n;
 
