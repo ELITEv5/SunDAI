@@ -279,12 +279,11 @@
 
     const collNum = Number(ethers.formatEther(totalColl));
     const debtNum = Number(ethers.formatEther(totalDebt));
-    const healthNum = Number(health) / 100;
-
+    const healthNum = Number(health); // ✅ FIXED HERE
 
     document.getElementById("totalColl").textContent = collNum.toFixed(0) + " PLS";
     document.getElementById("totalDebt").textContent = debtNum.toFixed(0) + " pSunDAI";
-    
+
     const healthEl = document.getElementById("sysHealth");
     healthEl.textContent = healthNum.toFixed(1) + "%";
     healthEl.className = "value " + (healthNum < 130 ? "risk" : healthNum < 150 ? "warn" : "safe");
