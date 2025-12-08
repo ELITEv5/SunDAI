@@ -81,8 +81,21 @@
     .contracts a:hover { color: #ffd700; }
     .contracts .label { color: #ff6b00; font-weight: 700; display: block; margin-bottom: 2px; }
     @media (max-width: 480px) { .contracts { font-size: 0.75em; gap: 8px; } .contracts a { font-size: 0.75em; } }
-    #bg { opacity: 0; animation: fadeIn 2s ease forwards; }
-    @keyframes fadeIn { to { opacity: 1; } }
+    /* TRUE SUN — MAXIMUM GLOW, PURE WHITE-GOLD */
+#bg {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0;
+  pointer-events: none; background-repeat: no-repeat; background-size: cover;
+  transition: background 1s ease; opacity: 0;
+  animation: fadeIn 2s ease forwards, solarBreath 8s ease-in-out infinite;
+}
+@keyframes fadeIn { to { opacity: 1; } }
+@keyframes solarBreath {
+  0%, 100% { filter: brightness(1) saturate(1); }
+  50%      { filter: brightness(1.7) saturate(1.4); }
+}
+.container:hover ~ #bg {
+  filter: brightness(1.9) saturate(1.5);
+}
   </style>
 </head>
 <body>
