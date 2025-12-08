@@ -241,22 +241,22 @@ document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
     }
 
     async function updatePrice() {
-      try {
-        let p, t;
-        try {
-          [p, t] = await oracle.getPriceWithTimestamp();
-        } catch {
-          [p, t] = await oracle.peekPriceView();
-        }
-        const age = Math.floor(Date.now()/1000) - Number(t);
-        if (age > 86400) throw new Error("Oracle data stale");
-        price = p;
-        document.getElementById("price").textContent = "$" + (Number(p)/1e18).toFixed(6) + " per PLS";
-      } catch {
-        document.getElementById("price").textContent = "Oracle offline";
-        price = 0n;
-      }
-    }
+  try {
+    let p, t;
+    try { [p, t] = await oracle.getPriceWithTimestamp(); }
+    catch { [p, t] = await oracle.peekPriceView(); }
+    const age = Math.floor(Date.now()/1000) - Number(t);
+    if (age > 86400) throw new Error("Oracle data stale");
+    
+    // FIX: Scale down oracle price to real wei-per-USD (oracle returns scaled 1e18)
+    price = p / 1e18n;
+    
+    document.getElementById("price").textContent = "$" + (Number(price) / 1e18).toFixed(6) + " per PLS";
+  } catch {
+    document.getElementById("price").textContent = "Oracle offline";
+    price = 0n;
+  }
+}
 
     function usdToPLS(usd) {
       if (!price || price === 0n) return 0n;
