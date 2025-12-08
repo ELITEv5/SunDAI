@@ -279,7 +279,7 @@
 
     const collNum = Number(ethers.formatEther(totalColl));
     const debtNum = Number(ethers.formatEther(totalDebt));
-    const healthNum = Number(health);
+    const healthNum = Number(health) / 100;
 
 
     document.getElementById("totalColl").textContent = collNum.toFixed(0) + " PLS";
