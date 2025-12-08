@@ -102,6 +102,29 @@
     <div class="status" id="status"></div>
     <div class="error" id="error"></div>
     <div class="card"><div class="stats" id="stats">Connect wallet to begin</div></div>
+    <!-- GLOBAL SYSTEM STATS — FUN & TRANSPARENT -->
+<div class="card" id="globalStats" style="margin-top:12px;display:none">
+  <div style="text-align:center;font-size:0.9em;color:#ffbd70;margin-bottom:8px">Global SunDAI System</div>
+  <div class="stats">
+    <div class="stat">
+      <div class="label">Total Collateral</div>
+      <div class="value" id="totalColl">—</div>
+    </div>
+    <div class="stat">
+      <div class="label">Total Minted</div>
+      <div class="value" id="totalDebt">—</div>
+    </div>
+    <div class="stat">
+      <div class="label">System Health</div>
+      <div class="value" id="sysHealth">—</div>
+    </div>
+    <div class="stat">
+      <div class="label">Your Share</div>
+      <div class="value" id="yourShare">—</div>
+    </div>
+  </div>
+</div>
+
     <!-- HOW TO BUTTON -->
 <div class="card" style="margin-bottom:12px">
   <button class="btn" id="howToBtn" style="background:#ffaa00;color:#000;font-weight:800">How to Use SunDAI</button>
@@ -236,6 +259,38 @@ document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
         console.error(e);
       }
     }
+    async function loadGlobalStats() {
+  try {
+    const [totalColl, totalDebt, health] = await Promise.all([
+      vault.totalCollateral(),
+      vault.totalDebt(),
+      vault.systemHealth()
+    ]);
+
+    const collNum = Number(ethers.formatEther(totalColl));
+    const debtNum = Number(ethers.formatEther(totalDebt));
+    const healthNum = Number(health) / 100;
+
+    document.getElementById("totalColl").textContent = collNum.toFixed(0) + " PLS";
+    document.getElementById("totalDebt").textContent = debtNum.toFixed(0) + " pSunDAI";
+    
+    const healthEl = document.getElementById("sysHealth");
+    healthEl.textContent = healthNum.toFixed(1) + "%";
+    healthEl.className = "value " + (healthNum < 130 ? "risk" : healthNum < 150 ? "warn" : "safe");
+
+    const yourColl = Number(ethers.formatEther((await vault.vaultInfo(account)).collateral));
+    if (yourColl > 0 && collNum > 0) {
+      const share = (yourColl / collNum) * 100;
+      document.getElementById("yourShare").textContent = share < 0.01 ? "<0.01%" : share.toFixed(2) + "%";
+    } else {
+      document.getElementById("yourShare").textContent = "0%";
+    }
+
+    document.getElementById("globalStats").style.display = "block";
+  } catch (e) {
+    console.log("Global stats failed (normal if no vault yet)");
+  }
+}
 
     async function updatePrice() {
       try {
@@ -402,12 +457,15 @@ document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
         }
       }
       const orig = window.connectWallet;
-      window.connectWallet = async () => {
-        await orig();
-        document.getElementById("safetyCard").style.opacity = "1";
-        await checkOracleHealth();
-        setInterval(checkOracleHealth, 20000);
-      };
+window.connectWallet = async () => {
+  await orig();
+  document.getElementById("safetyCard").style.opacity = "1";
+  await checkOracleHealth();
+  setInterval(checkOracleHealth, 20000);
+  await loadGlobalStats();               // ← Required
+  setInterval(loadGlobalStats, 60000);   // ← Optional (refresh every 60s)
+};
+
       document.getElementById("pokeBtn").onclick = async () => {
         const el = document.getElementById("safetyStatus");
         try {
