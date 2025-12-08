@@ -302,7 +302,7 @@ document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
       }
     }
 
-    // Live previews
+        // Live previews — FINAL VERSION (155% hard-coded, correct PLS amount)
     ["usdIn", "usdOut", "usdOneClick"].forEach(id => {
       document.getElementById(id).addEventListener("input", () => {
         const usd = parseFloat(document.getElementById(id).value) || 0;
@@ -310,16 +310,16 @@ document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
           document.getElementById(id === "usdOneClick" ? "plsOneClick" : id === "usdIn" ? "plsOut" : "plsIn").textContent = "";
           return;
         }
-        const pls = usdToPLS(usd);
-        const ratio = Number(minRatio) / 100;
-        const mintable = usd / (ratio / 100);
+        const plsWei = usdToPLS(usd);
+        const plsRounded = Math.round(Number(ethers.formatEther(plsWei)));
 
         if (id === "usdOneClick") {
+          const mintable = usd / 1.55; // 155% collateral buffer
           document.getElementById("plsOneClick").textContent =
-            `≈ ${Math.round(Number(ethers.formatEther(pls)))} PLS → ${mintable.toFixed(2)} pSunDAI (at ${ratio.toFixed(1)}%)`;
+            `≈ ${plsRounded.toLocaleString()} PLS → ${mintable.toFixed(2)} pSunDAI (at 155%)`;
         } else {
           document.getElementById(id === "usdIn" ? "plsOut" : "plsIn").textContent =
-            `≈ ${Math.round(Number(ethers.formatEther(pls)))} PLS`;
+            `≈ ${plsRounded.toLocaleString()} PLS`;
         }
       });
     });
@@ -363,7 +363,7 @@ document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
       const plsValue = usdToPLS(usd);
       const tx = await vault.depositAndAutoMintPLS({ value: plsValue });
       await tx.wait();
-      status.textContent = `Minted ${(usd / (Number(minRatio)/10000)).toFixed(2)} pSunDAI at ${(Number(minRatio)/100).toFixed(1)}%`;
+      status.textContent = `Minted ${(usd / 1.55).toFixed(2)} pSunDAI at 155% collateral`;
     });
 
     walletBtn.onclick = connectWallet;
