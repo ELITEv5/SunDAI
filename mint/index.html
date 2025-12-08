@@ -212,8 +212,8 @@
         token = new ethers.Contract(TOKEN, TOKEN_ABI, signer);
         oracle = new ethers.Contract(ORACLE, ORACLE_ABI, provider);
 
-        minRatio = await vault.COLLATERAL_RATIO(); // Live ratio!
-        document.getElementById("oneClickBtn").textContent = `1-Click Auto Mint (${(Number(minRatio)/100).toFixed(1)}%)`;
+       minRatio = await vault.COLLATERAL_RATIO(); // 150 for actual calculations
+document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)"; // UX buffer
 
         walletText.textContent = account.slice(0,6) + "..." + account.slice(-4);
         walletBtn.classList.add("connected");
