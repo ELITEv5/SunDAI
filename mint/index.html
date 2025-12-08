@@ -355,7 +355,7 @@ document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
 
     walletBtn.onclick = connectWallet;
 
-    // Oracle Safety Logic (unchanged — already perfect)
+        // Oracle Safety Logic (unchanged — perfect)
     window.addEventListener("load", () => {
       async function waitForOracle(ms = 10000) {
         const start = Date.now();
@@ -410,66 +410,69 @@ document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
       };
     });
 
-  const bg = document.getElementById("bg");
-  let t = 0, mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
+    // TRUE SUN — PURE WHITE-GOLD, ZERO GREEN, FINAL VERSION
+    const bg = document.getElementById("bg");
+    let t = 0, mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
 
-  function animateSolarCore() {
-    t += 0.004;
-    mouseX += (targetX - mouseX) * 0.06;
-    mouseY += (targetY - mouseY) * 0.06;
+    function animateTrueSun() {
+      t += 0.004;
+      mouseX += (targetX - mouseX) * 0.06;
+      mouseY += (targetY - mouseY) * 0.06;
 
-    const sunX = 50 + Math.sin(t * 0.3) * 4 + mouseX * 6;
-    const sunY = 50 + Math.cos(t * 0.4) * 4 + mouseY * 6;
+      const sunX = 50 + Math.sin(t * 0.32) * 4 + mouseX * 6;
+      const sunY = 50 + Math.cos(t * 0.38) * 4 + mouseY * 6;
 
-    const flare1x = 15 + Math.sin(t * 0.7) * 30 + mouseX * 25;
-    const flare1y = 25 + Math.cos(t * 0.8) * 25 + mouseY * 18;
-    const flare2x = 85 + Math.cos(t * 0.5) * 30 - mouseX * 25;
-    const flare2y = 70 + Math.sin(t * 0.6) * 25 - mouseY * 18;
+      const flare1x = 18 + Math.sin(t * 0.75) * 32 + mouseX * 26;
+      const flare1y = 28 + Math.cos(t * 0.82) * 26 + mouseY * 20;
+      const flare2x = 82 + Math.cos(t * 0.58) * 32 - mouseX * 26;
+      const flare2y = 68 + Math.sin(t * 0.65) * 26 - mouseY * 20;
 
-    bg.style.background = `
-      /* Blinding white-gold sun core */
-      radial-gradient(circle at ${sunX}% ${sunY}%, 
-        rgba(255, 255, 255, 0.95) 0%,
-        rgba(255, 252, 240, 0.8) 18%,
-        rgba(255, 245, 180, 0.5) 35%,
-        rgba(255, 235, 140, 0.2) 55%,
-        transparent 80%),
+      bg.style.background = `
+        /* Nuclear white-gold sun core — blinding */
+        radial-gradient(circle at ${sunX}% ${sunY}%,
+          rgba(255, 255, 255, 1)     0%,
+          rgba(255, 255, 245, 0.9)   15%,
+          rgba(255, 255, 220, 0.7)   28%,
+          rgba(255, 250, 190, 0.45)  45%,
+          rgba(255, 245, 160, 0.2)   65%,
+          transparent                90%),
 
-      /* Pure white flares */
-      radial-gradient(ellipse at ${flare1x}% ${flare1y}%,
-        rgba(255, 255, 255, 0.7) 0%,
-        rgba(255, 255, 240, 0.4) 40%,
-        rgba(255, 245, 200, 0.15) 70%,
-        transparent 90%),
+        /* Pure white plasma flares */
+        radial-gradient(ellipse at ${flare1x}% ${flare1y}%,
+          rgba(255, 255, 255, 0.8)   0%,
+          rgba(255, 255, 250, 0.5)   35%,
+          rgba(255, 255, 230, 0.2)   65%,
+          transparent                92%),
 
-      radial-gradient(ellipse at ${flare2x}% ${flare2y}%,
-        rgba(255, 255, 255, 0.7) 0%,
-        rgba(255, 255, 240, 0.4) 40%,
-        rgba(255, 245, 200, 0.15) 70%,
-        transparent 90%),
+        radial-gradient(ellipse at ${flare2x}% ${flare2y}%,
+          rgba(255, 255, 255, 0.8)   0%,
+          rgba(255, 255, 250, 0.5)   35%,
+          rgba(255, 255, 230, 0.2)   65%,
+          transparent                92%),
 
-      /* Soft white-gold halo */
-      radial-gradient(circle at ${sunX}% ${sunY}%,
-        rgba(255, 255, 245, 0.18) 0%,
-        rgba(255, 250, 220, 0.08) 50%,
-        transparent 100%)
-    `;
+        /* Warm white-gold corona */
+        radial-gradient(circle at ${sunX}% ${sunY}%,
+          rgba(255, 255, 240, 0.22)  0%,
+          rgba(255, 255, 200, 0.1)   50%,
+          transparent                100%)
+      `;
 
-    requestAnimationFrame(animateSolarCore);
-  }
-
-  window.addEventListener("mousemove", e => {
-    targetX = (e.clientX / innerWidth - 0.5);
-    targetY = (e.clientY / innerHeight - 0.5);
-  });
-  window.addEventListener("deviceorientation", e => {
-    if (e.gamma !== null && e.beta !== null) {
-      targetX = e.gamma / 45;
-      targetY = e.beta / 45;
+      requestAnimationFrame(animateTrueSun);
     }
-  });
 
-  animateSolarCore();
-</script>
+    window.addEventListener("mousemove", e => {
+      targetX = (e.clientX / innerWidth - 0.5);
+      targetY = (e.clientY / innerHeight - 0.5);
+    });
+
+    window.addEventListener("deviceorientation", e => {
+      if (e.gamma !== null && e.beta !== null) {
+        targetX = e.gamma / 45;
+        targetY = e.beta / 45;
+      }
+    });
+
+    animateTrueSun();
+  </script>
 </body>
 </html>
