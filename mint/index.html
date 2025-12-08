@@ -221,44 +221,54 @@
     }
 
     async function connectWallet() {
+  try {
+    if (!window.ethereum) return alert("Please install MetaMask");
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+    provider = new ethers.BrowserProvider(window.ethereum);
+    signer = await provider.getSigner();
+    account = await signer.getAddress();
+
+    const network = await provider.getNetwork();
+    if (Number(network.chainId) !== 369) {
       try {
-        if (!window.ethereum) return alert("Please install MetaMask");
-        await window.ethereum.request({ method: "eth_requestAccounts" });
-        provider = new ethers.BrowserProvider(window.ethereum);
-        signer = await provider.getSigner();
-        account = await signer.getAddress();
-
-        const network = await provider.getNetwork();
-        if (Number(network.chainId) !== 369) {
-          try {
-            await window.ethereum.request({
-              method: "wallet_switchEthereumChain",
-              params: [{ chainId: "0x171" }]
-            });
-          } catch (e) {
-            return alert("Please switch to PulseChain (chainId 369)");
-          }
-        }
-
-        const [VAULT_ABI, TOKEN_ABI, ORACLE_ABI] = await loadABIs();
-        vault = new ethers.Contract(VAULT, VAULT_ABI, signer);
-        token = new ethers.Contract(TOKEN, TOKEN_ABI, signer);
-        oracle = new ethers.Contract(ORACLE, ORACLE_ABI, provider);
-
-       minRatio = await vault.COLLATERAL_RATIO(); // 150 for actual calculations
-document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)"; // UX buffer
-
-        walletText.textContent = account.slice(0,6) + "..." + account.slice(-4);
-        walletBtn.classList.add("connected");
-        document.querySelectorAll(".btn").forEach(b => b.disabled = false);
-
-        await Promise.all([updatePrice(), loadVault()]);
-        setInterval(updatePrice, 60000);
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: "0x171" }]
+        });
       } catch (e) {
-        error.textContent = e.message || "Connection failed";
-        console.error(e);
+        return alert("Please switch to PulseChain (chainId 369)");
       }
     }
+
+    const [VAULT_ABI, TOKEN_ABI, ORACLE_ABI] = await loadABIs();
+    vault = new ethers.Contract(VAULT, VAULT_ABI, signer);
+    token = new ethers.Contract(TOKEN, TOKEN_ABI, signer);
+    oracle = new ethers.Contract(ORACLE, ORACLE_ABI, provider);
+
+    minRatio = await vault.COLLATERAL_RATIO(); // 150 for actual calculations
+    document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)"; // UX buffer
+
+    walletText.textContent = account.slice(0,6) + "..." + account.slice(-4);
+    walletBtn.classList.add("connected");
+    document.querySelectorAll(".btn").forEach(b => b.disabled = false);
+
+    await Promise.all([updatePrice(), loadVault()]);
+    setInterval(updatePrice, 60000);
+
+    // ✅ THESE LINES SHOULD BE HERE — inside the function
+    document.getElementById("safetyCard").style.opacity = "1";
+    await checkOracleHealth();
+    setInterval(checkOracleHealth, 20000);
+    
+    await loadGlobalStats();
+    setInterval(loadGlobalStats, 60000);
+
+  } catch (e) {
+    error.textContent = e.message || "Connection failed";
+    console.error(e);
+  }
+}
+
     async function loadGlobalStats() {
   try {
     const [totalColl, totalDebt, health] = await Promise.all([
@@ -456,15 +466,6 @@ document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
           el.textContent = "Oracle error"; el.style.color = "#ff3366"; btn.disabled = false;
         }
       }
-      const orig = window.connectWallet;
-window.connectWallet = async () => {
-  await orig();
-  document.getElementById("safetyCard").style.opacity = "1";
-  await checkOracleHealth();
-  setInterval(checkOracleHealth, 20000);
-  await loadGlobalStats();               // ← Required
-  setInterval(loadGlobalStats, 60000);   // ← Optional (refresh every 60s)
-};
 
       document.getElementById("pokeBtn").onclick = async () => {
         const el = document.getElementById("safetyStatus");
