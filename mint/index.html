@@ -182,323 +182,284 @@
   </footer>
 
   <script>
-    const ethers = window.ethers;
-    if (!ethers || !ethers.Contract) alert("Ethers.js failed to load");
+  const ethers = window.ethers;
+  if (!ethers || !ethers.Contract) alert("Ethers.js failed to load");
 
-    const VAULT = "0xE61569D135b98B2530AEB5287F9122B98b3D35d0";
-    const TOKEN = "0xA39Ae3eC7435CD30508FA439378478EA9cAB91dD";
-    const ORACLE = "0x4DDCC8de4f0DA14647F6bD2388553526308599c3";
+  const VAULT = "0xE61569D135b98B2530AEB5287F9122B98b3D35d0";
+  const TOKEN = "0xA39Ae3eC7435CD30508FA439378478EA9cAB91dD";
+  const ORACLE = "0x4DDCC8de4f0DA14647F6bD2388553526308599c3";
 
-    let provider, signer, vault, token, oracle, account, price = 0n, minRatio = 15500n;
+  let provider, signer, vault, token, oracle, account, price = 0n, minRatio = 15500n;
+  const DECIMALS = 10n ** 18n;
 
-    const DECIMALS = 10n ** 18n;
-    const status = document.getElementById("status");
-    const error = document.getElementById("error");
-    const stats = document.getElementById("stats");
-    const walletText = document.getElementById("walletText");
-    const walletBtn = document.getElementById("walletBtn");
+  const status = document.getElementById("status");
+  const error = document.getElementById("error");
+  const stats = document.getElementById("stats");
+  const walletText = document.getElementById("walletText");
+  const walletBtn = document.getElementById("walletBtn");
 
-    async function loadABIs() {
-      const [v, t, o] = await Promise.all([
-        fetch("vault-abi.json").then(r => r.json()),
-        fetch("token-abi.json").then(r => r.json()),
-        fetch("oracle-abi.json").then(r => r.json())
-      ]);
-      return [v, t, o];
-    }
+  async function loadABIs() {
+    const [v, t, o] = await Promise.all([
+      fetch("vault-abi.json").then(r => r.json()),
+      fetch("token-abi.json").then(r => r.json()),
+      fetch("oracle-abi.json").then(r => r.json())
+    ]);
+    return [v, t, o];
+  }
 
-    async function connectWallet() {
-      try {
-        if (!window.ethereum) return alert("Please install MetaMask");
-        await window.ethereum.request({ method: "eth_requestAccounts" });
-        provider = new ethers.BrowserProvider(window.ethereum);
-        signer = await provider.getSigner();
-        account = await signer.getAddress();
+  async function connectWallet() {
+    try {
+      if (!window.ethereum) return alert("Please install MetaMask");
+      await window.ethereum.request({ method: "eth_requestAccounts" });
+      provider = new ethers.BrowserProvider(window.ethereum);
+      signer = await provider.getSigner();
+      account = await signer.getAddress();
 
-        const network = await provider.getNetwork();
-        if (Number(network.chainId) !== 369) {
-          try {
-            await window.ethereum.request({
-              method: "wallet_switchEthereumChain",
-              params: [{ chainId: "0x171" }]
-            });
-          } catch (e) {
-            return alert("Please switch to PulseChain (chainId 369)");
-          }
-        }
-
-        const [VAULT_ABI, TOKEN_ABI, ORACLE_ABI] = await loadABIs();
-        vault = new ethers.Contract(VAULT, VAULT_ABI, signer);
-        token = new ethers.Contract(TOKEN, TOKEN_ABI, signer);
-        oracle = new ethers.Contract(ORACLE, ORACLE_ABI, provider);
-
-       minRatio = await vault.COLLATERAL_RATIO(); // 150 for actual calculations
-document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)"; // UX buffer
-
-        walletText.textContent = account.slice(0,6) + "..." + account.slice(-4);
-        walletBtn.classList.add("connected");
-        document.querySelectorAll(".btn").forEach(b => b.disabled = false);
-
-        await Promise.all([updatePrice(), loadVault()]);
-        setInterval(updatePrice, 60000);
-      } catch (e) {
-        error.textContent = e.message || "Connection failed";
-        console.error(e);
-      }
-    }
-
-    async function updatePrice() {
-      try {
-        let p, t;
+      const network = await provider.getNetwork();
+      if (Number(network.chainId) !== 369) {
         try {
-          [p, t] = await oracle.getPriceWithTimestamp();
-        } catch {
-          [p, t] = await oracle.peekPriceView();
+          await window.ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: "0x171" }]
+          });
+        } catch (e) {
+          return alert("Please switch to PulseChain (chainId 369)");
         }
-        const age = Math.floor(Date.now()/1000) - Number(t);
-        if (age > 86400) throw new Error("Oracle data stale");
-        price = p;
-        document.getElementById("price").textContent = "$" + (Number(p)/1e18).toFixed(6) + " per PLS";
-      } catch {
-        document.getElementById("price").textContent = "Oracle offline";
-        price = 0n;
       }
+
+      const [VAULT_ABI, TOKEN_ABI, ORACLE_ABI] = await loadABIs();
+      vault = new ethers.Contract(VAULT, VAULT_ABI, signer);
+      token = new ethers.Contract(TOKEN, TOKEN_ABI, signer);
+      oracle = new ethers.Contract(ORACLE, ORACLE_ABI, provider);
+
+      minRatio = await vault.COLLATERAL_RATIO();
+      document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
+
+      walletText.textContent = account.slice(0, 6) + "..." + account.slice(-4);
+      walletBtn.classList.add("connected");
+      document.querySelectorAll(".btn").forEach(b => b.disabled = false);
+
+      await Promise.all([updatePrice(), loadVault()]);
+      setInterval(updatePrice, 60000);
+    } catch (e) {
+      error.textContent = e.message || "Connection failed";
+      console.error(e);
     }
+  }
 
-    function usdToPLS(usd) {
-      if (!price || price === 0n) return 0n;
-      const usdWei = ethers.parseUnits(usd.toString(), 18);
-      return (usdWei * DECIMALS) / price;
+  async function updatePrice() {
+    try {
+      let p, t;
+      try { [p, t] = await oracle.getPriceWithTimestamp(); }
+      catch { [p, t] = await oracle.peekPriceView(); }
+
+      const age = Math.floor(Date.now() / 1000) - Number(t);
+      if (age > 86400) throw new Error("Oracle data stale");
+
+      price = p;
+      document.getElementById("price").textContent = "$" + (Number(p) / 1e18).toFixed(6) + " per PLS";
+    } catch {
+      document.getElementById("price").textContent = "Oracle offline";
+      price = 0n;
     }
-    function usdToPSun(usd) { return ethers.parseUnits(usd.toString(), 18); }
+  }
 
-    async function loadVault() {
-      try {
-        const i = await vault.vaultInfo(account);
-        const ratio = Number(i.ratio);
-        const ratioClass = ratio < 150 ? "risk" : ratio < 170 ? "warn" : "safe";
-        const ratioDisplay = ratio > 1e6 ? "∞" : ratio.toFixed(2) + "%";
+  function usdToPLS(usd) {
+    if (!price || price === 0n) return 0n;
+    const usdWei = ethers.parseUnits(usd.toString(), 18);
+    return (usdWei * DECIMALS) / price;
+  }
 
-        stats.innerHTML = `
-          <div class="stat"><div class="label">Collateral</div><div class="value">${Math.round(Number(ethers.formatEther(i.collateral)))} PLS</div></div>
-          <div class="stat"><div class="label">Debt</div><div class="value">${Number(ethers.formatEther(i.debt)).toFixed(2)} pSunDAI</div></div>
-          <div class="stat"><div class="label">Ratio</div><div class="value ${ratioClass}">${ratioDisplay}</div></div>
-          <div class="stat"><div class="label">Can Mint</div><div class="value">${Number(ethers.formatEther(i.mintable)).toFixed(2)} pSunDAI</div></div>
-        `;
-      } catch (e) {
-        stats.innerHTML = "Failed to load vault";
-      }
+  function usdToPSun(usd) {
+    return ethers.parseUnits(usd.toString(), 18);
+  }
+
+  async function loadVault() {
+    try {
+      const i = await vault.vaultInfo(account);
+      const ratio = Number(i.ratio);
+      const ratioClass = ratio < 150 ? "risk" : ratio < 170 ? "warn" : "safe";
+      const ratioDisplay = ratio > 1e6 ? "∞" : ratio.toFixed(2) + "%";
+
+      stats.innerHTML = `
+        <div class="stat"><div class="label">Collateral</div><div class="value">${Math.round(Number(ethers.formatEther(i.collateral)))} PLS</div></div>
+        <div class="stat"><div class="label">Debt</div><div class="value">${Number(ethers.formatEther(i.debt)).toFixed(2)} pSunDAI</div></div>
+        <div class="stat"><div class="label">Ratio</div><div class="value ${ratioClass}">${ratioDisplay}</div></div>
+        <div class="stat"><div class="label">Can Mint</div><div class="value">${Number(ethers.formatEther(i.mintable)).toFixed(2)} pSunDAI</div></div>
+      `;
+    } catch (e) {
+      stats.innerHTML = "Failed to load vault";
     }
+  }
 
-    async function withLoading(btn, fn) {
-      const orig = btn.textContent;
+  async function withLoading(btn, fn) {
+    const orig = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Processing...";
+    error.textContent = "";
+    try {
+      await fn();
+      status.textContent = "Success!";
+      setTimeout(() => status.textContent = "", 4000);
+      await loadVault();
+    } catch (e) {
+      error.textContent = e.message || "Transaction failed";
+      setTimeout(() => error.textContent = "", 8000);
+    } finally {
+      btn.textContent = orig;
+      btn.disabled = false;
+    }
+  }
+
+  walletBtn.onclick = connectWallet;
+</script>
+
+       <script>
+// Oracle Safety Logic + ALL NEW BUTTONS — FIXED
+window.addEventListener("load", () => {
+  async function waitForOracle(ms = 10000) {
+    const start = Date.now();
+    while ((!window.oracle || !window.oracle.isHealthy) && Date.now() - start < ms)
+      await new Promise(r => setTimeout(r, 300));
+    if (!window.oracle) throw new Error("Oracle not ready");
+    return window.oracle;
+  }
+
+  async function safeCall(p, t = 4000) {
+    return Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error("timeout")), t))]);
+  }
+
+  async function checkOracleHealth() {
+    const el = document.getElementById("safetyStatus");
+    const btn = document.getElementById("pokeBtn");
+    try {
+      const o = await waitForOracle();
+      el.textContent = "Checking Oracle...";
+      el.style.color = "#ffd700";
       btn.disabled = true;
-      btn.textContent = "Processing...";
-      error.textContent = "";
+
+      let p, ts;
       try {
-        await fn();
-        status.textContent = "Success!";
-        setTimeout(() => status.textContent = "", 4000);
-        await loadVault();
-      } catch (e) {
-        error.textContent = e.message || "Transaction failed";
-        setTimeout(() => error.textContent = "", 8000);
-      } finally {
-        btn.textContent = orig;
+        [p, ts] = await o.callStatic.getPriceWithTimestamp();
+      } catch {
+        [p, ts] = await safeCall(o.peekPriceView(), 3000);
+      }
+
+      const healthy = await safeCall(o.isHealthy(), 3000);
+      const age = Math.floor(Date.now() / 1000) - Number(ts);
+
+      if (healthy && age < 86400) {
+        el.innerHTML = `Vault & Oracle synced – fresh (${(age / 60).toFixed(1)} min ago)`;
+        el.style.color = "#00ff9d";
+        btn.disabled = true;
+      } else {
+        el.innerHTML = "Oracle stale – press <b>Wake Oracle</b>";
+        el.style.color = "#ff3366";
         btn.disabled = false;
       }
+    } catch (e) {
+      el.textContent = "Oracle error";
+      el.style.color = "#ff3366";
+      btn.disabled = false;
     }
+  }
 
-    ["usdIn", "usdOut", "usdOneClick"].forEach(id => {
-  document.getElementById(id).addEventListener("input", () => {
-    const usd = parseFloat(document.getElementById(id).value) || 0;
-    const target = document.getElementById(
-      id === "usdOneClick" ? "plsOneClick" : id === "usdIn" ? "plsOut" : "plsIn"
-    );
-    if (!usd || !price) {
-      target.textContent = "";
-      return;
+  const orig = window.connectWallet;
+  window.connectWallet = async () => {
+    await orig();
+    document.getElementById("safetyCard").style.opacity = "1";
+    await checkOracleHealth();
+    setInterval(checkOracleHealth, 20000);
+  };
+
+  document.getElementById("pokeBtn").onclick = async () => {
+    const el = document.getElementById("safetyStatus");
+    try {
+      if (!signer) throw new Error("Connect wallet first");
+      el.textContent = "Sending wake-up...";
+      el.style.color = "#ffd700";
+      const tx = await oracle.connect(signer).poke();
+      await tx.wait(1);
+      el.textContent = "Oracle awakened!";
+      el.style.color = "#00ff9d";
+      setTimeout(checkOracleHealth, 3000);
+    } catch (e) {
+      el.textContent = e.message.includes("rejected") ? "Rejected" : "Error";
+      el.style.color = "#ff3366";
     }
+  };
 
-    // CRITICAL: Use the already-scaled price (price is now real USD per PLS)
-    const plsWei = usdToPLS(usd);
-    const plsNum = Number(ethers.formatEther(plsWei));
+  // NEW BUTTONS — NOW INSIDE load() — WORKING
+  document.getElementById("repayToHealth").onclick = () =>
+    withLoading(document.getElementById("repayToHealth"), async () => {
+      await (await vault.autoRepayToHealth()).wait();
+      status.textContent = "Vault restored to safe health!";
+    });
 
-    if (id === "usdOneClick") {
-      const mintable = usd / 1.55; // 155% buffer — correct
-      target.textContent = `≈ ${plsNum.toLocaleString(undefined, {maximumFractionDigits: 0})} PLS → ${mintable.toFixed(2)} pSunDAI (at 155%)`;
-    } else {
-      target.textContent = `≈ ${plsNum.toLocaleString(undefined, {maximumFractionDigits: 0})} PLS`;
-    }
-  });
+  document.getElementById("repayAndWithdraw").onclick = () =>
+    withLoading(document.getElementById("repayAndWithdraw"), async () => {
+      const amt = parseFloat(document.getElementById("repayWithdrawAmt").value);
+      if (!amt || amt <= 0) throw new Error("Enter amount");
+      await (await vault.repayAndAutoWithdraw(ethers.parseUnits(amt.toString(), 18))).wait();
+      status.textContent = `Repaid ${amt} pSunDAI → excess PLS withdrawn`;
+    });
+
+  document.getElementById("maxMint").onclick = () =>
+    withLoading(document.getElementById("maxMint"), async () => {
+      const max = await vault.maxMint(account);
+      if (max === 0n) throw new Error("Nothing to mint");
+      await (await vault.mint(max)).wait();
+      status.textContent = `Minted max ${Number(ethers.formatEther(max)).toFixed(2)} pSunDAI`;
+    });
+
+  document.getElementById("maxWithdraw").onclick = () =>
+    withLoading(document.getElementById("maxWithdraw"), async () => {
+      const i = await vault.vaultInfo(account);
+      let excess = 0n;
+      if (i.debt === 0n) {
+        excess = i.collateral;
+      } else {
+        const price = await oracle.peekPriceView().then(([p]) => p);
+        const required = (i.debt * 150n * 1e18n) / price / 100n;
+        excess = i.collateral > required ? i.collateral - required : 0n;
+      }
+      if (excess === 0n) throw new Error("No excess to withdraw");
+      await (await vault.withdrawPLS(excess)).wait();
+      status.textContent = `Withdrew ${Number(ethers.formatEther(excess)).toFixed(0)} PLS (max safe)`;
+    });
 });
 
-
-    // Actions
-    document.getElementById("deposit").onclick = () => withLoading(document.getElementById("deposit"), async () => {
-      const u = parseFloat(document.getElementById("usdIn").value);
-      if (!u || u <= 0) throw new Error("Enter amount");
-      await (await vault.depositPLS({ value: usdToPLS(u) })).wait();
-    });
-
-    document.getElementById("mint").onclick = () => withLoading(document.getElementById("mint"), async () => {
-      const u = parseFloat(document.getElementById("usdMint").value);
-      if (!u || u <= 0) throw new Error("Enter amount");
-      await (await vault.mint(usdToPSun(u))).wait();
-    });
-
-    document.getElementById("repay").onclick = () => withLoading(document.getElementById("repay"), async () => {
-      const u = parseFloat(document.getElementById("usdRepay").value);
-      if (!u || u <= 0) throw new Error("Enter amount");
-      await (await token.approve(VAULT, usdToPSun(u))).wait();
-      await (await vault.repay(usdToPSun(u))).wait();
-    });
-
-    document.getElementById("withdraw").onclick = () => withLoading(document.getElementById("withdraw"), async () => {
-      const u = parseFloat(document.getElementById("usdOut").value);
-      if (!u || u <= 0) throw new Error("Enter amount");
-      await (await vault.withdrawPLS(usdToPLS(u))).wait();
-    });
-
-    document.getElementById("risk").onclick = () => withLoading(document.getElementById("risk"), async () => {
-      const can = await vault.canLiquidate(account);
-      document.getElementById("riskText").innerHTML = can
-        ? '<span class="risk">LIQUIDATION RISK</span>'
-        : '<span class="safe">You are safe</span>';
-    });
-
-    document.getElementById("oneClickBtn").onclick = () => withLoading(document.getElementById("oneClickBtn"), async () => {
-      const usd = parseFloat(document.getElementById("usdOneClick").value);
-      if (!usd || usd <= 0) throw new Error("Enter amount");
-      const plsValue = usdToPLS(usd);
-      const tx = await vault.depositAndAutoMintPLS({ value: plsValue });
-      await tx.wait();
-      status.textContent = `Minted ${(usd / (Number(minRatio)/10000)).toFixed(2)} pSunDAI at ${(Number(minRatio)/100).toFixed(1)}%`;
-    });
-
-    walletBtn.onclick = connectWallet;
-
-        // Oracle Safety Logic + ALL NEW BUTTONS — FIXED
-    window.addEventListener("load", () => {
-      async function waitForOracle(ms = 10000) {
-        const start = Date.now();
-        while ((!window.oracle || !window.oracle.isHealthy) && Date.now() - start < ms)
-          await new Promise(r => setTimeout(r, 300));
-        if (!window.oracle) throw new Error("Oracle not ready");
-        return window.oracle;
-      }
-      async function safeCall(p, t = 4000) {
-        return Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error("timeout")), t))]);
-      }
-      async function checkOracleHealth() {
-        const el = document.getElementById("safetyStatus");
-        const btn = document.getElementById("pokeBtn");
-        try {
-          const o = await waitForOracle();
-          el.textContent = "Checking Oracle..."; el.style.color = "#ffd700"; btn.disabled = true;
-          let p, ts;
-          try { [p, ts] = await o.callStatic.getPriceWithTimestamp(); }
-          catch { [p, ts] = await safeCall(o.peekPriceView(), 3000); }
-          const healthy = await safeCall(o.isHealthy(), 3000);
-          const age = Math.floor(Date.now()/1000) - Number(ts);
-          if (healthy && age < 86400) {
-            el.innerHTML = `Vault & Oracle synced – fresh (${(age/60).toFixed(1)} min ago)`;
-            el.style.color = "#00ff9d"; btn.disabled = true;
-          } else {
-            el.innerHTML = "Oracle stale – press <b>Wake Oracle</b>"; el.style.color = "#ff3366"; btn.disabled = false;
-          }
-        } catch (e) {
-          el.textContent = "Oracle error"; el.style.color = "#ff3366"; btn.disabled = false;
-        }
-      }
-
-      const orig = window.connectWallet;
-      window.connectWallet = async () => {
-        await orig();
-        document.getElementById("safetyCard").style.opacity = "1";
-        await checkOracleHealth();
-        setInterval(checkOracleHealth, 20000);
-      };
-
-      document.getElementById("pokeBtn").onclick = async () => {
-        const el = document.getElementById("safetyStatus");
-        try {
-          if (!signer) throw new Error("Connect wallet first");
-          el.textContent = "Sending wake-up..."; el.style.color = "#ffd700";
-          const tx = await oracle.connect(signer).poke();
-          await tx.wait(1);
-          el.textContent = "Oracle awakened!"; el.style.color = "#00ff9d";
-          setTimeout(checkOracleHealth, 3000);
-        } catch (e) {
-          el.textContent = e.message.includes("rejected") ? "Rejected" : "Error";
-          el.style.color = "#ff3366";
-        }
-      };
-
-      // NEW BUTTONS — NOW INSIDE load() — WORKING
-      document.getElementById("repayToHealth").onclick = () => withLoading(document.getElementById("repayToHealth"), async () => {
-        await (await vault.autoRepayToHealth()).wait();
-        status.textContent = "Vault restored to safe health!";
-      });
-
-      document.getElementById("repayAndWithdraw").onclick = () => withLoading(document.getElementById("repayAndWithdraw"), async () => {
-        const amt = parseFloat(document.getElementById("repayWithdrawAmt").value);
-        if (!amt || amt <= 0) throw "Enter amount";
-        await (await vault.repayAndAutoWithdraw(ethers.parseUnits(amt.toString(), 18))).wait();
-        status.textContent = `Repaid ${amt} pSunDAI → excess PLS withdrawn`;
-      });
-
-      document.getElementById("maxMint").onclick = () => withLoading(document.getElementById("maxMint"), async () => {
-        const max = await vault.maxMint(account);
-        if (max === 0n) throw "Nothing to mint";
-        await (await vault.mint(max)).wait();
-        status.textContent = `Minted max ${Number(ethers.formatEther(max)).toFixed(2)} pSunDAI`;
-      });
-
-      document.getElementById("maxWithdraw").onclick = () => withLoading(document.getElementById("maxWithdraw"), async () => {
-        const i = await vault.vaultInfo(account);
-        let excess = 0n;
-        if (i.debt === 0n) {
-          excess = i.collateral;
-        } else {
-          const price = await oracle.peekPriceView().then(([p]) => p);
-          const required = (i.debt * 150n * 1e18n) / price / 100n;
-          excess = i.collateral > required ? i.collateral - required : 0n;
-        }
-        if (excess === 0n) throw "No excess to withdraw";
-        await (await vault.withdrawPLS(excess)).wait();
-        status.textContent = `Withdrew ${Number(ethers.formatEther(excess)).toFixed(0)} PLS (max safe)`;
-      });
-    });
-
-    // Nebula Background (unchanged — beautiful)
-    const bg = document.getElementById("bg");
-    let t = 0, mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
-    function animate() {
-      t += 0.004;
-      mouseX += (targetX - mouseX) * 0.05;
-      mouseY += (targetY - mouseY) * 0.05;
-      const x1 = 25 + Math.sin(t * 0.7) * 20 + mouseX * 15;
-      const y1 = 25 + Math.cos(t * 0.8) * 15 + mouseY * 10;
-      const x2 = 75 + Math.cos(t * 0.5) * 18 - mouseX * 12;
-      const y2 = 70 + Math.sin(t * 0.6) * 14 - mouseY * 10;
-      const x3 = 50 + Math.sin(t * 0.3) * 15 + mouseX * 10;
-      const y3 = 50 + Math.cos(t * 0.4) * 12 + mouseY * 10;
-      bg.style.background = `
-        radial-gradient(circle at ${x1}% ${y1}%, rgba(255,200,100,0.20), transparent 65%),
-        radial-gradient(circle at ${x2}% ${y2}%, rgba(255,130,40,0.16), transparent 65%),
-        radial-gradient(circle at ${x3}% ${y3}%, rgba(120,0,180,0.22), transparent 75%)
-      `;
-      requestAnimationFrame(animate);
-    }
-    window.addEventListener("mousemove", e => {
-      targetX = (e.clientX / innerWidth - 0.5);
-      targetY = (e.clientY / innerHeight - 0.5);
-    });
-    window.addEventListener("deviceorientation", e => {
-      if (e.gamma && e.beta) { targetX = e.gamma/45; targetY = e.beta/45; }
-    });
-    animate();
-  </script>
+// Nebula Background (unchanged — beautiful)
+const bg = document.getElementById("bg");
+let t = 0, mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
+function animate() {
+  t += 0.004;
+  mouseX += (targetX - mouseX) * 0.05;
+  mouseY += (targetY - mouseY) * 0.05;
+  const x1 = 25 + Math.sin(t * 0.7) * 20 + mouseX * 15;
+  const y1 = 25 + Math.cos(t * 0.8) * 15 + mouseY * 10;
+  const x2 = 75 + Math.cos(t * 0.5) * 18 - mouseX * 12;
+  const y2 = 70 + Math.sin(t * 0.6) * 14 - mouseY * 10;
+  const x3 = 50 + Math.sin(t * 0.3) * 15 + mouseX * 10;
+  const y3 = 50 + Math.cos(t * 0.4) * 12 + mouseY * 10;
+  bg.style.background = `
+    radial-gradient(circle at ${x1}% ${y1}%, rgba(255,200,100,0.20), transparent 65%),
+    radial-gradient(circle at ${x2}% ${y2}%, rgba(255,130,40,0.16), transparent 65%),
+    radial-gradient(circle at ${x3}% ${y3}%, rgba(120,0,180,0.22), transparent 75%)
+  `;
+  requestAnimationFrame(animate);
+}
+window.addEventListener("mousemove", e => {
+  targetX = (e.clientX / innerWidth - 0.5);
+  targetY = (e.clientY / innerHeight - 0.5);
+});
+window.addEventListener("deviceorientation", e => {
+  if (e.gamma && e.beta) {
+    targetX = e.gamma / 45;
+    targetY = e.beta / 45;
+  }
+});
+animate();
+</script>
 </body>
 </html>
