@@ -378,7 +378,7 @@ document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
 
     walletBtn.onclick = connectWallet;
 
-    // Oracle Safety Logic (unchanged — already perfect)
+        // Oracle Safety Logic + ALL NEW BUTTONS — FIXED
     window.addEventListener("load", () => {
       async function waitForOracle(ms = 10000) {
         const start = Date.now();
@@ -411,6 +411,7 @@ document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
           el.textContent = "Oracle error"; el.style.color = "#ff3366"; btn.disabled = false;
         }
       }
+
       const orig = window.connectWallet;
       window.connectWallet = async () => {
         await orig();
@@ -418,59 +419,56 @@ document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
         await checkOracleHealth();
         setInterval(checkOracleHealth, 20000);
       };
+
       document.getElementById("pokeBtn").onclick = async () => {
         const el = document.getElementById("safetyStatus");
         try {
           if (!signer) throw new Error("Connect wallet first");
           el.textContent = "Sending wake-up..."; el.style.color = "#ffd700";
           const tx = await oracle.connect(signer).poke();
-          await tx.wait();
+          await tx.wait(1);
           el.textContent = "Oracle awakened!"; el.style.color = "#00ff9d";
           setTimeout(checkOracleHealth, 3000);
         } catch (e) {
-          el.textContent = e.message; el.style.color = "#ff3366";
+          el.textContent = e.message.includes("rejected") ? "Rejected" : "Error";
+          el.style.color = "#ff3366";
         }
       };
-      // Repay to Health
-document.getElementById("repayToHealth").onclick = () => withLoading(document.getElementById("repayToHealth"), async () => {
-  await (await vault.autoRepayToHealth()).wait();
-  status.textContent = "Vault restored to safe health!";
-});
 
-// Repay + Auto-Withdraw Excess
-document.getElementById("repayAndWithdraw").onclick = () => withLoading(document.getElementById("repayAndWithdraw"), async () => {
-  const amt = parseFloat(document.getElementById("repayWithdrawAmt").value);
-  if (!amt || amt <= 0) throw "Enter amount";
-  await (await vault.repayAndAutoWithdraw(ethers.parseUnits(amt.toString(), 18))).wait();
-  status.textContent = `Repaid ${amt} pSunDAI → excess PLS withdrawn`;
-});
+      // NEW BUTTONS — NOW INSIDE load() — WORKING
+      document.getElementById("repayToHealth").onclick = () => withLoading(document.getElementById("repayToHealth"), async () => {
+        await (await vault.autoRepayToHealth()).wait();
+        status.textContent = "Vault restored to safe health!";
+      });
 
-// Max Mint
-document.getElementById("maxMint").onclick = () => withLoading(document.getElementById("maxMint"), async () => {
-  const max = await vault.maxMint(account);
-  if (max === 0n) throw "Nothing to mint";
-  await (await vault.mint(max)).wait();
-  status.textContent = `Minted max ${Number(ethers.formatEther(max)).toFixed(2)} pSunDAI`;
-});
+      document.getElementById("repayAndWithdraw").onclick = () => withLoading(document.getElementById("repayAndWithdraw"), async () => {
+        const amt = parseFloat(document.getElementById("repayWithdrawAmt").value);
+        if (!amt || amt <= 0) throw "Enter amount";
+        await (await vault.repayAndAutoWithdraw(ethers.parseUnits(amt.toString(), 18))).wait();
+        status.textContent = `Repaid ${amt} pSunDAI → excess PLS withdrawn`;
+      });
 
-// Max Safe Withdraw — FIXED (no internal call)
-document.getElementById("maxWithdraw").onclick = () => withLoading(document.getElementById("maxWithdraw"), async () => {
-  const i = await vault.vaultInfo(account);
-  let excess = 0n;
+      document.getElementById("maxMint").onclick = () => withLoading(document.getElementById("maxMint"), async () => {
+        const max = await vault.maxMint(account);
+        if (max === 0n) throw "Nothing to mint";
+        await (await vault.mint(max)).wait();
+        status.textContent = `Minted max ${Number(ethers.formatEther(max)).toFixed(2)} pSunDAI`;
+      });
 
-  if (i.debt === 0n) {
-    excess = i.collateral;
-  } else {
-    // Use current oracle price (already safe-scaled)
-    const price = await oracle.peekPriceView().then(([p]) => p);
-    const required = (i.debt * 150n * 1e18n) / price / 100n;
-    excess = i.collateral > required ? i.collateral - required : 0n;
-  }
-
-  if (excess === 0n) throw "No excess PLS to withdraw";
-  await (await vault.withdrawPLS(excess)).wait();
-  status.textContent = `Withdrew ${Number(ethers.formatEther(excess)).toFixed(0)} PLS (max safe)`;
-});
+      document.getElementById("maxWithdraw").onclick = () => withLoading(document.getElementById("maxWithdraw"), async () => {
+        const i = await vault.vaultInfo(account);
+        let excess = 0n;
+        if (i.debt === 0n) {
+          excess = i.collateral;
+        } else {
+          const price = await oracle.peekPriceView().then(([p]) => p);
+          const required = (i.debt * 150n * 1e18n) / price / 100n;
+          excess = i.collateral > required ? i.collateral - required : 0n;
+        }
+        if (excess === 0n) throw "No excess to withdraw";
+        await (await vault.withdrawPLS(excess)).wait();
+        status.textContent = `Withdrew ${Number(ethers.formatEther(excess)).toFixed(0)} PLS (max safe)`;
+      });
     });
 
     // Nebula Background (unchanged — beautiful)
