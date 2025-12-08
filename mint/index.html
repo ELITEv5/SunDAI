@@ -289,27 +289,34 @@ document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
       }
     }
 
-    // Live previews
     ["usdIn", "usdOut", "usdOneClick"].forEach(id => {
-      document.getElementById(id).addEventListener("input", () => {
-        const usd = parseFloat(document.getElementById(id).value) || 0;
-        if (!usd || !price) {
-          document.getElementById(id === "usdOneClick" ? "plsOneClick" : id === "usdIn" ? "plsOut" : "plsIn").textContent = "";
-          return;
-        }
-        const pls = usdToPLS(usd);
-        const ratio = Number(minRatio) / 100;
-        const mintable = usd / (ratio / 100);
+  document.getElementById(id).addEventListener("input", () => {
+    const usd = parseFloat(document.getElementById(id).value) || 0;
+    const target = document.getElementById(
+      id === "usdOneClick" ? "plsOneClick" : id === "usdIn" ? "plsOut" : "plsIn"
+    );
 
-        if (id === "usdOneClick") {
-          document.getElementById("plsOneClick").textContent =
-            `≈ ${Math.round(Number(ethers.formatEther(pls)))} PLS → ${mintable.toFixed(2)} pSunDAI (at ${ratio.toFixed(1)}%)`;
-        } else {
-          document.getElementById(id === "usdIn" ? "plsOut" : "plsIn").textContent =
-            `≈ ${Math.round(Number(ethers.formatEther(pls)))} PLS`;
-        }
-      });
-    });
+    if (!usd || !price) {
+      target.textContent = "";
+      return;
+    }
+
+    const pls = usdToPLS(usd);
+    const plsNum = Number(ethers.formatEther(pls)); // PLS as float
+    const priceNum = Number(price) / 1e18;
+    const usdValue = plsNum * priceNum;
+
+    const ratio = Number(minRatio) / 100;
+    const mintable = usdValue / (ratio / 100);
+
+    if (id === "usdOneClick") {
+      target.textContent = `≈ ${Math.round(plsNum)} PLS → ${mintable.toFixed(2)} pSunDAI (at ${ratio.toFixed(1)}%)`;
+    } else {
+      target.textContent = `≈ ${Math.round(plsNum)} PLS`;
+    }
+  });
+});
+
 
     // Actions
     document.getElementById("deposit").onclick = () => withLoading(document.getElementById("deposit"), async () => {
