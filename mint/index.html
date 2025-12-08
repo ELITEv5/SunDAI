@@ -409,18 +409,26 @@ document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
         setInterval(checkOracleHealth, 20000);
       };
       document.getElementById("pokeBtn").onclick = async () => {
-        const el = document.getElementById("safetyStatus");
-        try {
-          if (!signer) throw new Error("Connect wallet first");
-          el.textContent = "Sending wake-up..."; el.style.color = "#ffd700";
-          const tx = await oracle.connect(signer).poke();
-          await tx.wait();
-          el.textContent = "Oracle awakened!"; el.style.color = "#00ff9d";
-          setTimeout(checkOracleHealth, 3000);
-        } catch (e) {
-          el.textContent = e.message; el.style.color = "#ff3366";
-        }
-      };
+  const el = document.getElementById("safetyStatus");
+  try {
+    if (!signer) throw new Error("Connect wallet first");
+    el.textContent = "Poking oracle..."; 
+    el.style.color = "#ffd700";
+
+    const tx = await oracle.connect(signer).poke();
+    el.textContent = "Waiting for confirmation...";
+    
+    await tx.wait(1);  // ← this is the magic line
+
+    el.textContent = "Oracle awakened & synced!";
+    el.style.color = "#00ff9d";
+    
+    setTimeout(checkOracleHealth, 3000);
+  } catch (e) {
+    el.textContent = e.message.includes("user rejected") ? "User rejected" : "Oracle error";
+    el.style.color = "#ff3366";
+  }
+};
     });
 
     // TRUE SUN — PURE WHITE-GOLD, ZERO GREEN, FINAL VERSION
