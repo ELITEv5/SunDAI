@@ -457,23 +457,33 @@ const modal = document.createElement("div");
 modal.className = "modal";
 modal.innerHTML = `
   <div class="modal-content">
-    <span class="close">&times;</span>
-    <h3>How to Use SunDAI Vault</h3>
-    <ol>
-      <li><strong>Connect Wallet:</strong> Click top right. Use MetaMask/Rabby on PulseChain.</li>
-      <li><strong>Check Price:</strong> Top shows PLS/USD. Wake oracle if stale.</li>
-      <li><strong>Deposit:</strong> Enter USD → "Deposit PLS" to lock collateral.</li>
-      <li><strong>Mint:</strong> Enter USD → "Mint pSunDAI" (keep ratio >150%).</li>
-      <li><strong>1-Click Mint:</strong> Deposit + Mint in one tx (155% safe buffer).</li>
-      <li><strong>Monitor:</strong> Stats show ratio. Click "Check Risk" for safety.</li>
-      <li><strong>Repay:</strong> Enter pSunDAI → "Repay Debt".</li>
-      <li><strong>Pro Repay:</strong> "Repay to Health" or "Repay & Withdraw Excess".</li>
-      <li><strong>Withdraw:</strong> Enter USD → "Withdraw PLS" (if safe).</li>
-      <li><strong>Pro Withdraw:</strong> "Withdraw Max Safe" for max without risk.</li>
-      <li><strong>Emergency:</strong> If no debt + 30 days inactive → "Emergency Unlock".</li>
-    </ol>
-    <p><strong>Safety:</strong> Keep ratio >150%. 0.5% fee on debt.</p>
-  </div>
+  <span class="close">×</span>
+  <h3>How to Use SunDAI Vault</h3>
+  <ol>
+    <li><strong>Connect Wallet:</strong> Click top right. Use MetaMask or Rabby on PulseChain.</li>
+    <li><strong>Check Price:</strong> Top shows live PLS → USD price. If it says "stale", click "Wake Oracle".</li>
+    <li><strong>Deposit:</strong> Enter USD value → "Deposit PLS" to lock your collateral.</li>
+    <li><strong>Mint pSunDAI:</strong> Enter amount → "Mint pSunDAI" (keep ratio above 150% to stay safe).</li>
+    <li><strong>1-Click Auto Mint (155%):</strong> Deposit + mint in one transaction with a safe buffer.</li>
+    <li><strong>Monitor Your Vault:</strong> Watch your collateral, debt, and ratio. Green = safe, yellow = caution, red = risk.</li>
+    <li><strong>Repay Debt:</strong> Enter pSunDAI amount → "Repay Debt". Instant, no cooldown.</li>
+    <li><strong>Pro Repay Options:</strong>
+      • "Repay to Safe Health" — one click to bring ratio back to 150%+<br>
+      • "Repay & Auto-Withdraw Excess" — repay and instantly get extra PLS back</li>
+    <li><strong>Withdraw PLS:</strong> Enter USD value → "Withdraw PLS" (only if ratio stays safe).</li>
+    <li><strong>Pro Withdraw:</strong> Click "Withdraw Max Safe" — instantly pull maximum PLS without dropping below 150%.</li>
+    <li><strong>Safety Cooldowns (for protection):</strong>
+      • 5-minute wait after depositing before withdrawing (prevents attacks)<br>
+      • 30-day emergency unlock if you have zero debt (full collateral recovery, no questions asked)<br>
+      • Minting & repaying are instant — no waiting!</li>
+  </ol>
+  <p style="margin-top:16px">
+    <strong>Safety Tips:</strong><br>
+    • Keep your ratio above 150% to avoid liquidation<br>
+    • 0.5% annual stability fee accrues on debt (very low)<br>
+    • Questions? → dev@sundaitoken.com
+  </p>
+</div>
 `;
 document.body.appendChild(modal);
 
