@@ -297,9 +297,11 @@ async function connectWallet() {
     }
 
     const [VAULT_ABI, TOKEN_ABI, ORACLE_ABI] = await loadABIs();
-    vault = new ethers.Contract(VAULT, VAULT_ABI, signer);
-    token = new ethers.Contract(TOKEN, TOKEN_ABI, signer);
-    oracle = new ethers.Contract(ORACLE, ORACLE_ABI, provider);
+vault = new ethers.Contract(VAULT, VAULT_ABI, signer);
+token = new ethers.Contract(TOKEN, TOKEN_ABI, signer);
+oracle = new ethers.Contract(ORACLE, ORACLE_ABI, provider);
+window.oracle = oracle; // ✅ Fix here
+
 
     minRatio = await vault.COLLATERAL_RATIO(); // 150 for actual calculations
     document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)"; // UX buffer
