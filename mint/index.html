@@ -234,9 +234,10 @@ async function safeCall(p, t = 4000) {
 }
 
 async function checkOracleHealth() {
-  const el = document.getElementById("safetyStatus");
-  const btn = document.getElementById("pokeBtn");
   try {
+    const el = document.getElementById("safetyStatus");
+    const btn = document.getElementById("pokeBtn");
+
     const o = await waitForOracle();
     el.textContent = "Checking Oracle...";
     el.style.color = "#ffd700";
@@ -262,9 +263,15 @@ async function checkOracleHealth() {
       btn.disabled = false;
     }
   } catch (e) {
-    el.textContent = "Oracle error";
-    el.style.color = "#ff3366";
-    btn.disabled = false;
+    console.error("Oracle health check failed:", e);
+    const el = document.getElementById("safetyStatus");
+    const btn = document.getElementById("pokeBtn");
+
+    if (el) {
+      el.textContent = "Oracle error";
+      el.style.color = "#ff3366";
+    }
+    if (btn) btn.disabled = false;
   }
 }
 
