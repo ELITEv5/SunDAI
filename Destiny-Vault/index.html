@@ -8,7 +8,6 @@
 <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
 <style>
-  :root{--gold:#ffb300;--glow:#ffeb3b;}
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
   body{
     background:#000;
@@ -20,16 +19,16 @@
   .container{
     max-width:520px;
     margin:0 auto;
-    padding:20px 20px;
+    padding:20px 24px;
   }
 
   h1{
     font-size:5.5rem;
     text-align:center;
-    background:linear-gradient(90deg,#b8860b,var(--gold),#fff,var(--gold),#b8860b);
+    background:linear-gradient(90deg,#b8860b,#ffb300,#fff,#ffb300,#b8860b);
     -webkit-background-clip:text;
     -webkit-text-fill-color:transparent;
-    text-shadow:0 0 80px var(--glow);
+    text-shadow:0 0 80px #ffeb3b;
     letter-spacing:20px;
     margin:40px 0 10px;
     font-weight:900;
@@ -45,9 +44,9 @@
   .card{
     background:rgba(10,15,35,0.95);
     backdrop-filter:blur(20px);
-    border:4px solid var(--gold);
+    border:4px solid #ffb300;
     border-radius:40px;
-    padding:40px 32px;
+    padding:40px 36px;
     margin-bottom:40px;
     box-shadow:0 20px 80px rgba(255,179,0,0.6);
   }
@@ -64,7 +63,6 @@
     border-radius:28px;
     text-align:center;
     border:2px solid rgba(255,179,0,0.6);
-    backdrop-filter:blur(10px);
   }
   .label{
     font-size:1.1rem;
@@ -75,25 +73,21 @@
   .value{
     font-size:2.6rem;
     font-weight:900;
-    color:var(--gold);
-    text-shadow:0 0 40px var(--glow);
+    color:#ffb300;
+    text-shadow:0 0 40px #ffeb3b;
   }
 
   .progress{
     height:100px;
     background:#000;
-    border:6px solid var(--gold);
+    border:6px solid #ffb300;
     border-radius:50px;
     overflow:hidden;
     margin:60px 0;
     position:relative;
-    box-shadow:0 0 100px var(--glow);
+    box-shadow:0 0 100px #ffeb3b;
   }
-  .fill{
-    height:100%;
-    width:0%;
-    background:linear-gradient(90deg,#b8860b,var(--gold),#fff);
-  }
+  .fill{height:100%;width:0%;background:linear-gradient(90deg,#b8860b,#ffb300,#fff);}
   .progtext{
     position:absolute;
     inset:0;
@@ -102,12 +96,13 @@
     justify-content:center;
     font-size:3.4rem;
     font-weight:900;
-    background:linear-gradient(90deg,var(--gold),#fff);
+    background:linear-gradient(90deg,#ffb300,#fff);
     -webkit-background-clip:text;
     -webkit-text-fill-color:transparent;
     text-shadow:0 0 60px #000;
   }
 
+  /* THIS IS THE FINAL FIX — NO MORE STICKING OUT */
   .inputs{
     display:flex;
     flex-direction:column;
@@ -118,7 +113,7 @@
     width:100%;
     padding:28px 24px;
     background:rgba(255,255,255,0.1);
-    border:4px solid var(--gold);
+    border:4px solid #ffb300;
     border-radius:28px;
     color:white;
     font-size:1.7rem;
@@ -126,6 +121,11 @@
     font-family:'Orbitron';
     font-weight:700;
     outline:none;
+    /* Force containment */
+    max-width:calc(100% - 48px);
+    max-width:calc(100% - 48px);
+    margin-left:auto;
+    margin-right:auto;
   }
 
   button{
@@ -142,7 +142,7 @@
     transition:all .6s;
     position:relative;
     overflow:hidden;
-    box-shadow:0 0 100px var(--glow);
+    box-shadow:0 0 100px #ffeb3b;
   }
   button::before{
     content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
@@ -151,15 +151,15 @@
   }
   button:hover::before{left:100%;}
   .btn-gold{
-    background:linear-gradient(45deg,#b8860b,var(--gold),#ffd700);
+    background:linear-gradient(45deg,#b8860b,#ffb300,#ffd700);
     color:#000;
   }
   .btn-claim{
-    background:linear-gradient(45deg,#ff8c00,var(--gold),#fff);
+    background:linear-gradient(45deg,#ff8c00,#ffb300,#fff);
     color:#000;
     font-size:3rem;
     padding:52px 24px;
-    box-shadow:0 0 140px var(--glow);
+    box-shadow:0 0 140px #ffeb3b;
   }
   button:not(:disabled):hover{
     transform:scale(1.05);
@@ -186,11 +186,11 @@
     <button id="connect" class="btn-gold" style="font-size:2.6rem;padding:44px;">CONNECT WALLET</button>
 
     <div id="userPanel" style="display:none;margin-top:60px;">
-      <div style="background:rgba(255,255,255,0.1);padding:40px;border-radius:32px;margin-bottom:60px;border:4px solid var(--gold);text-align:center;">
-        <div style="margin:20px 0;font-size:1.9rem;">SunDAI: <span id="uSun" style="color:var(--gold);font-weight:900;">0</span></div>
-        <div style="margin:20px 0;font-size:1.9rem;">PLP: <span id="uLP" style="color:var(--gold);font-weight:900;">0</span></div>
-        <div style="margin:20px 0;font-size:1.9rem;">Weight: <span id="uWeight" style="color:var(--gold);font-weight:900;">0</span></div>
-        <div id="claimable" style="margin-top:40px;color:var(--glow);font-size:2.2rem;font-weight:900;"></div>
+      <div style="background:rgba(255,255,255,0.1);padding:40px;border-radius:32px;margin-bottom:60px;border:4px solid #ffb300;text-align:center;">
+        <div style="margin:20px 0;font-size:1.9rem;">SunDAI: <span id="uSun" style="color:#ffb300;font-weight:900;">0</span></div>
+        <div style="margin:20px 0;font-size:1.9rem;">PLP: <span id="uLP" style="color:#ffb300;font-weight:900;">0</span></div>
+        <div style="margin:20px 0;font-size:1.9rem;">Weight: <span id="uWeight" style="color:#ffb300;font-weight:900;">0</span></div>
+        <div id="claimable" style="margin-top:40px;color:#ffeb3b;font-size:2.2rem;font-weight:900;"></div>
       </div>
 
       <div class="inputs">
@@ -203,7 +203,7 @@
       </button>
 
       <details style="margin-top:60px;">
-        <summary style="cursor:pointer;color:#888;font-size:1.4rem;">Advanced Withdraw</summary>
+        <summary style="cursor:pointer;color:#888;font-size:1.4rem;letter-spacing:3px;">Advanced Withdraw</summary>
         <div class="inputs" style="margin-top:30px;">
           <input type="number" id="outSun" placeholder="SunDAI">
           <input type="number" id="outLP" placeholder="PLP">
