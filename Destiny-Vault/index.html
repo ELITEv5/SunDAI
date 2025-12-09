@@ -1,1 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>SunDAI DESTINY VAULT | $1 = BLACK HOLE</title>
+<meta name="description" content="SunDAI to $1 → Everything burns → Only the faithful are reborn with pSunDAI"/>
 
+<link rel="icon" href="https://sun-dai.com/favicon.ico"/>
+
+<script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+
+<style>
+  :root{--bg:#000;--card:#0f001a;--p:#b22eff;--pink:#ff2e8a;--sun:#ff9500;--red:#ff0044;--text:#e0d0ff;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Orbitron','Arial',sans-serif;min-height:100vh;
+       background-image:radial-gradient(circle at 10% 90%,#4a00a330,transparent 50%),
+                        radial-gradient(circle at 90% 10%,#ff2e8a30,transparent 50%);
+       padding:15px;}
+  .container{max-width:500px;margin:0 auto;padding-top:30px;}
+  h1{font-size:3rem;text-align:center;background:linear-gradient(90deg,var(--sun),var(--pink),var(--p));
+     -webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:3px;margin-bottom:10px;}
+  .tagline{text-align:center;font-size:1.1rem;opacity:0.9;margin-bottom:30px;letter-spacing:1px;}
+
+  .card{background:var(--card);border-radius:20px;padding:24px;margin-bottom:20px;
+        border:1px solid #4a00a340;box-shadow:0 0 30px #000;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;text-align:center;}
+  .stat{background:#0006;padding:14px;border-radius:14px;}
+  .label{font-size:0.85rem;opacity:0.8;}
+  .value{font-size:1.4rem;font-weight:bold;color:var(--sun);margin-top:6px;}
+
+  .progress{height:40px;background:#0008;border:2px solid var(--p);border-radius:20px;overflow:hidden;position:relative;margin:25px 0;}
+  .fill{height:100%;width:0%;background:linear-gradient(90deg,var(--p),var(--pink));transition:width 2s ease;}
+  .progtext{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+            font-size:1.4rem;font-weight:bold;color:white;text-shadow:0 0 15px #000;}
+
+  input{width:100%;padding:16px;margin:10px 0;border-radius:12px;background:#0004;border:1px solid #4a00a360;color:white;font-size:1.1rem;}
+  button{width:100%;padding:18px;margin:10px 0;border:none;border-radius:12px;color:white;font-weight:bold;
+         font-size:1.2rem;cursor:pointer;transition:all .4s;letter-spacing:1px;}
+  .btn{background:linear-gradient(90deg,var(--p),var(--pink));}
+  .btn-admin{background:var(--red);box-shadow:0 0 20px #ff004460;}
+  .btn-claim{background:#c00;box-shadow:0 0 30px #c006;}
+  button:hover:not(:disabled){transform:scale(1.05);box-shadow:0 0 35px currentColor;}
+  button:disabled{opacity:0.35;cursor:not-allowed;}
+
+  .glow{animation:g 1.8s infinite alternate;}
+  @keyframes g{from{box-shadow:0 0 20px currentColor;}to{box-shadow:0 0 45px currentColor,0 0 70px currentColor;}}
+  .fire{animation:p 2s infinite;background:linear-gradient(45deg,#300,#900)!important;}
+  @keyframes p{0%,100%{opacity:0.9}50%{opacity:1}}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>DESTINY VAULT</h1>
+  <p class="tagline">SunDAI → $1 → BLACK HOLE → REBIRTH AS pSunDAI</p>
+
+  <div class="card" id="main">
+    <div class="grid">
+      <div class="stat"><div class="label">SunDAI Price</div><div class="value" id="price">$0.00</div></div>
+      <div class="stat"><div class="label">Progress</div><div class="value" id="progress">0.00%</div></div>
+      <div class="stat"><div class="label">X to $1</div><div class="value" id="multi">∞x</div></div>
+      <div class="stat"><div class="label">Status</div><div class="value" id="status">Loading...</div></div>
+    </div>
+    <div class="progress"><div class="fill" id="fill"></div><div class="progtext" id="progtext">0% to Ignition</div></div>
+    <div style="text-align:center;margin-top:10px;">Total Weight: <span id="totalW" style="color:var(--sun);font-weight:bold;">0</span></div>
+  </div>
+
+  <div class="card">
+    <button id="connect" class="btn glow" style="font-size:1.5rem;padding:22px;">CONNECT WALLET</button>
+
+    <div id="user" style="display:none;margin-top:20px;">
+      <div style="background:#0006;padding:15px;border-radius:12px;margin-bottom:20px;">
+        <div><b>SunDAI Staked:</b> <span id="uSun">0</span></div>
+        <div><b>PLP Staked:</b> <span id="uLP">0</span></div>
+        <div><b>Your Weight:</b> <span id="uWeight">0</span></div>
+        <div><b>Your Share:</b> <span id="uShare">0%</span></div>
+        <div style="margin-top:8px;color:#ff0;" id="claimable"></div>
+      </div>
+
+      <input type="number" id="inSun" placeholder="SunDAI amount" step="any">
+      <button id="appSun" class="btn">APPROVE SunDAI</button>
+      <input type="number" id="inLP" placeholder="PLP amount" step="any">
+      <button id="appLP" class="btn">APPROVE PLP</button>
+      <button id="stake" class="btn glow">STAKE INTO THE VOID</button>
+
+      <input type="number" id="outSun" placeholder="SunDAI withdraw" step="any">
+      <input type="number" id="outLP" placeholder="PLP withdraw" step="any">
+      <button id="withdraw" class="btn">WITHDRAW</button>
+
+      <div style="margin-top:35px;">
+        <button id="ignite" class="btn-admin glow" disabled>IGNITE BLACK HOLE</button>
+        <button id="supernova" class="btn-admin glow" disabled>TRIGGER SUPERNOVA</button>
+        <button id="rebirth" class="btn-admin glow" disabled>INITIATE REBIRTH</button>
+        <button id="claim" class="btn-claim glow" disabled style="font-size:1.7rem;padding:24px;margin-top:20px;">
+          CLAIM pSunDAI REBIRTH
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card fire" id="fireCard" style="display:none;text-align:center;font-size:2rem;color:#ff3366;">
+    BLACK HOLE IGNITED<br><span style="font-size:1.2rem;">All is sacrificed. Rebirth imminent.</span>
+  </div>
+</div>
+
+<script>
+// ==================== GITHUB RAW ABIs (ELITEv5/SunDAI Repo) ====================
+const GITHUB_RAW = "https://raw.githubusercontent.com/ELITEv5/SunDAI/main";
+const VAULT_ABI_URL   = `${GITHUB_RAW}/Destiny-Vault/destiny-vault-abi.json`;
+const ORACLE_ABI_URL   = `${GITHUB_RAW}/Destiny-Vault/sundai-oracle-abi.json`;
+
+// ==================== CONTRACTS ====================
+const ADDR = {
+  VAULT:   "0x883c54DaCeBd3efcc58A3467dbE7F52704D66880",
+  SUNDAI:  "0x41C6b24019Bd67CC58fe7bb059D532C12356712B",
+  PLP:     "0xc01e2eDAe9E65950bb5783A6B01DC429Cf3F0eE2",
+  ORACLE:  "0xDA5591A1DE3934B28cB1DE3Ea828606be6473236",
+  PSUNDAI: "0xA39Ae3eC7435CD30508FA439378478EA9cAB91dD"
+};
+
+let web3, account, vault, oracle, sun, lp, psun;
+
+// ==================== LOAD ABIs FROM GITHUB ====================
+async function loadABIs() {
+  const [vaultRes, oracleRes] = await Promise.all([
+    fetch(VAULT_ABI_URL).then(r => r.json()),
+    fetch(ORACLE_ABI_URL).then(r => r.json())
+  ]);
+  return { VAULT_ABI: vaultRes, ORACLE_ABI: oracleRes };
+}
+
+// ==================== CONNECT ====================
+document.getElementById("connect").onclick = async () => {
+  if (!window.ethereum) return alert("Wallet required!");
+  await ethereum.request({method:'eth_requestAccounts'});
+  web3 = new Web3(ethereum);
+  [account] = await web3.eth.getAccounts();
+
+  const {VAULT_ABI, ORACLE_ABI} = await loadABIs();
+
+  vault  = new web3.eth.Contract(VAULT_ABI, ADDR.VAULT);
+  oracle = new web3.eth.Contract(ORACLE_ABI, ADDR.ORACLE);
+  sun    = new web3.eth.Contract([{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool"}],"stateMutability":"nonpayable","type":"function"}], ADDR.SUNDAI);
+  lp     = new web3.eth.Contract([{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool"}],"stateMutability":"nonpayable","type":"function"}], ADDR.PLP);
+  psun   = new web3.eth.Contract([{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256"}],"stateMutability":"view","type":"function"}], ADDR.PSUNDAI);
+
+  document.getElementById("connect").innerHTML = `${account.slice(0,6)}...${account.slice(-4)}`;
+  document.getElementById("user").style.display = "block";
+  refresh();
+  setInterval(refresh, 11000);
+};
+
+// ==================== HELPERS ====================
+const W = (x) => web3.utils.toWei(String(x||0),'ether');
+const F = (x) => web3.utils.fromWei(x,'ether');
+
+// ==================== ACTIONS ====================
+document.getElementById("appSun").onclick = async () => {
+  const a = document.getElementById("inSun").value;
+  if(!a) return alert("Amount?");
+  await sun.methods.approve(ADDR.VAULT, W(a)).send({from:account});
+  alert("SunDAI approved");
+};
+document.getElementById("appLP").onclick = async () => {
+  const a = document.getElementById("inLP").value;
+  if(!a) return alert("Amount?");
+  await lp.methods.approve(ADDR.VAULT, W(a)).send({from:account});
+  alert("PLP approved");
+};
+document.getElementById("stake").onclick = async () => {
+  const s = W(document.getElementById("inSun").value || "0");
+  const l = W(document.getElementById("inLP").value || "0");
+  if(s==="0" && l==="0") return alert("Enter amount");
+  await vault.methods.stake(s,l).send({from:account});
+  alert("Sacrificed!");
+};
+document.getElementById("withdraw").onclick = async () => {
+  await vault.methods.withdraw(W(document.getElementById("outSun").value || "0"), W(document.getElementById("outLP").value || "0")).send({from:account});
+};
+
+document.getElementById("ignite").onclick = () => vault.methods.ignite().send({from:account}).catch(e=>alert(e.message));
+document.getElementById("supernova").onclick = () => vault.methods.supernova().send({from:account}).catch(e=>alert(e.message));
+document.getElementById("rebirth").onclick = () => vault.methods.rebirth().send({from:account}).catch(e=>alert(e.message));
+document.getElementById("claim").onclick = () => vault.methods.claim().send({from:account}).then(()=>alert("Reborn!"));
+
+// ==================== REFRESH ====================
+async function refresh() {
+  try {
+    const price = await oracle.methods.getPrice().call();
+    const p = Number(price)/1e18;
+    const prog = Math.min(p*100,100);
+    const mult = p>0 ? (1/p).toFixed(2)+"x" : "∞x";
+
+    document.getElementById("price").innerText = "$"+p.toFixed(8).replace(/0+$/,"");
+    document.getElementById("progress").innerText = prog.toFixed(2)+"%";
+    document.getElementById("multi").innerText = mult;
+    document.getElementById("fill").style.width = prog+"%";
+    document.getElementById("progtext").innerText = prog.toFixed(1)+"% to $1";
+
+    const [ignited, supered, rebirthed, totalW] = await Promise.all([
+      vault.methods.ignited().call(),
+      vault.methods.supernovaTriggered().call(),
+      vault.methods.rebirthTriggered().call(),
+      vault.methods.totalWeight().call()
+    ]);
+
+    document.getElementById("totalW").innerText = (Number(totalW)/1e18).toFixed(3);
+
+    if(ignited){
+      document.getElementById("fireCard").style.display="block";
+      document.getElementById("main").classList.add("fire");
+    }
+
+    const status = ignited 
+      ? (rebirthed ? "REBIRTH COMPLETE" : supered ? "SUPERNOVA" : "IGNITED")
+      : p>=1 ? "IGNITION READY" : "Awaiting $1";
+    document.getElementById("status").innerText = status;
+
+    document.getElementById("ignite").disabled = ignited || p<1;
+    document.getElementById("supernova").disabled = !ignited || supered;
+    document.getElementById("rebirth").disabled = !ignited || !supered || rebirthed;
+    document.getElementById("claim").disabled = !rebirthed;
+
+    if(account){
+      const s = await vault.methods.stakes(account).call();
+      document.getElementById("uSun").innerText = F(s.sundaiAmt);
+      document.getElementById("uLP").innerText = F(s.plpAmt);
+      document.getElementById("uWeight").innerText = F(s.weight);
+      const share = totalW>0 ? (Number(s.weight)*100/Number(totalW)).toFixed(4)+"%" : "0%";
+      document.getElementById("uShare").innerText = share;
+
+      if(rebirthed){
+        const totalP = await vault.methods.totalPayout().call();
+        const claimable = totalW>0 ? F((BigInt(totalP) * BigInt(s.weight)) / BigInt(totalW)) : "0";
+        document.getElementById("claimable").innerText = `Claimable: ${claimable} pSunDAI`;
+      }
+    }
+  } catch(e){ console.error(e); }
+}
+</script>
+</body>
+</html>
