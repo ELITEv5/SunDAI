@@ -472,16 +472,25 @@ document.getElementById("repay").onclick = () =>
 
     document.getElementById("withdraw").onclick = () =>
   withLoading(document.getElementById("withdraw"), async () => {
-    const pls = parseFloat(document.getElementById("plsWithdraw").value);
-    if (!pls || pls <= 0) throw new Error("Enter valid PLS amount");
+    const input = document.getElementById("plsWithdraw");
+    const val = input.value.trim();
+    if (!val || isNaN(val) || Number(val) <= 0)
+      throw new Error("Enter a valid PLS amount");
 
-    // Convert to wei (PLS uses 18 decimals)
-    const plsWei = ethers.utils.parseUnits(pls.toString(), 18);
+    // ethers v5 build uses utils.parseUnits
+    let plsWei;
+    try {
+      plsWei = ethers.utils.parseUnits(val, 18);
+    } catch (err) {
+      console.error("parseUnits failed:", err);
+      throw new Error("Invalid decimal format");
+    }
 
-    // Call vault
+    // Execute on-chain call
     const tx = await vault.withdrawPLS(plsWei);
     await tx.wait();
 
+    const pls = Number(val);
     status.textContent = `Withdrew ${pls.toFixed(4)} PLS`;
   });
 
