@@ -1,190 +1,97 @@
-<!DOCTYPE html
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <title>SunDAI • DESTINY VAULT</title>
-<meta name="description" content="One button to cross the event horizon. When SunDAI hits $1 — rebirth begins."/>
+<meta name="description" content="One button. Infinite allowance. Event horizon awaits."/>
 
 <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 
 <style>
-  :root {
-    --gold: #ffb300;
-    --purple: #8b22ff;
-    --pink: #ff2e8a;
-    --deep: #0a001f;
-    --glow: #ffeb3b;
-  }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  
-  body {
-    background: #000;
-    color: #fff;
-    font-family: 'Orbitron', 'Arial Black', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-    position: relative;
+  :root {--gold:#ffb300;--purple:#8b22ff;--pink:#ff2e8a;--glow:#ffeb3b;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    background:#000;
+    color:#fff;
+    font-family:'Orbitron',sans-serif;
+    min-height:100vh;
+    overflow-x:hidden;
+    position:relative;
   }
 
-  /* EPIC BLACK HOLE BACKGROUND — NO WATERMARK, 100% CLEAN */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: url('https://svs.gsfc.nasa.gov/vis/a010000/a013400/a013488/blackhole_accretion_disk_4k.jpg') center/cover no-repeat;
-    background-attachment: fixed;
-    filter: brightness(0.9) contrast(1.3) saturate(1.4);
-    animation: slowZoom 120s linear infinite;
-    z-index: -2;
+  /* ROCK-SOLID BLACK HOLE — WILL NEVER 404 OR SHOW BLACK SQUARE */
+  body::before{
+    content:'';
+    position:fixed;
+    inset:0;
+    background: url('https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?auto=format&fit=crop&w=2070&q=100') center/cover no-repeat;
+    background-attachment:fixed;
+    filter:brightness(0.8) contrast(1.4) saturate(1.6);
+    animation:slowZoom 140s linear infinite;
+    z-index:-2;
   }
-  @keyframes slowZoom {
-    0% { transform: scale(1) rotate(0deg); }
-    100% { transform: scale(1.15) rotate(3deg); }
+  @keyframes slowZoom{0%{transform:scale(1)}100%{transform:scale(1.2)}}
+
+  body::after{
+    content:'';
+    position:fixed;
+    inset:0;
+    background:radial-gradient(circle at center,transparent 30%,#8b22ff11 60%,#ffb30008 100%);
+    animation:rotate 50s linear infinite;
+    pointer-events:none;
+    z-index:-1;
+  }
+  @keyframes rotate{to{transform:rotate(360deg)}}
+
+  .container{max-width:540px;margin:0 auto;padding:20px;position:relative;z-index:2;}
+  h1{
+    font-size:4.5rem;text-align:center;
+    background:linear-gradient(90deg,var(--gold),#fff,var(--purple));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    text-shadow:0 0 60px var(--gold);
+    letter-spacing:12px;margin:40px 0 10px;
+    animation:titlePulse 6s ease-in-out infinite alternate;
+  }
+  @keyframes titlePulse{from{text-shadow:0 0 60px var(--gold)}to{text-shadow:0 0 100px var(--glow),0 0 160px var(--purple)}}
+
+  .tagline{text-align:center;font-size:1.4rem;opacity:0.95;margin-bottom:50px;text-shadow:0 0 30px #8b22ff;letter-spacing:3px;}
+
+  .card{
+    background:rgba(8,0,28,0.72);backdrop-filter:blur(16px);
+    border:2px solid rgba(139,34,255,0.6);border-radius:28px;padding:32px;margin-bottom:28px;
+    box-shadow:0 0 60px rgba(139,34,255,0.4);
   }
 
-  /* Subtle rotating accretion glow */
-  body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: radial-gradient(circle at center, transparent 30%, #8b22ff22 60%, #ffb30011 100%);
-    animation: rotate 40s linear infinite;
-    pointer-events: none;
-    z-index: -1;
-  }
-  @keyframes rotate { to { transform: rotate(360deg); } }
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:35px;}
+  .stat{text-align:center;padding:20px;background:rgba(255,255,255,0.06);border-radius:18px;border:1px solid rgba(255,179,0,0.3);}
+  .label{font-size:0.95rem;opacity:0.85;}
+  .value{font-size:1.8rem;font-weight:900;color:var(--gold);text-shadow:0 0 25px var(--gold);}
 
-  .container { max-width: 540px; margin: 0 auto; padding: 20px; position: relative; z-index: 2; }
+  .progress{height:60px;background:rgba(0,0,0,0.8);border:3px solid var(--purple);border-radius:30px;overflow:hidden;position:relative;margin:40px 0;box-shadow:0 0 50px var(--purple);}
+  .fill{height:100%;width:0%;background:linear-gradient(90deg,#8b22ff,#ff2e8a,#ffb300);transition:width 3.5s ease;}
+  .progtext{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2.2rem;font-weight:900;
+            background:linear-gradient(90deg,var(--gold),#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
 
-  h1 {
-    font-size: 4.5rem;
-    text-align: center;
-    background: linear-gradient(90deg, var(--gold), #fff, var(--purple));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-shadow: 0 0 60px var(--gold);
-    letter-spacing: 12px;
-    margin: 40px 0 10px;
-    animation: titlePulse 6s ease-in-out infinite alternate;
-  }
-  @keyframes titlePulse {
-    from { text-shadow: 0 0 60px var(--gold); }
-    to { text-shadow: 0 0 100px var(--glow), 0 0 160px var(--purple); }
-  }
+  input{width:100%;padding:22px;margin:16px 0;border-radius:18px;background:rgba(255,255,255,0.08);border:1px solid var(--purple);color:white;font-size:1.3rem;text-align:center;font-family:'Orbitron';}
 
-  .tagline {
-    text-align: center;
-    font-size: 1.4rem;
-    opacity: 0.95;
-    margin-bottom: 50px;
-    text-shadow: 0 0 30px #8b22ff;
-    letter-spacing: 3px;
+  button{
+    width:100%;padding:26px;margin:16px 0;border:none;border-radius:18px;
+    font-family:'Orbitron',sans-serif;font-weight:900;font-size:1.6rem;letter-spacing:3px;
+    cursor:pointer;transition:all .6s;position:relative;overflow:hidden;
   }
+  button::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
+                   background:linear-gradient(90deg,transparent,rgba(255,255,255,0.4),transparent);transition:left .8s;}
+  button:hover::before{left:100%;}
+  .btn-cosmic{background:linear-gradient(45deg,var(--purple),var(--pink));color:white;box-shadow:0 0 50px var(--purple);}
+  .btn-claim{background:linear-gradient(45deg,#ff6f00,var(--gold));color:#000;font-size:2.2rem;padding:36px;box-shadow:0 0 100px var(--gold);}
+  .btn-admin{background:linear-gradient(45deg,#c62828,#ff1744);color:white;box-shadow:0 0 60px #ff1744;}
+  button:not(:disabled):hover{transform:translateY(-8px) scale(1.02);}
+  button:disabled{opacity:0.4;cursor:not-allowed;}
 
-  .card {
-    background: rgba(8, 0, 28, 0.7);
-    backdrop-filter: blur(16px);
-    border: 2px solid rgba(139, 34, 255, 0.6);
-    border-radius: 28px;
-    padding: 32px;
-    margin-bottom: 28px;
-    box-shadow: 0 0 60px rgba(139, 34, 255, 0.4);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 35px; }
-  .stat {
-    text-align: center;
-    padding: 20px;
-    background: rgba(255,255,255,0.06);
-    border-radius: 18px;
-    border: 1px solid rgba(255,179,0,0.3);
-  }
-  .label { font-size: 0.95rem; opacity: 0.85; }
-  .value { font-size: 1.8rem; font-weight: 900; color: var(--gold); text-shadow: 0 0 25px var(--gold); }
-
-  .progress {
-    height: 60px;
-    background: rgba(0,0,0,0.8);
-    border: 3px solid var(--purple);
-    border-radius: 30px;
-    overflow: hidden;
-    position: relative;
-    margin: 40px 0;
-    box-shadow: 0 0 50px var(--purple);
-  }
-  .fill {
-    height: 100%;
-    width: 0%;
-    background: linear-gradient(90deg, #8b22ff, #ff2e8a, #ffb300);
-    box-shadow: 0 0 60px #ffb300;
-    transition: width 3.5s cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-  .progtext {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2.2rem;
-    font-weight: 900;
-    background: linear-gradient(90deg, var(--gold), #fff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-shadow: 0 0 40px #000;
-  }
-
-  input {
-    width: 100%;
-    padding: 22px;
-    margin: 16px 0;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid var(--purple);
-    border-radius: 18px;
-    color: white;
-    font-size: 1.3rem;
-    text-align: center;
-    font-family: 'Orbitron';
-  }
-
-  button {
-    width: 100%;
-    padding: 26px;
-    margin: 16px 0;
-    border: none;
-    border-radius: 18px;
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 900;
-    font-size: 1.6rem;
-    letter-spacing: 3px;
-    cursor: pointer;
-    transition: all 0.6s;
-    position: relative;
-    overflow: hidden;
-  }
-  button::before {
-    content: '';
-    position: absolute;
-    top: 0; left: -100%;
-    width: 100%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-    transition: left 0.8s;
-  }
-  button:hover::before { left: 100%; }
-
-  .btn-cosmic { background: linear-gradient(45deg, var(--purple), var(--pink)); color: white; box-shadow: 0 0 50px var(--purple); }
-  .btn-claim { background: linear-gradient(45deg, #ff6f00, var(--gold)); color: #000; font-size: 2.2rem; padding: 36px; box-shadow: 0 0 100px var(--gold); }
-  .btn-admin { background: linear-gradient(45deg, #c62828, #ff1744); color: white; box-shadow: 0 0 60px #ff1744; }
-
-  button:not(:disabled):hover { transform: translateY(-8px) scale(1.02); }
-  button:disabled { opacity: 0.4; cursor: not-allowed; }
-
-  .glow { animation: glow 2.5s infinite alternate; }
-  @keyframes glow { from { box-shadow: 0 0 40px currentColor; } to { box-shadow: 0 0 80px currentColor, 0 0 120px currentColor; } }
+  .glow{animation:glow 2.5s infinite alternate;}
+  @keyframes glow{from{box-shadow:0 0 40px currentColor}to{box-shadow:0 0 80px currentColor,0 0 120px currentColor}}
 </style>
 </head>
 <body>
@@ -216,7 +123,7 @@
         <div id="claimable" style="margin-top:15px;color:#ff0;font-size:1.5rem;"></div>
       </div>
 
-      <input type="number" id="sunAmt" placeholder="SunDAI amount" step="any">
+      <input type="number" id="sunAmt" placeholder="SunDAI amount (e.g. 100000)" step="any">
       <input type="number" id="plpAmt" placeholder="PLP amount (optional)" step="any">
 
       <button id="stakeBtn" class="btn-cosmic glow" style="font-size:2.2rem;padding:36px;margin-top:40px;">
@@ -224,7 +131,7 @@
       </button>
 
       <details style="margin-top:40px;">
-        <summary style="cursor:pointer;color:#888;font-size:1.2rem;opacity:0.8;">Advanced Withdraw</summary>
+        <summary style="cursor:pointer;color:#888;font-size:1.2rem;">Advanced Withdraw</summary>
         <input type="number" id="outSun" placeholder="SunDAI withdraw" style="margin-top:20px;">
         <input type="number" id="outLP" placeholder="PLP withdraw">
         <button id="withdrawBtn" class="btn-cosmic" style="margin-top:15px;">WITHDRAW</button>
@@ -248,7 +155,7 @@
 </div>
 
 <script>
-// Same bulletproof one-click stake logic as last version — with NASA-grade black hole background restored
+// Same flawless logic as before — now with bulletproof background
 const GITHUB_RAW = "https://raw.githubusercontent.com/ELITEv5/SunDAI/main";
 const VAULT_ABI_URL = `${GITHUB_RAW}/Destiny-Vault/destiny-vault-abi.json`;
 const ORACLE_ABI_URL = `${GITHUB_RAW}/Destiny-Vault/sundai-oracle-abi.json`;
@@ -274,7 +181,7 @@ async function loadABIs() {
 }
 
 document.getElementById("connect").onclick = async () => {
-  if(!window.ethereum) return alert("Connect wallet");
+  if(!window.ethereum) return alert("Wallet needed");
   await ethereum.request({method:'eth_requestAccounts'});
   web3 = new Web3(ethereum);
   [account] = await web3.eth.getAccounts();
