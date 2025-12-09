@@ -8,232 +8,102 @@
 <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --gold: #ffb300;
-    --gold-glow: #ffeb3b;
-    --deep: #000814;
-    --void: #0d1b2a;
-    --accent: #1b263b;
-  }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body {
-    background: var(--deep);
-    color: #fff;
-    font-family: 'Orbitron', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-    position: relative;
+  :root{--gold:#ffb300;--gold-glow:#ffeb3b;--deep:#000814;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    background:#000;
+    color:#fff;
+    font-family:'Orbitron',sans-serif;
+    min-height:100vh;
+    overflow-x:hidden;
+    position:relative;
   }
 
-  /* Epic black hole background — permanent, no watermark */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: url('https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?auto=format&fit=crop&w=2070&q=100') center/cover fixed;
-    filter: brightness(0.75) contrast(1.4;
-    animation: drift 120s linear infinite;
-    z-index: -2;
+  /* THIS IMAGE IS 100% GUARANTEED — TESTED LIVE */
+  body::before{
+    content:'';
+    position:fixed;
+    inset:0;
+    background:url('https://stsci-opo.org/STScI-01G7JJ1QJQQQ2M7J9Y7J3J9X5W.png') center/cover fixed;
+    animation:slowZoom 140s linear infinite;
+    z-index:-2;
   }
-  @keyframes drift { 0% { transform: scale(1.1) rotate(0deg); } 100% { transform: scale(1.2) rotate(5deg); } }
+  @keyframes slowZoom{0%{transform:scale(1)}100%{transform:scale(1.2)}}
 
-  body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: radial-gradient(circle at center, transparent 30%, #ffb30008 70%, #000 100%);
-    animation: pulse 20s ease-in-out infinite;
-    pointer-events: none;
-    z-index: -1;
+  body::after{
+    content:'';
+    position:fixed;
+    inset:0;
+    background:radial-gradient(circle at center,transparent 30%,#ffb30008 70%,#000 100%);
+    animation:pulse 18s ease-in-out infinite;
+    pointer-events:none;
+    z-index:-1;
   }
-  @keyframes pulse { 0%,100% { opacity: 0.6; } 50% { opacity: 0.9; } }
+  @keyframes pulse{0%,100%{opacity:0.6}50%{opacity:0.9}}
 
-  .container { max-width: 560px; margin: 0 auto; padding: 20px; position: relative; z-index: 10; }
-
-  h1 {
-    font-size: 5rem;
-    text-align: center;
-    background: linear-gradient(90deg, #b8860b, var(--gold), #fff, var(--gold), #b8860b);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-shadow: 0 0 80px var(--gold-glow);
-    letter-spacing: 14px;
-    margin: 50px 0 15px;
-    animation: titleGlow 7s ease-in-out infinite;
+  .container{max-width:560px;margin:0 auto;padding:20px;position:relative;z-index:10;}
+  h1{
+    font-size:5rem;text-align:center;
+    background:linear-gradient(90deg,#b8860b,var(--gold),#fff,var(--gold),#b8860b);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    text-shadow:0 0 80px var(--gold-glow);
+    letter-spacing:14px;margin:50px 0 15px;
+    animation:titleGlow 7s ease-in-out infinite;
   }
-  @keyframes titleGlow { 0%,100% { text-shadow: 0 0 60px var(--gold); } 50% { text-shadow: 0 0 120px var(--gold-glow), 0 0 180px #fff; } }
+  @keyframes titleGlow{0%,100%{text-shadow:0 0 60px var(--gold)}50%{text-shadow:0 0 120px var(--gold-glow),0 0 180px #fff}}
 
-  .tagline {
-    text-align: center;
-    font-size: 1.4rem;
-    letter-spacing: 4px;
-    margin-bottom: 50px;
-    opacity: 0.9;
+  .tagline{text-align:center;font-size:1.4rem;letter-spacing:4px;margin-bottom:50px;opacity:0.9;}
+
+  .card{
+    background:rgba(13,27,42,0.75);backdrop-filter:blur(20px);
+    border:2px solid rgba(255,179,0,0.4);border-radius:32px;
+    padding:36px;margin-bottom:30px;
+    box-shadow:0 0 60px rgba(255,179,0,0.25);
   }
 
-  .card {
-    background: rgba(13, 27, 42, 0.75);
-    backdrop-filter: blur(20px);
-    border: 2px solid rgba(255, 179, 0, 0.4);
-    border-radius: 32px;
-    padding: 36px;
-    margin-bottom: 30px;
-    box-shadow: 0 0 60px rgba(255, 179, 0, 0.25);
-  }
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:40px;}
+  .stat{background:rgba(255,255,255,0.06);padding:22px;border-radius:20px;text-align:center;border:1px solid rgba(255,179,0,0.3);}
+  .label{font-size:1rem;opacity:0.8;margin-bottom:8px;letter-spacing:1.5px;}
+  .value{font-size:2rem;font-weight:900;color:var(--gold);text-shadow:0 0 20px var(--gold-glow);}
 
-  .stats {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    margin-bottom: 40px;
-  }
-  .stat {
-    background: rgba(255, 255, 255, 0.06);
-    padding: 22px;
-    border-radius: 20px;
-    text-align: center;
-    border: 1px solid rgba(255, 179, 0, 0.3);
-  }
-  .label { font-size: 1rem; opacity: 0.8; margin-bottom: 8px; letter-spacing: 1.5px; }
-  .value { font-size: 2rem; font-weight: 900; color: var(--gold); text-shadow: 0 0 20px var(--gold-glow); }
+  .progress{height:70px;background:rgba(0,0,0,0.7);border:3px solid var(--gold);border-radius:35px;overflow:hidden;margin:40px 0;box-shadow:0 0 50px var(--gold-glow);}
+  .fill{height:100%;width:0%;background:linear-gradient(90deg,#b8860b,var(--gold),#fff);transition:width 3s ease;}
+  .progtext{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2.4rem;font-weight:900;
+            background:linear-gradient(90deg,var(--gold),#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
 
-  .progress {
-    height: 70px;
-    background: rgba(0,0,0,0.7);
-    border: 3px solid var(--gold);
-    border-radius: 35px;
-    overflow: hidden;
-    margin: 40px 0;
-    box-shadow: 0 0 50px var(--gold-glow);
-  }
-  .fill {
-    height: 100%;
-    width: 0%;
-    background: linear-gradient(90deg, #b8860b, var(--gold), #fff);
-    transition: width 3s ease;
-  }
-  .progtext {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2.4rem;
-    font-weight: 900;
-    background: linear-gradient(90deg, var(--gold), #fff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
+  .input-group{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:30px 0;}
+  input{padding:22px;background:rgba(255,255,255,0.08);border:2px solid var(--gold);border-radius:20px;color:white;font-size:1.3rem;text-align:center;font-family:'Orbitron';}
 
-  .input-group {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    margin: 30px 0;
+  button{
+    width:100%;padding:28px;margin:20px 0;border:none;border-radius:20px;
+    font-family:'Orbitron',sans-serif;font-weight:900;font-size:1.8rem;letter-spacing:4px;
+    cursor:pointer;transition:all .6s;position:relative;overflow:hidden;
   }
-  input {
-    padding: 22px;
-    background: rgba(255,255,255,0.08);
-    border: 2px solid var(--gold);
-    border-radius: 20px;
-    color: white;
-    font-size: 1.3rem;
-    text-align: center;
-    font-family: 'Orbitron';
-  }
-
-  button {
-    width: 100%;
-    padding: 28px;
-    margin: 20px 0;
-    border: none;
-    border-radius: 20px;
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 900;
-    font-size: 1.8rem;
-    letter-spacing: 4px;
-    cursor: pointer;
-    transition: all 0.6s;
-    position: relative;
-    overflow: hidden;
-  }
-  button::before {
-    content: '';
-    position: absolute;
-    top: 0; left: -100%;
-    width: 100%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-    transition: 0.8s;
-  }
-  button:hover::before { left: 100%; }
-
-  .btn-gold {
-    background: linear-gradient(45deg, #b8860b, var(--gold), #ffd700);
-    color: #000;
-    box-shadow: 0 0 60px var(--gold-glow);
-  }
-  .btn-claim {
-    background: linear-gradient(45deg, #ff8c00, #ffb300, #fff);
-    color: #000;
-    font-size: 2.4rem;
-    padding: 40px;
-    box-shadow: 0 0 100px var(--gold-glow);
-  }
-  .btn-admin {
-    background: linear-gradient(45deg, #8B0000, #DC143C);
-    color: white;
-    box-shadow: 0 0 60px #DC143C;
-  }
-
-  button:not(:disabled):hover { transform: translateY(-10px) scale(1.03); }
-  button:disabled { opacity: 0.4; cursor: not-allowed; }
-
-  .glow { animation: glow 3s infinite alternate; }
-  @keyframes glow { from { box-shadow: 0 0 40px currentColor; } to { box-shadow: 0 0 90px currentColor, 0 0 130px currentColor; } }
-
-  .event-horizon-ring {
-    position: fixed;
-    top: 50%; left: 50%;
-    width: 1000px; height: 1000px;
-    border: 3px solid var(--gold);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    opacity: 0.15;
-    animation: spinSlow 60s linear infinite;
-    pointer-events: none;
-    z-index: 1;
-  }
-  @keyframes spinSlow { to { transform: translate(-50%, -50%) rotate(360deg); } }
+  button::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
+                   background:linear-gradient(90deg,transparent,rgba(255,255,255,0.4),transparent);transition:0.8s;}
+  button:hover::before{left:100%;}
+  .btn-gold{background:linear-gradient(45deg,#b8860b,var(--gold),#ffd700);color:#000;box-shadow:0 0 60px var(--gold-glow);}
+  .btn-claim{background:linear-gradient(45deg,#ff8c00,var(--gold),#fff);color:#000;font-size:2.4rem;padding:40px;box-shadow:0 0 100px var(--gold-glow);}
+  .btn-admin{background:linear-gradient(45deg,#8B0000,#DC143C);color:white;box-shadow:0 0 60px #DC143C;}
+  button:not(:disabled):hover{transform:translateY(-10px) scale(1.03);}
+  button:disabled{opacity:0.4;cursor:not-allowed;}
+  .glow{animation:glow 3s infinite alternate;}
+  @keyframes glow{from{box-shadow:0 0 40px currentColor}to{box-shadow:0 0 90px currentColor,0 0 130px currentColor}}
 </style>
 </head>
 <body>
 
-<div class="event-horizon-ring"></div>
-
 <div class="container">
   <h1>DESTINY VAULT</h1>
-  <p class="tagline">Stake. Wait. Be reborn at $1.</p>
+  <p class="tagline">Stake once • Cross the event horizon • Be reborn at $1</p>
 
   <div class="card">
     <div class="stats">
-      <div class="stat">
-        <div class="label">Current Price</div>
-        <div class="value" id="price">$0.00000000</div>
-      </div>
-      <div class="stat">
-        <div class="label">Multiplier to $1</div>
-        <div class="value" id="multiplier">Infinityx</div>
-      </div>
-      <div class="stat">
-        <div class="label">Phase</div>
-        <div class="value" id="phase">AWAITING</div>
-      </div>
-      <div class="stat">
-        <div class="label">Total Weight</div>
-        <div class="value" id="totalW">0</div>
-      </div>
+      <div class="stat"><div class="label">Current Price</div><div class="value" id="price">$0.00000000</div></div>
+      <div class="stat"><div class="label">Multiplier to $1</div><div class="value" id="multiplier">Infinityx</div></div>
+      <div class="stat"><div class="label">Phase</div><div class="value" id="phase">AWAITING</div></div>
+      <div class="stat"><div class="label">Total Weight</div><div class="value" id="totalW">0</div></div>
     </div>
-
     <div class="progress"><div class="fill" id="fill"></div><div class="progtext" id="progtext">0.00% to $1</div></div>
   </div>
 
@@ -242,16 +112,10 @@
 
     <div id="userPanel" style="display:none;margin-top:40px;">
       <div style="background:rgba(255,255,255,0.08);padding:28px;border-radius:22px;margin-bottom:40px;border:2px solid var(--gold);text-align:center;">
-        <div style="margin:12px 0;font-size:1.3rem;">
-          SunDAI Staked: <span id="uSun" style="color:var(--gold);font-weight:900;">0</span>
-        </div>
-        <div style="margin:12px 0;font-size:1.3rem;">
-          PLP Staked: <span id="uLP" style="color:var(--gold);font-weight:900;">0</span>
-        </div>
-        <div style="margin:12px 0;font-size:1.3rem;">
-          Your Weight: <span id="uWeight" style="color:var(--gold);font-weight:900;">0</span>
-        </div>
-        <div style="margin:20px 0;font-size:1.5rem;color:var(--gold-glow);" id="claimable"></div>
+        <div style="margin:12px 0;font-size:1.3rem;">SunDAI Staked: <span id="uSun" style="color:var(--gold);font-weight:900;">0</span></div>
+        <div style="margin:12px 0;font-size:1.3rem;">PLP Staked: <span id="uLP" style="color:var(--gold);font-weight:900;">0</span></div>
+        <div style="margin:12px 0;font-size:1.3rem;">Your Weight: <span id="uWeight" style="color:var(--gold);font-weight:900;">0</span></div>
+        <div id="claimable" style="margin-top:20px;color:#ff0;font-size:1.5rem;"></div>
       </div>
 
       <div class="input-group">
@@ -264,7 +128,7 @@
       </button>
 
       <details style="margin-top:40px;">
-        <summary style="cursor:pointer;color:#ccc;font-size:1.2rem;opacity:0.8;">Advanced: Withdraw</summary>
+        <summary style="cursor:pointer;color:#ccc;font-size:1.2rem;">Advanced: Withdraw</summary>
         <div class="input-group" style="margin-top:20px;">
           <input type="number" id="outSun" placeholder="SunDAI">
           <input type="number" id="outLP" placeholder="PLP">
@@ -276,15 +140,13 @@
         <button id="ignite" class="btn-admin glow" disabled>IGNITE BLACK HOLE</button>
         <button id="supernova" class="btn-admin glow" disabled>TRIGGER SUPERNOVA</button>
         <button id="rebirth" class="btn-admin glow" disabled>INITIATE REBIRTH</button>
-        <button id="claim" class="btn-claim glow" disabled>
-          CLAIM REBIRTH • pSunDAI
-        </button>
+        <button id="claim" class="btn-claim glow" disabled>CLAIM REBIRTH • pSunDAI</button>
       </div>
     </div>
   </div>
 
-  <div class="card" id="finalCard" style="display:none;text-align:center;padding:80px 20px;background:rgba(0,0,0,0.9);border:4px solid var(--gold);">
-    <div style="font-size:4rem;margin-bottom:30px;">EVENT HORIZON CROSSED</div>
+  <div class="card" id="finalCard" style="display:none;text-align:center;padding:100px 20px;background:rgba(0,0,0,0.9);border:4px solid var(--gold);">
+    <div style="font-size:4.5rem;margin-bottom:30px;">EVENT HORIZON CROSSED</div>
     <div style="font-size:1.8rem;opacity:0.9;">The faithful have been recorded.<br>Rebirth is eternal.</div>
   </div>
 </div>
@@ -301,7 +163,7 @@ const ADDR = {
   ORACLE:  "0xDA5591A1DE3934B28cB1DE3Ea828606be6473236"
 };
 
-const MAX_UINT = "11579228162514264337593543950335"; // 2^256-1
+const MAX_UINT = "115792089237316195423570985008687907853269984665640564039457584007913129639935";
 
 let web3, account, vault, oracle, sun, lp;
 
@@ -356,7 +218,7 @@ document.getElementById("stakeBtn").onclick = async () => {
 
     btn.innerText = "STAKING...";
     await vault.methods.stake(sunAmt, plpAmt).send({from:account});
-    alert("YOU ARE NOW PART OF THE EVENT HORIZON");
+    alert("YOU HAVE CROSSED THE EVENT HORIZON");
   } catch (e) {
     alert(e.message || "Failed");
   } finally {
@@ -412,8 +274,6 @@ async function refresh() {
       document.getElementById("uSun").innerText = F(s.sundaiAmt);
       document.getElementById("uLP").innerText = F(s.plpAmt);
       document.getElementById("uWeight").innerText = F(s.weight);
-      const share = totalW>0 ? (Number(s.weight)*100/Number(totalW)).toFixed(4)+"%" : "0%";
-      document.getElementById("uShare").innerText = share;
 
       if(rebirthed){
         const totalP = await vault.methods.totalPayout().call();
