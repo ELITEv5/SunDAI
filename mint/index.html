@@ -153,10 +153,10 @@
     </div>
 
     <div class="card">
-  <input id="plsWithdraw" type="number" step="0.0001" placeholder="Withdraw PLS amount" />
-  <button class="btn" id="withdraw" disabled>Withdraw PLS</button>
-</div>
-
+      <input id="usdOut" type="number" step="0.01" placeholder="Withdraw USD value" />
+      <div class="preview" id="plsIn"></div>
+      <button class="btn" id="withdraw" disabled>Withdraw PLS</button>
+    </div>
 
     <div class="card">
       <button class="btn" id="risk" disabled style="background:#ff3366">Check Liquidation Risk</button>
@@ -471,19 +471,11 @@ document.getElementById("repay").onclick = () =>
     await (await vault.repay(repayAmount)).wait();
   });
 
-    document.getElementById("withdraw").onclick = () =>
-  withLoading(document.getElementById("withdraw"), async () => {
-    const pls = document.getElementById("plsWithdraw").value;
-    if (!pls || isNaN(pls) || pls <= 0) throw new Error("Enter valid PLS amount");
-
-    // Ethers v6 uses parseUnits directly on ethers
-    const plsWei = ethers.parseUnits(pls, 18);
-
-    const tx = await vault.withdrawPLS(plsWei);
-    await tx.wait();
-
-    status.textContent = `Withdrew ${pls} PLS`;
-  });
+     document.getElementById("withdraw").onclick = () => withLoading(document.getElementById("withdraw"), async () => {
+      const u = parseFloat(document.getElementById("usdOut").value);
+      if (!u || u <= 0) throw new Error("Enter amount");
+      await (await vault.withdrawPLS(usdToPLS(u))).wait();
+    });
 
 
     document.getElementById("risk").onclick = () => withLoading(document.getElementById("risk"), async () => {
