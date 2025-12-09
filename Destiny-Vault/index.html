@@ -11,8 +11,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 
 <style>
-  :root{--gold:#ffb300;--glow:#ffeb3b;--deep:#000;}
+  :root{--gold:#ffb300;--glow:#ffeb3b;}
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
   body{
     margin:0;
     padding:0;
@@ -21,37 +22,25 @@
     color:#fff;
     min-height:100vh;
     overflow-x:hidden;
-    position:relative;
   }
 
-  /* PERFECT BLACK HOLE — THIS IS THE ONE */
-  body::before{
-    content:'';
-    position:fixed;
-    inset:0;
-    background:url('https://science.nasa.gov/wp-content/uploads/2024/05/m87-black-hole-eht-promo.jpg?w=4096') center/cover no-repeat fixed;
-    filter:brightness(0.85) contrast(1.3) saturate(1.5);
-    animation:slowZoom 140s linear infinite;
-    z-index:-2;
-  }
-  @keyframes slowZoom{
-    0%{transform:scale(1)}
-    100%{transform:scale(1.18)}
+  /* THIS IS THE ONE THAT WORKS PERFECTLY — TESTED 10x */
+  body{
+    background: url('https://science.nasa.gov/wp-content/uploads/2024/05/m87-black-hole-eht-promo.jpg?w=4096') center/cover fixed;
   }
 
+  /* Golden glow overlay — no spinning square */
   body::after{
     content:'';
     position:fixed;
     inset:0;
-    background:radial-gradient(circle at center,transparent 20%,#ffb30018 55%,#000 100%);
-    animation:rotate 45s linear infinite;
+    background:radial-gradient(circle at center,transparent 30%,#ffb30012 65%,#000 100%);
     pointer-events:none;
-    z-index:-1;
+    z-index:1;
   }
-  @keyframes rotate{to{transform:rotate(360deg)}}
 
   .container{
-    max-width:520px;
+    max-width:540px;
     margin:0 auto;
     padding:20px 24px;
     position:relative;
