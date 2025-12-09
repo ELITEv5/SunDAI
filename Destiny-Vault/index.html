@@ -6,98 +6,99 @@
 <title>SunDAI • DESTINY VAULT</title>
 <script src="ethers-5.7.2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
 <style>
-  :root{--gold:#ffb300;--gold-glow:#ffeb3b;--deep:#000814;--card:#0f1b3a;}
+  :root{
+    --gold:#ffb300;
+    --gold-glow:#ffeb3b;
+    --deep:#000;
+    --card:#0a0e2e;
+  }
   *{margin:0;padding:0;box-sizing:border-box;}
   body{
     background:#000 url('https://science.nasa.gov/wp-content/uploads/2024/05/m87-black-hole-eht-promo.jpg?w=4096') center/cover fixed;
+    font-family:'Orbitron',sans-serif;
     color:#fff;
-    font-family:'Orbitron,sans-serif;
     min-height:100vh;
   }
   body::after{
     content:'';position:fixed;inset:0;
-    background:radial-gradient(circle at center,transparent 25%,#ffb30008 65%,#000 100%);
-    animation:pulse 20s ease-in-out infinite;pointer-events:none;
+    background:radial-gradient(circle at center,transparent 25%,#ffb30011 65%,#000 100%);
+    animation:pulse 16s ease-in-out infinite;
   }
   @keyframes pulse{0%,100%{opacity:0.7}50%{opacity:0.95}}
 
-  .container{
-    max-width:520px;
-    margin:0 auto;
-    padding:20px;
-    position:relative;
-    z-index:10;
- 10;
-  }
+  .container{max-width:540px;margin:0 auto;padding:20px 16px;position:relative;z-index:10;}
 
   h1{
-    font-size:4.8rem;
+    font-size:5.2rem;
     text-align:center;
     background:linear-gradient(90deg,#b8860b,var(--gold),#fff,var(--gold),#b8860b);
     -webkit-background-clip:text;
     -webkit-text-fill-color:transparent;
-    text-shadow:0 0 80px var(--gold-glow);
-    letter-spacing:16px;
+    text-shadow:0 0 100px var(--gold-glow);
+    letter-spacing:18px;
     margin:60px 0 20px;
+    font-weight:900;
   }
 
   .tagline{
     text-align:center;
-    font-size:1.4rem;
-    letter-spacing:6px;
+    font-size:1.6rem;
+    letter-spacing:7px;
     margin-bottom:60px;
     opacity:0.9;
+    font-weight:600;
   }
 
   .card{
     background:var(--card);
-    backdrop-filter:blur(20px);
+    backdrop-filter:blur(22px);
     border:3px solid var(--gold);
-    border-radius:32px;
-    padding:40px 36px;
-    margin-bottom:32px;
-    box-shadow:0 0 80px rgba(255,179,0,0.35);
-    overflow:hidden;
+    border-radius:36px;
+    padding:44px 40px;
+    margin-bottom:36px;
+    box-shadow:0 0 100px rgba(255,179,0,0.5);
   }
 
   .stats{
     display:grid;
     grid-template-columns:1fr 1fr;
-    gap:20px;
+    gap:24px;
     margin-bottom:50px;
   }
   .stat{
-    background:rgba(255,255,255,0.07);
-    padding:28px 20px;
-    border-radius:22px;
+    background:rgba(255,255,255,0.08);
+    padding:32px 20px;
+    border-radius:24px;
     text-align:center;
-    border:1px solid rgba(255,179,0,0.4);
-    backdrop-filter:blur(8px);
+    border:2px solid rgba(255,179,0,0.5);
+    backdrop-filter:blur(10px);
   }
   .label{
-    font-size:1rem;
+    font-size:1.1rem;
     opacity:0.8;
-    letter-spacing:2px;
-    margin-bottom:10px;
+    letter-spacing:3px;
+    margin-bottom:12px;
+    font-weight:600;
   }
   .value{
-    font-size:2.1rem;
+    font-size:2.4rem;
     font-weight:900;
     color:var(--gold);
-    text-shadow:0 0 30px var(--gold-glow);
+    text-shadow:0 0 40px var(--gold-glow);
+    font-weight:900;
   }
 
   .progress{
-    height:80px;
+    height:90px;
     background:rgba(0,0,0,0.8);
-    border:4px solid var(--gold);
-    border-radius:40px;
+    border:5px solid var(--gold);
+    border-radius:45px;
     overflow:hidden;
-    margin:50px 0;
+    margin:60px 0;
     position:relative;
-    box-shadow:0 0 70px var(--gold-glow);
+    box-shadow:0 0 90px var(--gold-glow);
   }
   .fill{
     height:100%;
@@ -111,69 +112,80 @@
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:2.8rem;
+    font-size:3.2rem;
     font-weight:900;
     background:linear-gradient(90deg,var(--gold),#fff);
     -webkit-background-clip:text;
     -webkit-text-fill-color:transparent;
+    text-shadow:0 0 50px #000;
   }
 
-  /* THIS FIXES THE INPUTS — NO MORE OVERFLOW */
   .inputs{
     display:flex;
     flex-direction:column;
-    gap:24px;
-    margin:40px 0;
+    gap:28px;
+    margin:50px 0;
   }
   input{
     width:100%;
-    padding:26px;
-    background:rgba(255,255,255,0.08);
-    border:2px solid var(--gold);
-    border-radius:20px;
+    padding:28px;
+    background:rgba(255,255,255,0.1);
+    border:3px solid var(--gold);
+    border-radius:24px;
     color:white;
-    font-size:1.4rem;
+    font-size:1.6rem;
     text-align:center;
     font-family:'Orbitron';
+    font-weight:700;
   }
 
   button{
     width:100%;
-    padding:32px;
-    margin:30px 0;
+    padding:36px;
+    margin:35px 0;
     border:none;
-    border-radius:24px;
+    border-radius:28px;
     font-family:'Orbitron',sans-serif;
     font-weight:900;
-    font-size:2rem;
-    letter-spacing:5px;
+    font-size:2.2rem;
+    letter-spacing:6px;
     cursor:pointer;
     transition:all .6s;
     position:relative;
     overflow:hidden;
+    box-shadow:0 0 80px var(--gold-glow);
   }
   button::before{
     content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
-    background:linear-gradient(90deg,transparent,rgba(255,255,255,0.5),transparent);
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent);
     transition:.8s;
   }
   button:hover::before{left:100%;}
   .btn-gold{
     background:linear-gradient(45deg,#b8860b,var(--gold),#ffd700);
     color:#000;
-    box-shadow:0 0 80px var(--gold-glow);
   }
   .btn-claim{
     background:linear-gradient(45deg,#ff8c00,var(--gold),#fff);
     color:#000;
-    font-size:2.6rem;
-    padding:44px;
-    box-shadow:0 0 120px var(--gold-glow);
+    font-size:2.8rem;
+    padding:50px;
+    box-shadow:0 0 140px var(--gold-glow);
   }
-  button:not(:disabled):hover{transform:translateY(-12px) scale(1.04);}
-  button:disabled{opacity:0.4;cursor:not-allowed;}
-  .glow{animation:glow 3s infinite alternate;}
-  @keyframes glow{from{box-shadow:0 0 50px currentColor}to{box-shadow:0 0 100px currentColor}}
+  button:not(:disabled):hover{
+    transform:translateY(-15px) scale(1.05);
+  }
+  button:disabled{
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+  .glow{
+    animation:glow 2.5s infinite alternate;
+  }
+  @keyframes glow{
+    from{box-shadow:0 0 60px currentColor}
+    to{box-shadow:0 0 0 120px currentColor, 0 0 180px currentColor}
+  }
 </style>
 </head>
 <body>
@@ -193,39 +205,38 @@
   </div>
 
   <div class="card">
-    <button id="connect" class="btn-gold glow" style="font-size:2.2rem;padding:36px;">CONNECT WALLET</button>
+    <button id="connect" class="btn-gold glow" style="font-size:2.4rem;padding:40px;">CONNECT WALLET</button>
 
-    <div id="userPanel" style="display:none;margin-top:50px;">
-      <div style="background:rgba(255,255,255,0.08);padding:35px;border-radius:26px;margin-bottom:50px;border:3px solid var(--gold);text-align:center;">
-        <div style="margin:18px 0;font-size:1.5rem;">SunDAI: <span id="uSun" style="color:var(--gold);font-weight:900;">0</span></div>
-        <div style="margin:18px 0;font-size:1.5rem;">PLP: <span id="uLP" style="color:var(--gold);font-weight:900;">0</span></div>
-        <div style="margin:18px 0;font-size:1.5rem;">Weight: <span id="uWeight" style="color:var(--gold);font-weight:900;">0</span></div>
-        <div id="claimable" style="margin-top:30px;color:#ff0;font-size:1.7rem;"></div>
+    <div id="userPanel" style="display:none;">
+      <div style="background:rgba(255,255,255,0.1);padding:40px;border-radius:28px;margin:40px 0 60px;border:3px solid var(--gold);text-align:center;">
+        <div style="margin:20px 0;font-size:1.8rem;">SunDAI: <span id="uSun" style="color:var(--gold);font-weight:900;">0</span></div>
+        <div style="margin:20px 0;font-size:1.8rem;">PLP: <span id="uLP" style="color:var(--gold);font-weight:900;">0</span></div>
+        <div style="margin:20px 0;font-size:1.8rem;">Weight: <span id="uWeight" style="color:var(--gold);font-weight:900;">0</span></div>
+        <div id="claimable" style="margin-top:35px;color:#ffeb3b;font-size:2rem;font-weight:900;"></div>
       </div>
 
-      <!-- FIXED: Now perfectly aligned and contained -->
       <div class="inputs">
         <input type="number" id="sunAmt" placeholder="SunDAI amount">
         <input type="number" id="plpAmt" placeholder="PLP amount (optional)">
       </div>
 
-      <button id="stakeBtn" class="btn-gold glow" style="font-size:2.5rem;padding:44px;margin:60px 0;">
+      <button id="stakeBtn" class="btn-gold glow" style="font-size:2.6rem;padding:48px;margin:60px 0;">
         STAKE INTO THE EVENT HORIZON
       </button>
 
-      <details style="margin-top:50px;">
-        <summary style="cursor:pointer;color:#aaa;font-size:1.3rem;">Advanced Withdraw</summary>
-        <div class="inputs" style="margin-top:25px;">
+      <details style="margin-top:60px;">
+        <summary style="cursor:pointer;color:#aaa;font-size:1.4rem;letter-spacing:3px;">Advanced Withdraw</summary>
+        <div class="inputs" style="margin-top:30px;">
           <input type="number" id="outSun" placeholder="SunDAI">
           <input type="number" id="outLP" placeholder="PLP">
         </div>
-        <button id="withdrawBtn" class="btn-gold" style="margin-top:20px;">WITHDRAW</button>
+        <button id="withdrawBtn" class="btn-gold" style="margin-top:25px;">WITHDRAW</button>
       </details>
 
-      <div style="margin-top:80px;">
-        <button id="ignite" class="btn-admin glow" disabled>IGNITE BLACK HOLE</button>
-        <button id="supernova" class="btn-admin glow" disabled>TRIGGER SUPERNOVA</button>
-        <button id="rebirth" class="btn-admin glow" disabled>INITIATE REBIRTH</button>
+      <div style="margin-top:90px;">
+        <button id="ignite" class="btn-gold" style="background:#8B0000;" disabled>IGNITE BLACK HOLE</button>
+        <button id="supernova" class="btn-gold" style="background:#8B0000;" disabled>TRIGGER SUPERNOVA</button>
+        <button id="rebirth" class="btn-gold" style="background:#8B0000;" disabled>INITIATE REBIRTH</button>
         <button id="claim" class="btn-claim glow" disabled>CLAIM REBIRTH</button>
       </div>
     </div>
@@ -233,7 +244,7 @@
 </div>
 
 <script>
-// [All the same working script from before — just with the critical layout fix above]
+// YOUR REPO ABIS + WORKING LOGIC
 const GITHUB_RAW = "https://raw.githubusercontent.com/ELITEv5/SunDAI/main";
 const VAULT_ABI_URL = `${GITHUB_RAW}/Destiny-Vault/destiny-vault-abi.json`;
 const ORACLE_ABI_URL = `${GITHUB_RAW}/Destiny-Vault/sundai-oracle-abi.json`;
@@ -258,7 +269,7 @@ async function loadABIs() {
 }
 
 document.getElementById("connect").onclick = async () => {
-  if(!window.ethereum) return alert("Wallet required");
+  if(!window.ethereum) return alert("Connect wallet");
   await ethereum.request({method:'eth_requestAccounts'});
   web3 = new Web3(ethereum);
   [account] = await web3.eth.getAccounts();
@@ -308,9 +319,61 @@ document.getElementById("stakeBtn").onclick = async () => {
   }
 };
 
-// [Rest of script unchanged — refresh, withdraw, ignite, etc.]
-// ... (same as previous version)
+document.getElementById("withdrawBtn").onclick = async () => {
+  await vault.methods.withdraw(W(document.getElementById("outSun").value||"0"), W(document.getElementById("outLP").value||"0")).send({from:account});
+};
 
+document.getElementById("ignite").onclick = () => vault.methods.ignite().send({from:account}).catch(e=>alert(e.message));
+document.getElementById("supernova").onclick = () => vault.methods.supernova().send({from:account}).catch(e=>alert(e.message));
+document.getElementById("rebirth").onclick = () => vault.methods.rebirth().send({from:account}).catch(e=>alert(e.message));
+document.getElementById("claim").onclick = () => vault.methods.claim().send({from:account}).then(()=>alert("REBIRTH ACHIEVED"));
+
+async function refresh() {
+  try {
+    const price = await oracle.methods.getPrice().call();
+    const p = Number(price) / 1e18;
+    const prog = Math.min(p * 100, 100);
+    const multiplier = p > 0 ? (1 / p).toFixed(2) + "x" : "Infinityx";
+
+    document.getElementById("price").innerText = "$" + p.toFixed(8).replace(/0+$/,"");
+    document.getElementById("multiplier").innerText = multiplier;
+    document.getElementById("progress").innerText = prog.toFixed(2) + "%";
+    document.getElementById("fill").style.width = prog + "%";
+    document.getElementById("progtext").innerText = prog.toFixed(1) + "% to $1";
+
+    const [ignited, supered, rebirthed, totalW] = await Promise.all([
+      vault.methods.ignited().call(),
+      vault.methods.supernovaTriggered().call(),
+      vault.methods.rebirthTriggered().call(),
+      vault.methods.totalWeight().call()
+    ]);
+
+    document.getElementById("totalW").innerText = (Number(totalW)/1e18).toFixed(2);
+
+    const phase = ignited 
+      ? (rebirthed ? "REBIRTH" : supered ? "SUPERNOVA" : "BLACK HOLE IGNITED")
+      : p >= 1 ? "EVENT HORIZON REACHED" : "APPROACHING EVENT HORIZON";
+    document.getElementById("phase").innerText = phase;
+
+    document.getElementById("ignite").disabled = ignited || p < 1;
+    document.getElementById("supernova").disabled = !ignited || supered;
+    document.getElementById("rebirth").disabled = !ignited || !supered || rebirthed;
+    document.getElementById("claim").disabled = !rebirthed;
+
+    if(account){
+      const s = await vault.methods.stakes(account).call();
+      document.getElementById("uSun").innerText = F(s.sundaiAmt);
+      document.getElementById("uLP").innerText = F(s.plpAmt);
+      document.getElementById("uWeight").innerText = F(s.weight);
+
+      if(rebirthed){
+        const totalP = await vault.methods.totalPayout().call();
+        const claimable = totalW>0 ? F((BigInt(totalP) * BigInt(s.weight)) / BigInt(totalW)) : "0";
+        document.getElementById("claimable").innerText = `Claimable: ${claimable} pSunDAI`;
+      }
+    }
+  } catch(e){ console.error(e); }
+}
 </script>
 </body>
 </html>
