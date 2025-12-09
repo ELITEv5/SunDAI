@@ -4,226 +4,92 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <title>SunDAI • DESTINY VAULT</title>
-<meta name="description" content="When SunDAI hits $1, the Black Hole ignites. Only the faithful are reborn."/>
+<meta name="description" content="One button to stake SunDAI + PLP into the Black Hole. When $1 hits — rebirth begins."/>
 
 <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 
 <style>
-  :root {
-    --gold: #ffb300;
-    --purple: #8b22eff;
-    --pink: #ff2e8a;
-    --deep: #0a001f;
-    --glow-gold: #ffeb3b;
-  }
-
-  * { margin:0; padding:0; box-sizing:border-box; }
-  
-  body {
+  :root {--gold:#ffb300;--purple:#8b22ff;--pink:#ff2e8a;--deep:#0a001f;--glow:#ffeb3b;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
     background: radial-gradient(circle at 50% 100%, #1a0040 0%, #000 70%),
                 radial-gradient(circle at 30% 20%, #4a0072 0%, transparent 40%),
                 radial-gradient(circle at 80% 60%, #120030 0%, transparent 50%);
     background-attachment: fixed;
-    color: #fff;
-    font-family: 'Orbitron', 'Arial Black', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-    position: relative;
+    color:#fff; font-family:'Orbitron',sans-serif; min-height:100vh; overflow-x:hidden; position:relative;
   }
-
-  /* Animated Nebula Background */
-  body::before {
-    content: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
+  body::before{
+    content:''; position:absolute; inset:0;
     background: url('https://i.ibb.co/0jG2Z8K/nebula-gold-purple.png') center/cover;
-    background-blend-mode: screen;
-    opacity: 0.6;
-    animation: nebula 60s linear infinite;
-    pointer-events: none;
+    background-blend-mode: screen; opacity:0.6;
+    animation: nebula 80s linear infinite; pointer-events:none;
   }
-  @keyframes nebula { 0%{background-position:0% 0%} 100%{background-position:100% 100%} }
+  @keyframes nebula{0%{background-position:0% 0%}100%{background-position:100% 100%}}
 
-  .container { max-width: 520px; margin: 0 auto; padding: 20px; position: relative; z-index: 2; }
-
-  h1 {
-    font-size: 4rem;
-    text-align: center;
-    background: linear-gradient(90deg, var(--gold), #fff, var(--purple));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-shadow: 0 0 40px var(--gold);
-    letter-spacing: 8px;
-    margin: 30px 0 10px;
-    animation: titleGlow 4s ease-in-out infinite alternate;
+  .container{max-width:520px;margin:0 auto;padding:20px;position:relative;z-index:2;}
+  h1{
+    font-size:4.2rem;text-align:center;
+    background:linear-gradient(90deg,var(--gold),#fff,var(--purple));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    text-shadow:0 0 50px var(--gold);letter-spacing:10px;margin:40px 0 10px;
+    animation:titleGlow 5s ease-in-out infinite alternate;
   }
-  @keyframes titleGlow {
-    from { text-shadow: 0 0 40px var(--gold); }
-    to { text-shadow: 0 0 80px var(--glow-gold), 0 0 120px var(--purple); }
+  @keyframes titleGlow{from{text-shadow:0 0 40px var(--gold)}to{text-shadow:0 0 100px var(--glow-gold),0 0 150px var(--purple)}}
+  .tagline{text-align:center;font-size:1.3rem;opacity:0.9;margin-bottom:40px;text-shadow:0 0 20px var(--purple);}
+
+  .card{
+    background:rgba(10,0,31,0.65);backdrop-filter:blur(14px);
+    border:1px solid rgba(178,46,255,0.5);border-radius:24px;padding:30px;margin-bottom:24px;
+    box-shadow:0 0 50px rgba(178,46,255,0.4);
   }
 
-  .tagline {
-    text-align: center;
-    font-size: 1.3rem;
-    opacity: 0.9;
-    margin-bottom: 40px;
-    text-shadow: 0 0 20px var(--purple);
-  }
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:30px;}
+  .stat{text-align:center;padding:16px;background:rgba(255,255,255,0.05);border-radius:16px;border:1px solid rgba(255,179,0,0.3);}
+  .label{font-size:0.9rem;opacity:0.8;}
+  .value{font-size:1.7rem;font-weight:900;color:var(--gold);text-shadow:0 0 20px var(--gold);}
 
-  .card {
-    background: rgba(10, 0, 31, 0.6);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(178, 46, 255, 0.4);
-    border-radius: 24px;
-    padding: 28px;
-    margin-bottom: 24px;
-    box-shadow: 0 0 40px rgba(178, 46, 255, 0.3);
-    position: relative;
-    overflow: hidden;
-  }
-  .card::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, transparent 30%, rgba(255,179,0,0.1) 100%);
-    pointer-events: none;
-  }
+  .progress{height:56px;background:rgba(0,0,0,0.7);border:3px solid var(--purple);border-radius:28px;overflow:hidden;position:relative;margin:35px 0;box-shadow:0 0 40px var(--purple);}
+  .fill{height:100%;width:0%;background:linear-gradient(90deg,var(--purple),var(--pink),var(--gold));transition:width 3s ease;}
+  .progtext{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:900;
+            background:linear-gradient(90deg,var(--gold),#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
 
-  .grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 30px;
-  }
- 1
-  .stat {
-    text-align: center;
-    padding: 16px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 16px;
-    border: 1px solid rgba(255,179,0,0.2);
-  }
-  .label { font-size: 0.9rem; opacity: 0.8; margin-bottom: 6px; }
-  .value { font-size: 1.6rem; font-weight: 900; color: var(--gold); text-shadow: 0 0 15px var(--gold); }
+  input{width:100%;padding:20px;margin:14px 0;border-radius:16px;background:rgba(255,255,255,0.1);border:1px solid var(--purple);color:white;font-size:1.2rem;text-align:center;}
 
-  .progress {
-    height: 50px;
-    background: rgba(0,0,0,0.6);
-    border: 2px solid var(--purple);
-    border-radius: 25px;
-    overflow: hidden;
-    position: relative;
-    margin: 30px 0;
-    box-shadow: 0 0 30px var(--purple);
+  button{
+    width:width:100%;padding:22px;margin:14px 0;border:none;border-radius:16px;
+    font-family:'Orbitron',sans-serif;font-weight:900;font-size:1.4rem;letter-spacing:2px;
+    cursor:pointer;transition:all .5s;position:relative;overflow:hidden;
   }
-  .fill {
-    height: 100%;
-    width: 0%;
-    background: linear-gradient(90deg, var(--purple), var(--pink), var(--gold));
-    box-shadow: 0 0 40px var(--gold);
-    transition: width 2.5s cubic-bezier(0.65, 0, 0.35, 1);
-  }
-  .progtext {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.8rem;
-    font-weight: 900;
-    background: linear-gradient(90deg, var(--gold), #fff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-shadow: 0 0 30px #000;
-  }
+  button::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
+                   background:linear-gradient(90deg,transparent,rgba(255,255,255,0.4),transparent);transition:left .8s;}
+  button:hover::before{left:100%;}
 
-  input {
-    width: 100%;
-    padding: 18px;
-    margin: 12px 0;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid var(--purple);
-    border-radius: 16px;
-    color: white;
-    font-size: 1.1rem;
-    text-align: center;
-  }
+  .btn-cosmic{background:linear-gradient(45deg,var(--purple),var(--pink));color:white;box-shadow:0 0 40px var(--purple);}
+  .btn-claim{background:linear-gradient(45deg,#ff6f00,var(--gold));color:#000;font-size:2rem;padding:32px;box-shadow:0 0 80px var(--gold);}
+  .btn-admin{background:linear-gradient(45deg,#c62828,#ff1744);color:white;box-shadow:0 0 50px #ff1744;}
 
-  button {
-    width: 100%;
-    padding: 20px;
-    margin: 12px 0;
-    border: none;
-    border-radius: 16px;
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 900;
-    font-size: 1.3rem;
-    letter-spacing: 2px;
-    cursor: pointer;
-    transition: all 0.5s;
-    position: relative;
-    overflow: hidden;
-  }
-  button::before {
-    content: '';
-    position: absolute;
-    top: 0; left: -100%;
-    width: 100%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-    transition: left 0.7s;
-  }
-  button:hover::before { left: 100%; }
+  button:not(:disabled):hover{transform:translateY(-6px);}
+  button:disabled{opacity:0.4;cursor:not-allowed;}
 
-  .btn-cosmic {
-    background: linear-gradient(45deg, var(--purple), var(--pink));
-    color: white;
-    box-shadow: 0 0 30px var(--purple);
-  }
-  .btn-admin {
-    background: linear-gradient(45deg, #ff1744, #f50057);
-    color: white;
-    box-shadow: 0 0 40px #ff1744;
-  }
-  .btn-claim {
-    background: linear-gradient(45deg, #ff6f00, var(--gold));
-    color: #000;
-    font-size: 1.8rem;
-    padding: 28px;
-    box-shadow: 0 0 60px var(--gold);
-  }
-  button:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
-  button:not(:disabled):hover { transform: translateY(-5px); }
+  .glow{animation:glow 2s infinite alternate;}
+  @keyframes glow{from{box-shadow:0 0 30px currentColor}to{box-shadow:0 0 70px currentColor,0 0 100px currentColor}}
 
-  .glow { animation: cosmicGlow 2s infinite alternate; }
-  @keyframes cosmicGlow {
-    from { box-shadow: 0 0 30px currentColor; }
-    to { box-shadow: 0 0 60px currentColor, 0 0 90px currentColor; }
+  .event-horizon{
+    position:fixed;top:50%;left:50%;width:900px;height:900px;
+    background:radial-gradient(circle,transparent 30%,#000 70%);
+    border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;opacity:0.5;z-index:1;
+    animation:spin 30s linear infinite;
   }
-
-  .event-horizon {
-    position: fixed;
-    top: 50%; left: 50%;
-    width: 800px; height: 800px;
-    background: radial-gradient(circle, transparent 30%, #000 70%);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-    opacity: 0.4;
-    z-index: 1;
-    animation: horizon 20s linear infinite;
-  }
-  @keyframes horizon { to { transform: translate(-50%, -50%) rotate(360deg); } }
-
-  footer { text-align:center; margin:60px 0 20px; opacity:0.6; font-size:0.9rem; }
+  @keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
 </style>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 </head>
 <body>
-
 <div class="event-horizon"></div>
 
 <div class="container">
   <h1>DESTINY VAULT</h1>
-  <p class="tagline">SunDAI to $1 → Event Horizon → Eternal Rebirth</p>
+  <p class="tagline">One button. Infinite allowance. Eternal rebirth.</p>
 
   <div class="card">
     <div class="grid">
@@ -233,34 +99,39 @@
       <div class="stat"><div class="label">Phase</div><div class="value" id="status">AWAITING</div></div>
     </div>
     <div class="progress"><div class="fill" id="fill"></div><div class="progtext" id="progtext">0% to Event Horizon</div></div>
-    <div style="text-align:center; font-size:1.2rem;">Total Staked Weight: <span id="totalW" style="color:var(--gold);">0</span></div>
+    <div style="text-align:center;font-size:1.3rem;">Total Staked Weight: <span id="totalW" style="color:var(--gold);font-weight:bold;">0</span></div>
   </div>
 
   <div class="card">
-    <button id="connect" class="btn-cosmic glow" style="font-size:1.8rem;padding:26px;">CONNECT WALLET</button>
+    <button id="connect" class="btn-cosmic glow" style="font-size:1.9rem;padding:28px;">CONNECT WALLET</button>
 
-    <div id="user" style="display:none; margin-top:25px;">
-      <div style="background:rgba(255,255,255,0.08); padding:20px; border-radius:16px; margin-bottom:25px; border:1px solid var(--gold);">
+    <div id="user" style="display:none;margin-top:30px;">
+      <div style="background:rgba(255,255,255,0.08);padding:22px;border-radius:18px;margin-bottom:30px;border:1px solid var(--gold);">
         <div>SunDAI Staked: <span id="uSun" style="color:var(--gold);font-weight:bold;">0</span></div>
         <div>PLP Staked: <span id="uLP" style="color:var(--gold);font-weight:bold;">0</span></div>
         <div>Your Weight: <span id="uWeight" style="color:var(--gold);font-weight:bold;">0</span></div>
         <div>Your Share: <span id="uShare" style="color:var(--gold);font-weight:bold;">0%</span></div>
-        <div id="claimable" style="margin-top:12px; color:#ffeb3b; font-size:1.3rem;"></div>
+        <div id="claimable" style="margin-top:15px;color:#ff0;font-size:1.4rem;"></div>
       </div>
 
-      <input type="number" id="inSun" placeholder="SunDAI amount" step="any">
-      <button id="appSun" class="btn-cosmic">APPROVE SunDAI</button>
+      <!-- ONE INPUT PER TOKEN -->
+      <input type="number" id="sunAmt" placeholder="SunDAI amount (e.g. 100000)" step="any">
+      <input type="number" id="plpAmt" placeholder="PLP amount (optional)" step="any">
 
-      <input type="number" id="inLP" placeholder="PLP amount" step="any">
-      <button id="appLP" class="btn-cosmic">APPROVE PLP</button>
+      <!-- THE LEGENDARY ONE-CLICK BUTTON -->
+      <button id="stakeBtn" class="btn-cosmic glow" style="font-size:2rem;padding:32px;margin-top:30px;">
+        STAKE INTO THE EVENT HORIZON
+      </button>
 
-      <button id="stake" class="btn-cosmic glow" style="font-size:1.6rem;padding:24px;">STAKE INTO THE EVENT HORIZON</button>
+      <!-- Optional manual withdraw -->
+      <details style="margin-top:30px;">
+        <summary style="cursor:pointer;color:#aaa;font-size:1.1rem;">Advanced: Manual Withdraw</summary>
+        <input type="number" id="outSun" placeholder="SunDAI withdraw" style="margin-top:15px;">
+        <input type="number" id="outLP" placeholder="PLP withdraw">
+        <button id="withdrawBtn" class="btn-cosmic" style="margin-top:15px;">WITHDRAW</button>
+      </details>
 
-      <input type="number" id="outSun" placeholder="SunDAI withdraw" step="any">
-      <input type="number" id="outLP" placeholder="PLP withdraw" step="any">
-      <button id="withdraw" class="btn-cosmic">WITHDRAW</button>
-
-      <div style="margin-top:40px;">
+      <div style="margin-top:50px;">
         <button id="ignite" class="btn-admin glow" disabled>IGNITE BLACK HOLE</button>
         <button id="supernova" class="btn-admin glow" disabled>TRIGGER SUPERNOVA</button>
         <button id="rebirth" class="btn-admin glow" disabled>INITIATE REBIRTH</button>
@@ -271,22 +142,17 @@
     </div>
   </div>
 
-  <div class="card fire" id="fireCard" style="display:none; text-align:center; font-size:2.5rem; padding:60px 20px;">
+  <div class="card" id="fireCard" style="display:none;text-align:center;font-size:3rem;padding:80px 20px;background:linear-gradient(45deg,#300,#900);">
     EVENT HORIZON CROSSED<br>
-    <div style="font-size:1.4rem; margin-top:20px; opacity:0.9;">All matter consumed.<br>Only light remains.</div>
+    <div style="font-size:1.5rem;margin-top:25px;opacity:0.9;">All is consumed.<br>Only the faithful remain.</div>
   </div>
-
-  <footer>
-    SunDAI Destiny Vault • PulseChain<br>
-    <span style="font-size:0.8rem;">Vault: 0x883c...66880</span>
-  </footer>
 </div>
 
 <script>
-// Same exact logic as before but with cosmic names and URLs
+// ABIs from your GitHub
 const GITHUB_RAW = "https://raw.githubusercontent.com/ELITEv5/SunDAI/main";
-const VAULT_ABI_URL   = `${GITHUB_RAW}/Destiny-Vault/destiny-vault-abi.json`;
-const ORACLE_ABI_URL   = `${GITHUB_RAW}/Destiny-Vault/sundai-oracle-abi.json`;
+const VAULT_ABI_URL = `${GITHUB_RAW}/Destiny-Vault/destiny-vault-abi.json`;
+const ORACLE_ABI_URL = `${GITHUB_RAW}/Destiny-Vault/sundai-oracle-abi.json`;
 
 const ADDR = {
   VAULT:   "0x883c54DaCeBd3efcc58A3467dbE7F52704D66880",
@@ -295,6 +161,8 @@ const ADDR = {
   ORACLE:  "0xDA5591A1DE3934B28cB1DE3Ea828606be6473236",
   PSUNDAI: "0xA39Ae3eC7435CD30508FA439378478EA9cAB91dD"
 };
+
+const MAX_UINT = "115792089237316195423570985008687907853269984665640564039457584007913129639935";
 
 let web3, account, vault, oracle, sun, lp;
 
@@ -307,7 +175,7 @@ async function loadABIs() {
 }
 
 document.getElementById("connect").onclick = async () => {
-  if(!window.ethereum) return alert("Wallet required");
+  if(!window.ethereum) return alert("Wallet needed!");
   await ethereum.request({method:'eth_requestAccounts'});
   web3 = new Web3(ethereum);
   [account] = await web3.eth.getAccounts();
@@ -321,22 +189,61 @@ document.getElementById("connect").onclick = async () => {
   document.getElementById("connect").innerHTML = `${account.slice(0,6)}...${account.slice(-4)}`;
   document.getElementById("user").style.display = "block";
   refresh();
-  setInterval(refresh, 11000);
+  setInterval(refresh, 12000);
 };
 
 const W = x => web3.utils.toWei(String(x||0),'ether');
 const F = x => web3.utils.fromWei(x,'ether');
 
-document.getElementById("appSun").onclick = async () => { const a=document.getElementById("inSun").value; if(!a) return alert("Amount?"); await sun.methods.approve(ADDR.VAULT, W(a)).send({from:account}); alert("Approved"); };
-document.getElementById("appLP").onclick = async () => { const a=document.getElementById("inLP").value; if(!a) return alert("Amount?"); await lp.methods.approve(ADDR.VAULT, W(a)).send({from:account}); alert("Approved"); };
-document.getElementById("stake").onclick = async () => { const s=W(document.getElementById("inSun").value||"0"), l=W(document.getElementById("inLP").value||"0"); if(s==="0" && l==="0") return alert("Amount?"); await vault.methods.stake(s,l).send({from:account}); alert("Sacrificed"); };
-document.getElementById("withdraw").onclick = async () => { await vault.methods.withdraw(W(document.getElementById("outSun").value||"0"), W(document.getElementById("outLP").value||"0")).send({from:account}); };
+// ONE-CLICK STAKE BUTTON — THE MAGIC HAPPENS HERE
+document.getElementById("stakeBtn").onclick = async () => {
+  const sunAmtInput = document.getElementById("sunAmt").value || "0";
+  const plpAmtInput = document.getElementById("plpAmt").value || "0";
 
+  const sunAmt = W(sunAmtInput);
+  const plpAmt = W(plpAmtInput);
+
+  if (sunAmt === "0" && plpAmt === "0") return alert("Enter at least one amount");
+
+  try {
+    // STEP 1: Auto-approve MAX for both tokens if needed
+    if (sunAmt !== "0") {
+      const allowance = await sun.methods.allowance(account, ADDR.VAULT).call();
+      if (allowance < sunAmt) {
+        document.getElementById("stakeBtn").innerText = "APPROVING SunDAI...";
+        await sun.methods.approve(ADDR.VAULT, MAX_UINT).send({from: account});
+      }
+    }
+    if (plpAmt !== "0") {
+      const allowance = await lp.methods.allowance(account, ADDR.VAULT).call();
+      if (allowance < plpAmt) {
+        document.getElementById("stakeBtn").innerText = "APPROVING PLP...";
+        await lp.methods.approve(ADDR.VAULT, MAX_UINT).send({from: account});
+      }
+    }
+
+    // STEP 2: Stake
+    document.getElementById("stakeBtn").innerText = "STAKING...";
+    await vault.methods.stake(sunAmt, plpAmt).send({from: account});
+    document.getElementById("stakeBtn").innerText = "STAKE INTO THE EVENT HORIZON";
+    alert("SACRIFICED TO THE BLACK HOLE — WELCOME, FAITHFUL");
+
+  } catch (e) {
+    document.getElementById("stakeBtn").innerText = "STAKE INTO THE EVENT HORIZON";
+    alert("Transaction failed: " + (e.message || e));
+  }
+};
+
+// Rest of buttons unchanged
+document.getElementById("withdrawBtn").onclick = async () => {
+  await vault.methods.withdraw(W(document.getElementById("outSun").value||"0"), W(document.getElementById("outLP").value||"0")).send({from:account});
+};
 document.getElementById("ignite").onclick = () => vault.methods.ignite().send({from:account}).catch(e=>alert(e.message));
 document.getElementById("supernova").onclick = () => vault.methods.supernova().send({from:account}).catch(e=>alert(e.message));
 document.getElementById("rebirth").onclick = () => vault.methods.rebirth().send({from:account}).catch(e=>alert(e.message));
-document.getElementById("claim").onclick = () => vault.methods.claim().send({from:account}).then(()=>alert("REBIRTH COMPLETE"));
+document.getElementById("claim").onclick = () => vault.methods.claim().send({from:account}).then(()=>alert("REBIRTH COMPLETE — YOU ARE ETERNAL"));
 
+// Refresh loop (same as before)
 async function refresh() {
   try {
     const price = await oracle.methods.getPrice().call();
@@ -361,7 +268,6 @@ async function refresh() {
 
     if(ignited){
       document.getElementById("fireCard").style.display="block";
-      document.querySelectorAll(".card").forEach(c=>c.classList.add("fire"));
     }
 
     const status = ignited ? (rebirthed ? "REBIRTH" : supered ? "SUPERNOVA" : "IGNITED") : p>=1 ? "READY" : "AWAITING";
@@ -379,6 +285,7 @@ async function refresh() {
       document.getElementById("uWeight").innerText = F(s.weight);
       const share = totalW>0 ? (Number(s.weight)*100/Number(totalW)).toFixed(4)+"%" : "0%";
       document.getElementById("uShare").innerText = share;
+
       if(rebirthed){
         const totalP = await vault.methods.totalPayout().call();
         const claimable = totalW>0 ? F((BigInt(totalP) * BigInt(s.weight)) / BigInt(totalW)) : "0";
