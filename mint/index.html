@@ -471,21 +471,10 @@ document.getElementById("repay").onclick = () =>
     await (await vault.repay(repayAmount)).wait();
   });
 
-    document.getElementById("withdraw").onclick = () =>
-    withLoading(document.getElementById("withdraw"), async () => {
-      const plsStr = document.getElementById("plsWithdraw").value.trim();
-      if (!plsStr || isNaN(Number(plsStr)) || Number(plsStr) <= 0)
-        throw new Error("Enter valid PLS amount");
-
-      const plsWei = ethers.parseUnits(plsStr, 18);
-      const tx = await vault.withdrawPLS(plsWei);
-      await tx.wait();
-
-      const pls = Number(plsStr);
-      const priceNum = typeof price === "bigint" ? Number(price) / 1e18 : price;
-      const usdVal = pls * priceNum;
-
-      status.textContent = `Withdrew ${pls.toFixed(4)} PLS (≈ $${usdVal.toFixed(2)} USD)`;
+    document.getElementById("withdraw").onclick = () => withLoading(document.getElementById("withdraw"), async () => {
+      const u = parseFloat(document.getElementById("usdOut").value);
+      if (!u || u <= 0) throw new Error("Enter amount");
+      await (await vault.withdrawPLS(usdToPLS(u))).wait();
     });
 
 
