@@ -460,8 +460,8 @@ window.oracle = oracle; // ✅ Fix here
       if (!u || u <= 0) throw new Error("Enter amount");
       await (await vault.mint(usdToPSun(u))).wait();
     });
-
-    document.getElementById("repay").onclick = () =>
+    
+document.getElementById("repay").onclick = () =>
   withLoading(document.getElementById("repay"), async () => {
     const amt = parseFloat(document.getElementById("psunRepay").value);
     if (!amt || amt <= 0) throw new Error("Enter amount");
@@ -470,7 +470,6 @@ window.oracle = oracle; // ✅ Fix here
     await (await token.approve(VAULT, repayAmount)).wait();
     await (await vault.repay(repayAmount)).wait();
   });
-
 
     document.getElementById("withdraw").onclick = () => withLoading(document.getElementById("withdraw"), async () => {
       const u = parseFloat(document.getElementById("usdOut").value);
