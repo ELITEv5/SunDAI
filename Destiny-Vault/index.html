@@ -21,7 +21,7 @@
   }
   body::before{
     content:''; position:absolute; inset:0;
-    background: url('https://i.ibb.co/0jG2Z8K/nebula-gold-purple.png') center/cover;
+    background: url('https://thumbs.dreamstime.com/b/abstract-cosmic-nebula-swirling-purple-orange-hues-glittering-tiny-golden-lights-celestial-ethereal-atmosphere-382641273.jpg') center/cover;
     background-blend-mode: screen; opacity:0.6;
     animation: nebula 80s linear infinite; pointer-events:none;
   }
@@ -57,7 +57,7 @@
   input{width:100%;padding:20px;margin:14px 0;border-radius:16px;background:rgba(255,255,255,0.1);border:1px solid var(--purple);color:white;font-size:1.2rem;text-align:center;}
 
   button{
-    width:width:100%;padding:22px;margin:14px 0;border:none;border-radius:16px;
+    width:100%;padding:22px;margin:14px 0;border:none;border-radius:16px;
     font-family:'Orbitron',sans-serif;font-weight:900;font-size:1.4rem;letter-spacing:2px;
     cursor:pointer;transition:all .5s;position:relative;overflow:hidden;
   }
@@ -114,18 +114,18 @@
         <div id="claimable" style="margin-top:15px;color:#ff0;font-size:1.4rem;"></div>
       </div>
 
-      <!-- ONE INPUT PER TOKEN -->
+      <!-- INPUTS -->
       <input type="number" id="sunAmt" placeholder="SunDAI amount (e.g. 100000)" step="any">
       <input type="number" id="plpAmt" placeholder="PLP amount (optional)" step="any">
 
-      <!-- THE LEGENDARY ONE-CLICK BUTTON -->
+      <!-- ONE BUTTON -->
       <button id="stakeBtn" class="btn-cosmic glow" style="font-size:2rem;padding:32px;margin-top:30px;">
         STAKE INTO THE EVENT HORIZON
       </button>
 
-      <!-- Optional manual withdraw -->
+      <!-- WITHDRAW -->
       <details style="margin-top:30px;">
-        <summary style="cursor:pointer;color:#aaa;font-size:1.1rem;">Advanced: Manual Withdraw</summary>
+        <summary style="cursor:pointer;color:#aaa;font-size:1.1rem;">Advanced: Withdraw</summary>
         <input type="number" id="outSun" placeholder="SunDAI withdraw" style="margin-top:15px;">
         <input type="number" id="outLP" placeholder="PLP withdraw">
         <button id="withdrawBtn" class="btn-cosmic" style="margin-top:15px;">WITHDRAW</button>
@@ -149,7 +149,7 @@
 </div>
 
 <script>
-// ABIs from your GitHub
+// GITHUB ABIs
 const GITHUB_RAW = "https://raw.githubusercontent.com/ELITEv5/SunDAI/main";
 const VAULT_ABI_URL = `${GITHUB_RAW}/Destiny-Vault/destiny-vault-abi.json`;
 const ORACLE_ABI_URL = `${GITHUB_RAW}/Destiny-Vault/sundai-oracle-abi.json`;
@@ -195,55 +195,56 @@ document.getElementById("connect").onclick = async () => {
 const W = x => web3.utils.toWei(String(x||0),'ether');
 const F = x => web3.utils.fromWei(x,'ether');
 
-// ONE-CLICK STAKE BUTTON — THE MAGIC HAPPENS HERE
+// ONE-CLICK STAKE WITH AUTO-APPROVE
 document.getElementById("stakeBtn").onclick = async () => {
-  const sunAmtInput = document.getElementById("sunAmt").value || "0";
-  const plpAmtInput = document.getElementById("plpAmt").value || "0";
+  let btn = document.getElementById("stakeBtn");
+  let sunInput = document.getElementById("sunAmt").value || "0";
+  let plpInput = document.getElementById("plpAmt").value || "0";
 
-  const sunAmt = W(sunAmtInput);
-  const plpAmt = W(plpAmtInput);
+  let sunAmt = W(sunInput);
+  let plpAmt = W(plpInput);
 
   if (sunAmt === "0" && plpAmt === "0") return alert("Enter at least one amount");
 
   try {
-    // STEP 1: Auto-approve MAX for both tokens if needed
+    btn.innerText = "APPROVING...";
+
     if (sunAmt !== "0") {
-      const allowance = await sun.methods.allowance(account, ADDR.VAULT).call();
-      if (allowance < sunAmt) {
-        document.getElementById("stakeBtn").innerText = "APPROVING SunDAI...";
-        await sun.methods.approve(ADDR.VAULT, MAX_UINT).send({from: account});
+      let allowSun = await sun.methods.allowance(account, ADDR.VAULT).call();
+      if (BigInt(allowSun) < BigInt(sunAmt)) {
+        await sun.methods.approve(ADDR.VAULT, MAX_UINT).send({from:account});
       }
     }
+
     if (plpAmt !== "0") {
-      const allowance = await lp.methods.allowance(account, ADDR.VAULT).call();
-      if (allowance < plpAmt) {
-        document.getElementById("stakeBtn").innerText = "APPROVING PLP...";
-        await lp.methods.approve(ADDR.VAULT, MAX_UINT).send({from: account});
+      let allowPlp = await lp.methods.allowance(account, ADDR.VAULT).call();
+      if (BigInt(allowPlp) < BigInt(plpAmt)) {
+        await lp.methods.approve(ADDR.VAULT, MAX_UINT).send({from:account});
       }
     }
 
-    // STEP 2: Stake
-    document.getElementById("stakeBtn").innerText = "STAKING...";
-    await vault.methods.stake(sunAmt, plpAmt).send({from: account});
-    document.getElementById("stakeBtn").innerText = "STAKE INTO THE EVENT HORIZON";
-    alert("SACRIFICED TO THE BLACK HOLE — WELCOME, FAITHFUL");
-
+    btn.innerText = "STAKING...";
+    await vault.methods.stake(sunAmt, plpAmt).send({from:account});
+    alert("STAKED INTO THE EVENT HORIZON!");
   } catch (e) {
-    document.getElementById("stakeBtn").innerText = "STAKE INTO THE EVENT HORIZON";
-    alert("Transaction failed: " + (e.message || e));
+    alert(e.message || e);
+  } finally {
+    btn.innerText = "STAKE INTO THE EVENT HORIZON";
   }
 };
 
-// Rest of buttons unchanged
+// WITHDRAW
 document.getElementById("withdrawBtn").onclick = async () => {
   await vault.methods.withdraw(W(document.getElementById("outSun").value||"0"), W(document.getElementById("outLP").value||"0")).send({from:account});
 };
+
+// OTHER BUTTONS
 document.getElementById("ignite").onclick = () => vault.methods.ignite().send({from:account}).catch(e=>alert(e.message));
 document.getElementById("supernova").onclick = () => vault.methods.supernova().send({from:account}).catch(e=>alert(e.message));
 document.getElementById("rebirth").onclick = () => vault.methods.rebirth().send({from:account}).catch(e=>alert(e.message));
-document.getElementById("claim").onclick = () => vault.methods.claim().send({from:account}).then(()=>alert("REBIRTH COMPLETE — YOU ARE ETERNAL"));
+document.getElementById("claim").onclick = () => vault.methods.claim().send({from:account}).then(()=>alert("REBIRTH COMPLETE"));
 
-// Refresh loop (same as before)
+// REFRESH
 async function refresh() {
   try {
     const price = await oracle.methods.getPrice().call();
