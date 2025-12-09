@@ -17,11 +17,10 @@
     overflow-x:hidden;
   }
   .container{
-    max-width:520px;
+    max-width:540px;
     margin:0 auto;
     padding:20px 24px;
   }
-
   h1{
     font-size:5.5rem;
     text-align:center;
@@ -40,7 +39,6 @@
     margin-bottom:50px;
     opacity:0.9;
   }
-
   .card{
     background:rgba(10,15,35,0.95);
     backdrop-filter:blur(20px);
@@ -50,7 +48,6 @@
     margin-bottom:40px;
     box-shadow:0 20px 80px rgba(255,179,0,0.6);
   }
-
   .stats{
     display:grid;
     grid-template-columns:1fr 1fr;
@@ -76,7 +73,6 @@
     color:#ffb300;
     text-shadow:0 0 40px #ffeb3b;
   }
-
   .progress{
     height:100px;
     background:#000;
@@ -101,17 +97,12 @@
     -webkit-text-fill-color:transparent;
     text-shadow:0 0 60px #000;
   }
-
-  /* THIS IS THE FINAL FIX — NO MORE STICKING OUT */
   .inputs{
-    display:flex;
-    flex-direction:column;
-    gap:30px;
     margin:50px 0;
   }
   input{
     width:100%;
-    padding:28px 24px;
+    padding:28px 20px;
     background:rgba(255,255,255,0.1);
     border:4px solid #ffb300;
     border-radius:28px;
@@ -120,14 +111,8 @@
     text-align:center;
     font-family:'Orbitron';
     font-weight:700;
-    outline:none;
-    /* Force containment */
-    max-width:calc(100% - 48px);
-    max-width:calc(100% - 48px);
-    margin-left:auto;
-    margin-right:auto;
+    margin-bottom:30px;
   }
-
   button{
     width:100%;
     padding:38px 24px;
@@ -167,7 +152,6 @@
 </style>
 </head>
 <body>
-
 <div class="container">
   <h1>DESTINY VAULT</h1>
   <p class="tagline">One stake. One destiny.</p>
@@ -222,7 +206,6 @@
 </div>
 
 <script>
-// [Same working script as before — only layout is fixed]
 const GITHUB_RAW = "https://raw.githubusercontent.com/ELITEv5/SunDAI/main";
 const VAULT_ABI_URL = `${GITHUB_RAW}/Destiny-Vault/destiny-vault-abi.json`;
 const ORACLE_ABI_URL = `${GITHUB_RAW}/Destiny-Vault/sundai-oracle-abi.json`;
@@ -256,7 +239,7 @@ document.getElementById("connect").onclick = async () => {
   vault = new web3.eth.Contract(VAULT_ABI, ADDR.VAULT);
   oracle = new web3.eth.Contract(ORACLE_ABI, ADDR.ORACLE);
   sun = new web3.eth.Contract([{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool"}],"stateMutability":"nonpayable","type":"function"}], ADDR.SUNDAI);
-  lp = new web3.eth.Contract([{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender"}],"name":"allowance","outputs":[{"internalType":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool"}],"stateMutability":"nonpayable","type":"function"}], ADDR.PLP);
+  lp = new web3.eth.Contract([{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool"}],"stateMutability":"nonpayable","type":"function"}], ADDR.PLP);
 
   document.getElementById("connect").innerHTML = `${account.slice(0,6)}...${account.slice(-4)}`;
   document.getElementById("userPanel").style.display = "block";
@@ -272,23 +255,23 @@ document.getElementById("stakeBtn").onclick = async () => {
   const sunIn = document.getElementById("sunAmt").value || "0";
   const plpIn = document.getElementById("plpAmt").value || "0";
   const sunAmt = W(sunIn);
-  const plpAmt = W(plpIn);
+  const plp = W(plpIn);
 
-  if (sunAmt === "0" && plpAmt === "0") return alert("Enter amount");
+  if (sun === "0" && plp === "0") return alert("Enter amount");
 
   try {
     btn.innerText = "APPROVING...";
-    if (sunAmt !== "0") {
+    if (sun !== "0") {
       const a = await sun.methods.allowance(account, ADDR.VAULT).call();
-      if (BigInt(a) < BigInt(sunAmt)) await sun.methods.approve(ADDR.VAULT, MAX_UINT).send({from:account});
+      if (BigInt(a) < BigInt(sun)) await sun.methods.approve(ADDR.VAULT, MAX_UINT).send({from:account});
     }
-    if (plpAmt !== "0") {
+    if (plp !== "0") {
       const a = await lp.methods.allowance(account, ADDR.VAULT).call();
-      if (BigInt(a) < BigInt(plpAmt)) await lp.methods.approve(ADDR.VAULT, MAX_UINT).send({from:account});
+      if (BigInt(a) < BigInt(plp)) await lp.methods.approve(ADDR.VAULT, MAX_UINT).send({from:account});
     }
 
     btn.innerText = "STAKING...";
-    await vault.methods.stake(sunAmt, plpAmt).send({from:account});
+    await vault.methods.stake(sun, plp).send({from:account});
     alert("CROSSED THE EVENT HORIZON");
   } catch (e) {
     alert(e.message || "Failed");
@@ -297,8 +280,61 @@ document.getElementById("stakeBtn").onclick = async () => {
   }
 };
 
-// [rest of working script unchanged]
+document.getElementById("withdrawBtn").onclick = async () => {
+  await vault.methods.withdraw(W(document.getElementById("outSun").value||"0"), W(document.getElementById("outLP").value||"0")).send({from:account});
+};
 
+document.getElementById("ignite").onclick = () => vault.methods.ignite().send({from:account}).catch(e=>alert(e.message));
+document.getElementById("supernova").onclick = () => vault.methods.supernova().send({from:account}).catch(e=>alert(e.message));
+document.getElementById("rebirth").onclick = () => vault.methods.rebirth().send({from:account}).catch(e=>alert(e.message));
+document.getElementById("claim").onclick = () => vault.methods.claim().send({from:account}).then(()=>alert("REBIRTH ACHIEVED"));
+
+async function refresh() {
+  try {
+    const price = await oracle.methods.getPrice().call();
+    const p = Number(price) / 1e18;
+    const prog = Math.min(p * 100, 100);
+    const multiplier = p > 0 ? (1 / p).toFixed(2) + "x" : "Infinityx";
+
+    document.getElementById("price").innerText = "$" + p.toFixed(8).replace(/0+$/,"");
+    document.getElementById("multiplier").innerText = multiplier;
+    document.getElementById("progress").innerText = prog.toFixed(2) + "%";
+    document.getElementById("fill").style.width = prog + "%";
+    document.getElementById("progtext").innerText = prog.toFixed(1) + "% to $1";
+
+    const [ignited, supered, rebirthed, totalW] = await Promise.all([
+      vault.methods.ignited().call(),
+      vault.methods.supernovaTriggered().call(),
+      vault.methods.rebirthTriggered().call(),
+      vault.methods.totalWeight().call()
+    ]);
+
+    document.getElementById("totalW").innerText = (Number(totalW)/1e18).toFixed(2);
+
+    const phase = ignited 
+      ? (rebirthed ? "REBIRTH" : supered ? "SUPERNOVA" : "BLACK HOLE IGNITED")
+      : p >= 1 ? "EVENT HORIZON REACHED" : "APPROACHING EVENT HORIZON";
+    document.getElementById("phase").innerText = phase;
+
+    document.getElementById("ignite").disabled = ignited || p < 1;
+    document.getElementById("supernova").disabled = !ignited || supered;
+    document.getElementById("rebirth").disabled = !ignited || !supered || rebirthed;
+    document.getElementById("claim").disabled = !rebirthed;
+
+    if(account){
+      const s = await vault.methods.stakes(account).call();
+      document.getElementById("uSun").innerText = F(s.sundaiAmt);
+      document.getElementById("uLP").innerText = F(s.plpAmt);
+      document.getElementById("uWeight").innerText = F(s.weight);
+
+      if(rebirthed){
+        const totalP = await vault.methods.totalPayout().call();
+        const claimable = totalW>0 ? F((BigInt(totalP) * BigInt(s.weight)) / BigInt(totalW)) : "0";
+        document.getElementById("claimable").innerText = `Claimable: ${claimable} pSunDAI`;
+      }
+    }
+  } catch(e){ console.error(e); }
+}
 </script>
 </body>
 </html>
