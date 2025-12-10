@@ -464,22 +464,31 @@ document.getElementById("withdraw").onclick = () => withLoading(document.getElem
   await (await vault.withdrawPLS(plsWei)).wait();
   status.textContent = `Withdrew ${pls.toFixed(2)} PLS`;
 });
-    // Max Safe Withdraw — auto-fills the input + executes
+    // Max Safe Withdraw — FIXED (price in scope)
 document.getElementById("maxWithdraw").onclick = () => withLoading(document.getElementById("maxWithdraw"), async () => {
   const i = await vault.vaultInfo(account);
   let excess = 0n;
+  let currentPrice = 0n;
+
   if (i.debt === 0n) {
     excess = i.collateral;
   } else {
     const priceData = await oracle.peekPriceView();
-    const price = priceData[0];
-    const required = (i.debt * 150n * 1e18n) / price / 100n;
+    currentPrice = priceData[0];  // ← now available outside
+    const required = (i.debt * 150n * 1e18n) / currentPrice / 100n;
     excess = i.collateral > required ? i.collateral - required : 0n;
   }
+
   if (excess === 0n) throw "No excess to withdraw";
+
   const excessNum = Number(ethers.formatEther(excess));
   document.getElementById("plsOut").value = excessNum.toFixed(2);
-  document.getElementById("usdPreview").textContent = `≈ $${(excessNum * Number(price)).toFixed(2)} USD`;
+  
+  // Use currentPrice (or fallback to global price if debt=0)
+  const displayPrice = currentPrice > 0n ? currentPrice : price;
+  document.getElementById("usdPreview").textContent = 
+    `≈ $${(excessNum * Number(displayPrice) / 1e18).toFixed(2)} USD`;
+
   await (await vault.withdrawPLS(excess)).wait();
   status.textContent = `Withdrew ${excessNum.toFixed(2)} PLS (max safe)`;
 });
