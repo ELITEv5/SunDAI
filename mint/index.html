@@ -10,17 +10,16 @@
   <meta name="robots" content="index,follow" />
   <meta name="author" content="SunDAI Protocol" />
   <!-- PWA meta tags -->
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="sundailogo.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="msapplication-TileColor" content="#ff6b00">
-<meta name="msapplication-TileImage" content="sundailogo.png">
-
-<!-- Splash screen & better icons (optional but recommended) -->
-<link rel="icon" sizes="192x192" href="icon-192.png">
-<link rel="apple-touch-icon" sizes="180x180" href="icon-192.png">
-<link rel="icon" sizes="512x512" href="icon-512.png">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="sundailogo.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="msapplication-TileColor" content="#ff6b00">
+  <meta name="msapplication-TileImage" content="sundailogo.png">
+  <!-- Splash screen & better icons -->
+  <link rel="icon" sizes="192x192" href="icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icon-192.png">
+  <link rel="icon" sizes="512x512" href="icon-512.png">
   <script src="ethers.umd.min.js"></script>
   <style>
     body {
@@ -96,11 +95,11 @@
     #bg { opacity: 0; animation: fadeIn 2s ease forwards; }
     @keyframes fadeIn { to { opacity: 1; } }
     /* Popup Modal */
-.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; display: none; align-items: center; justify-content: center; }
-.modal-content { background: #110022; border: 2px solid #ff6b00; border-radius: 10px; padding: 20px; max-width: 400px; color: #ffebd1; }
-.modal-content h3 { color: #ffd700; }
-.modal-content ul { list-style: disc; padding-left: 20px; }
-.close { color: #ff3366; float: right; font-size: 1.5em; cursor: pointer; }
+    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; display: none; align-items: center; justify-content: center; }
+    .modal-content { background: #110022; border: 2px solid #ff6b00; border-radius: 10px; padding: 20px; max-width: 400px; color: #ffebd1; }
+    .modal-content h3 { color: #ffd700; }
+    .modal-content ul { list-style: disc; padding-left: 20px; }
+    .close { color: #ff3366; float: right; font-size: 1.5em; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -115,66 +114,58 @@
     <div class="error" id="error"></div>
     <div class="card"><div class="stats" id="stats">Connect wallet to begin</div></div>
     <!-- GLOBAL SYSTEM STATS — FUN & TRANSPARENT -->
-<div class="card" id="globalStats" style="margin-top:12px;display:none">
-  <div style="text-align:center;font-size:0.9em;color:#ffbd70;margin-bottom:8px">Global SunDAI System</div>
-  <div class="stats">
-    <div class="stat">
-      <div class="label">Total Collateral</div>
-      <div class="value" id="totalColl">—</div>
+    <div class="card" id="globalStats" style="margin-top:12px;display:none">
+      <div style="text-align:center;font-size:0.9em;color:#ffbd70;margin-bottom:8px">Global SunDAI System</div>
+      <div class="stats">
+        <div class="stat">
+          <div class="label">Total Collateral</div>
+          <div class="value" id="totalColl">—</div>
+        </div>
+        <div class="stat">
+          <div class="label">Total Minted</div>
+          <div class="value" id="totalDebt">—</div>
+        </div>
+        <div class="stat">
+          <div class="label">System Health</div>
+          <div class="value" id="sysHealth">—</div>
+        </div>
+        <div class="stat">
+          <div class="label">Your Share</div>
+          <div class="value" id="yourShare">—</div>
+        </div>
+      </div>
     </div>
-    <div class="stat">
-      <div class="label">Total Minted</div>
-      <div class="value" id="totalDebt">—</div>
-    </div>
-    <div class="stat">
-      <div class="label">System Health</div>
-      <div class="value" id="sysHealth">—</div>
-    </div>
-    <div class="stat">
-      <div class="label">Your Share</div>
-      <div class="value" id="yourShare">—</div>
-    </div>
-  </div>
-</div>
-
     <!-- HOW TO BUTTON -->
-<div class="card" style="margin-bottom:12px">
-  <button class="btn" id="howToBtn" style="background:#ffaa00;color:#000;font-weight:800">How to Use SunDAI</button>
-</div>
-
+    <div class="card" style="margin-bottom:12px">
+      <button class="btn" id="howToBtn" style="background:#ffaa00;color:#000;font-weight:800">How to Use SunDAI</button>
+    </div>
     <div class="card">
       <input id="usdOneClick" type="number" step="0.01" placeholder="Deposit & Auto Mint (USD)" />
       <div class="preview" id="plsOneClick"></div>
       <button class="btn" id="oneClickBtn" disabled>1-Click Auto Mint</button>
     </div>
-
     <div class="card">
       <input id="usdIn" type="number" step="0.01" placeholder="Deposit USD value" />
       <div class="preview" id="plsOut"></div>
       <button class="btn" id="deposit" disabled>Deposit PLS</button>
     </div>
-
     <div class="card">
       <input id="usdMint" type="number" step="0.01" placeholder="Mint USD amount" />
       <button class="btn" id="mint" disabled>Mint pSunDAI</button>
     </div>
-
     <div class="card">
       <input id="usdRepay" type="number" step="0.01" placeholder="Repay pSunDAI amount" />
       <button class="btn" id="repay" disabled>Repay Debt</button>
     </div>
-
     <div class="card">
       <input id="usdOut" type="number" step="0.01" placeholder="Withdraw USD value" />
       <div class="preview" id="plsIn"></div>
       <button class="btn" id="withdraw" disabled>Withdraw PLS</button>
     </div>
-
     <div class="card">
       <button class="btn" id="risk" disabled style="background:#ff3366">Check Liquidation Risk</button>
       <div id="riskText" style="margin-top:10px;text-align:center;font-weight:700"></div>
     </div>
-
     <div class="card" id="safetyCard" style="margin-top: 12px;">
       <div id="safetyStatus" style="text-align:center;font-weight:700;color:#ffd700;margin-bottom:8px;">
         Wake up Oracle for Most Current Price
@@ -184,7 +175,6 @@
       </button>
     </div>
   </div>
-
   <footer class="footer">
     <h3>Official Contracts</h3>
     <div class="contracts">
@@ -209,13 +199,10 @@
   <script>
     const ethers = window.ethers;
     if (!ethers || !ethers.Contract) alert("Ethers.js failed to load");
-
     const VAULT = "0xE61569D135b98B2530AEB5287F9122B98b3D35d0";
     const TOKEN = "0xA39Ae3eC7435CD30508FA439378478EA9cAB91dD";
     const ORACLE = "0x4DDCC8de4f0DA14647F6bD2388553526308599c3";
-
     let provider, signer, vault, token, oracle, account, price = 0n, minRatio = 15500n;
-
     const DECIMALS = 10n ** 18n;
     const status = document.getElementById("status");
     const error = document.getElementById("error");
@@ -232,146 +219,123 @@
       return [v, t, o];
     }
 
-    // === HELPER FUNCTIONS for Oracle Health Check ===
-async function waitForOracle(ms = 10000) {
-  const start = Date.now();
-  while ((!window.oracle || !window.oracle.isHealthy) && Date.now() - start < ms)
-    await new Promise(r => setTimeout(r, 300));
-  if (!window.oracle) throw new Error("Oracle not ready");
-  return window.oracle;
-}
-
-async function safeCall(p, t = 4000) {
-  return Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error("timeout")), t))]);
-}
-
-async function checkOracleHealth() {
-  try {
-    const el = document.getElementById("safetyStatus");
-    const btn = document.getElementById("pokeBtn");
-
-    const o = await waitForOracle();
-    el.textContent = "Checking Oracle...";
-    el.style.color = "#ffd700";
-    btn.disabled = true;
-
-    let p, ts;
-    try {
-      [p, ts] = await o.callStatic.getPriceWithTimestamp();
-    } catch {
-      [p, ts] = await safeCall(o.peekPriceView(), 3000);
+    // HELPER FUNCTIONS for Oracle Health Check
+    async function waitForOracle(ms = 10000) {
+      const start = Date.now();
+      while ((!window.oracle || !window.oracle.isHealthy) && Date.now() - start < ms)
+        await new Promise(r => setTimeout(r, 300));
+      if (!window.oracle) throw new Error("Oracle not ready");
+      return window.oracle;
     }
-
-    const healthy = await safeCall(o.isHealthy(), 3000);
-    const age = Math.floor(Date.now() / 1000) - Number(ts);
-
-    if (healthy && age < 86400) {
-      el.innerHTML = `Vault & Oracle synced – fresh (${(age / 60).toFixed(1)} min ago)`;
-      el.style.color = "#00ff9d";
-      btn.disabled = true;
-    } else {
-      el.innerHTML = "Oracle stale – press <b>Wake Oracle</b>";
-      el.style.color = "#ff3366";
-      btn.disabled = false;
+    async function safeCall(p, t = 4000) {
+      return Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error("timeout")), t))]);
     }
-  } catch (e) {
-    console.error("Oracle health check failed:", e);
-    const el = document.getElementById("safetyStatus");
-    const btn = document.getElementById("pokeBtn");
-
-    if (el) {
-      el.textContent = "Oracle error";
-      el.style.color = "#ff3366";
-    }
-    if (btn) btn.disabled = false;
-  }
-}
-
-// === FIXED connectWallet() FUNCTION ===
-async function connectWallet() {
-  try {
-    if (!window.ethereum) return alert("Please install MetaMask");
-    await window.ethereum.request({ method: "eth_requestAccounts" });
-    provider = new ethers.BrowserProvider(window.ethereum);
-    signer = await provider.getSigner();
-    account = await signer.getAddress();
-
-    const network = await provider.getNetwork();
-    if (Number(network.chainId) !== 369) {
+    async function checkOracleHealth() {
       try {
-        await window.ethereum.request({
-          method: "wallet_switchEthereumChain",
-          params: [{ chainId: "0x171" }]
-        });
+        const el = document.getElementById("safetyStatus");
+        const btn = document.getElementById("pokeBtn");
+        const o = await waitForOracle();
+        el.textContent = "Checking Oracle...";
+        el.style.color = "#ffd700";
+        btn.disabled = true;
+        let p, ts;
+        try {
+          [p, ts] = await o.callStatic.getPriceWithTimestamp();
+        } catch {
+          [p, ts] = await safeCall(o.peekPriceView(), 3000);
+        }
+        const healthy = await safeCall(o.isHealthy(), 3000);
+        const age = Math.floor(Date.now() / 1000) - Number(ts);
+        if (healthy && age < 86400) {
+          el.innerHTML = `Vault & Oracle synced – fresh (${(age / 60).toFixed(1)} min ago)`;
+          el.style.color = "#00ff9d";
+          btn.disabled = true;
+        } else {
+          el.innerHTML = "Oracle stale – press <b>Wake Oracle</b>";
+          el.style.color = "#ff3366";
+          btn.disabled = false;
+        }
       } catch (e) {
-        return alert("Please switch to PulseChain (chainId 369)");
+        console.error("Oracle health check failed:", e);
+        const el = document.getElementById("safetyStatus");
+        const btn = document.getElementById("pokeBtn");
+        if (el) {
+          el.textContent = "Oracle error";
+          el.style.color = "#ff3366";
+        }
+        if (btn) btn.disabled = false;
       }
     }
 
-    const [VAULT_ABI, TOKEN_ABI, ORACLE_ABI] = await loadABIs();
-vault = new ethers.Contract(VAULT, VAULT_ABI, signer);
-token = new ethers.Contract(TOKEN, TOKEN_ABI, signer);
-oracle = new ethers.Contract(ORACLE, ORACLE_ABI, provider);
-window.oracle = oracle; // ✅ Fix here
-
-
-    minRatio = await vault.COLLATERAL_RATIO(); // 150 for actual calculations
-    document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)"; // UX buffer
-
-    walletText.textContent = account.slice(0,6) + "..." + account.slice(-4);
-    walletBtn.classList.add("connected");
-    document.querySelectorAll(".btn").forEach(b => b.disabled = false);
-
-    await Promise.all([updatePrice(), loadVault()]);
-    setInterval(updatePrice, 60000);
-
-    // ✅ Auto-load safety + stats
-    document.getElementById("safetyCard").style.opacity = "1";
-    await checkOracleHealth();
-    setInterval(checkOracleHealth, 20000);
-
-    await loadGlobalStats();
-    setInterval(loadGlobalStats, 60000);
-
-  } catch (e) {
-    error.textContent = e.message || "Connection failed";
-    console.error(e);
-  }
-}
-
-
-    async function loadGlobalStats() {
-  try {
-    const [totalColl, totalDebt, health] = await Promise.all([
-      vault.totalCollateral(),
-      vault.totalDebt(),
-      vault.systemHealth()
-    ]);
-
-    const collNum = Number(ethers.formatEther(totalColl));
-    const debtNum = Number(ethers.formatEther(totalDebt));
-    const healthNum = Number(health) / 1;
-
-    document.getElementById("totalColl").textContent = collNum.toFixed(0) + " PLS";
-    document.getElementById("totalDebt").textContent = debtNum.toFixed(0) + " pSunDAI";
-
-    const healthEl = document.getElementById("sysHealth");
-    healthEl.textContent = healthNum.toFixed(1) + "%";
-    healthEl.className = "value " + (healthNum < 130 ? "risk" : healthNum < 150 ? "warn" : "safe");
-
-    const yourColl = Number(ethers.formatEther((await vault.vaultInfo(account)).collateral));
-    if (yourColl > 0 && collNum > 0) {
-      const share = (yourColl / collNum) * 100;
-      document.getElementById("yourShare").textContent = share < 0.01 ? "<0.01%" : share.toFixed(2) + "%";
-    } else {
-      document.getElementById("yourShare").textContent = "0%";
+    // FIXED connectWallet() FUNCTION
+    async function connectWallet() {
+      try {
+        if (!window.ethereum) return alert("Please install MetaMask");
+        await window.ethereum.request({ method: "eth_requestAccounts" });
+        provider = new ethers.BrowserProvider(window.ethereum);
+        signer = await provider.getSigner();
+        account = await signer.getAddress();
+        const network = await provider.getNetwork();
+        if (Number(network.chainId) !== 369) {
+          try {
+            await window.ethereum.request({
+              method: "wallet_switchEthereumChain",
+              params: [{ chainId: "0x171" }]
+            });
+          } catch (e) {
+            return alert("Please switch to PulseChain (chainId 369)");
+          }
+        }
+        const [VAULT_ABI, TOKEN_ABI, ORACLE_ABI] = await loadABIs();
+        vault = new ethers.Contract(VAULT, VAULT_ABI, signer);
+        token = new ethers.Contract(TOKEN, TOKEN_ABI, signer);
+        oracle = new ethers.Contract(ORACLE, ORACLE_ABI, provider);
+        window.oracle = oracle;
+        minRatio = await vault.COLLATERAL_RATIO();
+        document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
+        walletText.textContent = account.slice(0,6) + "..." + account.slice(-4);
+        walletBtn.classList.add("connected");
+        document.querySelectorAll(".btn").forEach(b => b.disabled = false);
+        await Promise.all([updatePrice(), loadVault()]);
+        setInterval(updatePrice, 60000);
+        document.getElementById("safetyCard").style.opacity = "1";
+        await checkOracleHealth();
+        setInterval(checkOracleHealth, 20000);
+        await loadGlobalStats();
+        setInterval(loadGlobalStats, 60000);
+      } catch (e) {
+        error.textContent = e.message || "Connection failed";
+        console.error(e);
+      }
     }
 
-    document.getElementById("globalStats").style.display = "block";
-  } catch (e) {
-    console.log("Global stats failed (normal if no vault yet)");
-  }
-}
+    async function loadGlobalStats() {
+      try {
+        const [totalColl, totalDebt, health] = await Promise.all([
+          vault.totalCollateral(),
+          vault.totalDebt(),
+          vault.systemHealth()
+        ]);
+        const collNum = Number(ethers.formatEther(totalColl));
+        const debtNum = Number(ethers.formatEther(totalDebt));
+        const healthNum = Number(health) / 1;
+        document.getElementById("totalColl").textContent = collNum.toFixed(0) + " PLS";
+        document.getElementById("totalDebt").textContent = debtNum.toFixed(0) + " pSunDAI";
+        const healthEl = document.getElementById("sysHealth");
+        healthEl.textContent = healthNum.toFixed(1) + "%";
+        healthEl.className = "value " + (healthNum < 130 ? "risk" : healthNum < 150 ? "warn" : "safe");
+        const yourColl = Number(ethers.formatEther((await vault.vaultInfo(account)).collateral));
+        if (yourColl > 0 && collNum > 0) {
+          const share = (yourColl / collNum) * 100;
+          document.getElementById("yourShare").textContent = share < 0.01 ? "<0.01%" : share.toFixed(2) + "%";
+        } else {
+          document.getElementById("yourShare").textContent = "0%";
+        }
+        document.getElementById("globalStats").style.display = "block";
+      } catch (e) {
+        console.log("Global stats failed (normal if no vault yet)");
+      }
+    }
 
     async function updatePrice() {
       try {
@@ -403,8 +367,7 @@ window.oracle = oracle; // ✅ Fix here
         const i = await vault.vaultInfo(account);
         const ratio = Number(i.ratio);
         const ratioClass = ratio < 150 ? "risk" : ratio < 170 ? "warn" : "safe";
-        const ratioDisplay = ratio > 1e6 ? "∞" : ratio.toFixed(2) + "%";
-
+        const ratioDisplay = ratio > 1e6 ? "Infinite" : ratio.toFixed(2) + "%";
         stats.innerHTML = `
           <div class="stat"><div class="label">Collateral</div><div class="value">${Math.round(Number(ethers.formatEther(i.collateral)))} PLS</div></div>
           <div class="stat"><div class="label">Debt</div><div class="value">${Number(ethers.formatEther(i.debt)).toFixed(2)} pSunDAI</div></div>
@@ -437,28 +400,25 @@ window.oracle = oracle; // ✅ Fix here
 
     // Live previews
     ["usdIn", "usdOut", "usdOneClick"].forEach(id => {
-  document.getElementById(id).addEventListener("input", () => {
-    const usd = parseFloat(document.getElementById(id).value) || 0;
-    const target = document.getElementById(
-      id === "usdOneClick" ? "plsOneClick" : id === "usdIn" ? "plsOut" : "plsIn"
-    );
-    if (!usd || !price) {
-      target.textContent = "";
-      return;
-    }
-
-    // CRITICAL: Use the already-scaled price (price is now real USD per PLS)
-    const plsWei = usdToPLS(usd);
-    const plsNum = Number(ethers.formatEther(plsWei));
-
-    if (id === "usdOneClick") {
-      const mintable = usd / 1.55; // 155% buffer — correct
-      target.textContent = `≈ ${plsNum.toLocaleString(undefined, {maximumFractionDigits: 0})} PLS → ${mintable.toFixed(2)} pSunDAI (at 155%)`;
-    } else {
-      target.textContent = `≈ ${plsNum.toLocaleString(undefined, {maximumFractionDigits: 0})} PLS`;
-    }
-  });
-});
+      document.getElementById(id).addEventListener("input", () => {
+        const usd = parseFloat(document.getElementById(id).value) || 0;
+        const target = document.getElementById(
+          id === "usdOneClick" ? "plsOneClick" : id === "usdIn" ? "plsOut" : "plsIn"
+        );
+        if (!usd || !price) {
+          target.textContent = "";
+          return;
+        }
+        const plsWei = usdToPLS(usd);
+        const plsNum = Number(ethers.formatEther(plsWei));
+        if (id === "usdOneClick") {
+          const mintable = usd / 1.55;
+          target.textContent = `≈ ${plsNum.toLocaleString(undefined, {maximumFractionDigits: 0})} PLS → ${mintable.toFixed(2)} pSunDAI (at 155%)`;
+        } else {
+          target.textContent = `≈ ${plsNum.toLocaleString(undefined, {maximumFractionDigits: 0})} PLS`;
+        }
+      });
+    });
 
     // Actions
     document.getElementById("deposit").onclick = () => withLoading(document.getElementById("deposit"), async () => {
@@ -466,33 +426,28 @@ window.oracle = oracle; // ✅ Fix here
       if (!u || u <= 0) throw new Error("Enter amount");
       await (await vault.depositPLS({ value: usdToPLS(u) })).wait();
     });
-
     document.getElementById("mint").onclick = () => withLoading(document.getElementById("mint"), async () => {
       const u = parseFloat(document.getElementById("usdMint").value);
       if (!u || u <= 0) throw new Error("Enter amount");
       await (await vault.mint(usdToPSun(u))).wait();
     });
-
     document.getElementById("repay").onclick = () => withLoading(document.getElementById("repay"), async () => {
       const u = parseFloat(document.getElementById("usdRepay").value);
       if (!u || u <= 0) throw new Error("Enter amount");
       await (await token.approve(VAULT, usdToPSun(u))).wait();
       await (await vault.repay(usdToPSun(u))).wait();
     });
-
     document.getElementById("withdraw").onclick = () => withLoading(document.getElementById("withdraw"), async () => {
       const u = parseFloat(document.getElementById("usdOut").value);
       if (!u || u <= 0) throw new Error("Enter amount");
       await (await vault.withdrawPLS(usdToPLS(u))).wait();
     });
-
     document.getElementById("risk").onclick = () => withLoading(document.getElementById("risk"), async () => {
       const can = await vault.canLiquidate(account);
       document.getElementById("riskText").innerHTML = can
         ? '<span class="risk">LIQUIDATION RISK</span>'
         : '<span class="safe">You are safe</span>';
     });
-
     document.getElementById("oneClickBtn").onclick = () => withLoading(document.getElementById("oneClickBtn"), async () => {
       const usd = parseFloat(document.getElementById("usdOneClick").value);
       if (!usd || usd <= 0) throw new Error("Enter amount");
@@ -504,56 +459,7 @@ window.oracle = oracle; // ✅ Fix here
 
     walletBtn.onclick = connectWallet;
 
-    // Oracle Safety Logic (unchanged — already perfect)
-    window.addEventListener("load", () => {
-      async function waitForOracle(ms = 10000) {
-        const start = Date.now();
-        while ((!window.oracle || !window.oracle.isHealthy) && Date.now() - start < ms)
-          await new Promise(r => setTimeout(r, 300));
-        if (!window.oracle) throw new Error("Oracle not ready");
-        return window.oracle;
-      }
-      async function safeCall(p, t = 4000) {
-        return Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error("timeout")), t))]);
-      }
-      async function checkOracleHealth() {
-        const el = document.getElementById("safetyStatus");
-        const btn = document.getElementById("pokeBtn");
-        try {
-          const o = await waitForOracle();
-          el.textContent = "Checking Oracle..."; el.style.color = "#ffd700"; btn.disabled = true;
-          let p, ts;
-          try { [p, ts] = await o.callStatic.getPriceWithTimestamp(); }
-          catch { [p, ts] = await safeCall(o.peekPriceView(), 3000); }
-          const healthy = await safeCall(o.isHealthy(), 3000);
-          const age = Math.floor(Date.now()/1000) - Number(ts);
-          if (healthy && age < 86400) {
-            el.innerHTML = `Vault & Oracle synced – fresh (${(age/60).toFixed(1)} min ago)`;
-            el.style.color = "#00ff9d"; btn.disabled = true;
-          } else {
-            el.innerHTML = "Oracle stale – press <b>Wake Oracle</b>"; el.style.color = "#ff3366"; btn.disabled = false;
-          }
-        } catch (e) {
-          el.textContent = "Oracle error"; el.style.color = "#ff3366"; btn.disabled = false;
-        }
-      }
-
-      document.getElementById("pokeBtn").onclick = async () => {
-        const el = document.getElementById("safetyStatus");
-        try {
-          if (!signer) throw new Error("Connect wallet first");
-          el.textContent = "Sending wake-up..."; el.style.color = "#ffd700";
-          const tx = await oracle.connect(signer).poke();
-          await tx.wait();
-          el.textContent = "Oracle awakened!"; el.style.color = "#00ff9d";
-          setTimeout(checkOracleHealth, 3000);
-        } catch (e) {
-          el.textContent = e.message; el.style.color = "#ff3366";
-        }
-      };
-    });
-
-    // Nebula Background (unchanged — beautiful)
+    // Nebula Background
     const bg = document.getElementById("bg");
     let t = 0, mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
     function animate() {
@@ -581,59 +487,70 @@ window.oracle = oracle; // ✅ Fix here
       if (e.gamma && e.beta) { targetX = e.gamma/45; targetY = e.beta/45; }
     });
     animate();
-    // HOW TO POPUP — FIXED
-const howToBtn = document.getElementById("howToBtn");
-const modal = document.createElement("div");
-modal.className = "modal";
-modal.innerHTML = `
-  <div class="modal-content">
-  <span class="close">×</span>
-  <h3>How to Use SunDAI Vault</h3>
-  <ol>
-    <li><strong>Connect Wallet:</strong> Click top right. Use MetaMask or Rabby on PulseChain.</li>
-    <li><strong>Check Price:</strong> Top shows live PLS → USD price. If it says "stale", click "Wake Oracle".</li>
-    <li><strong>Deposit:</strong> Enter USD value → "Deposit PLS" to lock your collateral.</li>
-    <li><strong>Mint pSunDAI:</strong> Enter amount → "Mint pSunDAI" (keep ratio above 150% to stay safe).</li>
-    <li><strong>1-Click Auto Mint (155%):</strong> Deposit + mint in one transaction with a safe buffer.</li>
-    <li><strong>Monitor Your Vault:</strong> Watch your collateral, debt, and ratio. Green = safe, yellow = caution, red = risk.</li>
-    <li><strong>Repay Debt:</strong> Enter pSunDAI amount → "Repay Debt". Instant, no cooldown.</li>
-    <li><strong>Withdraw PLS:</strong> Enter USD value → "Withdraw PLS" (only if ratio stays safe).</li>
-    <li><strong>Safety Cooldowns (for protection):</strong>
-      • 5-minute wait after depositing before withdrawing (prevents attacks)<br>
-      • 30-day emergency unlock if you have zero debt (full collateral recovery, no questions asked)<br>
-      • Minting & repaying are instant — no waiting!</li>
-  </ol>
-  <p style="margin-top:16px">
-    <strong>Safety Tips:</strong><br>
-    • Keep your ratio above 150% to avoid liquidation<br>
-    • 0.5% annual stability fee accrues on debt (very low)<br>
-  </p>
-</div>
-`;
-document.body.appendChild(modal);
 
-howToBtn.onclick = () => modal.style.display = "flex";
-modal.onclick = e => {
-  if (e.target.className === "modal" || e.target.className === "close") modal.style.display = "none";
-};
-      // Auto-connect wallet on page load (keeps your current behaviour)
-      window.addEventListener("load", () => {
-        connectWallet();
-      });
+    // HOW TO POPUP
+    const howToBtn = document.getElementById("howToBtn");
+    const modal = document.createElement("div");
+    modal.className = "modal";
+    modal.innerHTML = `
+      <div class="modal-content">
+      <span class="close">x</span>
+      <h3>How to Use SunDAI Vault</h3>
+      <ol>
+        <li><strong>Connect Wallet:</strong> Click top right. Use MetaMask or Rabby on PulseChain.</li>
+        <li><strong>Check Price:</strong> Top shows live PLS to USD price. If it says "stale", click "Wake Oracle".</li>
+        <li><strong>Deposit:</strong> Enter USD value to "Deposit PLS" to lock your collateral.</li>
+        <li><strong>Mint pSunDAI:</strong> Enter amount to "Mint pSunDAI" (keep ratio above 150% to stay safe).</li>
+        <li><strong>1-Click Auto Mint (155%):</strong> Deposit + mint in one transaction with a safe buffer.</li>
+        <li><strong>Monitor Your Vault:</strong> Watch your collateral, debt, and ratio. Green = safe, yellow = caution, red = risk.</li>
+        <li><strong>Repay Debt:</strong> Enter pSunDAI amount to "Repay Debt". Instant, no cooldown.</li>
+        <li><strong>Withdraw PLS:</strong> Enter USD value to "Withdraw PLS" (only if ratio stays safe).</li>
+        <li><strong>Safety Cooldowns (for protection):</strong>
+          • 5-minute wait after depositing before withdrawing (prevents attacks)<br>
+          • 30-day emergency unlock if you have zero debt (full collateral recovery, no questions asked)<br>
+          • Minting & repaying are instant — no waiting!</li>
+      </ol>
+      <p style="margin-top:16px">
+        <strong>Safety Tips:</strong><br>
+        • Keep your ratio above 150% to avoid liquidation<br>
+        • 0.5% annual stability fee accrues on debt (very low)<br>
+      </p>
+    </div>
+    `;
+    document.body.appendChild(modal);
+    howToBtn.onclick = () => modal.style.display = "flex";
+    modal.onclick = e => {
+      if (e.target.className === "modal" || e.target.className === "close") modal.style.display = "none";
+    };
 
-      // PWA Service Worker Registration
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker
-            .register("sw.js")
-            .then(reg => {
-              console.log("Service Worker registered successfully", reg.scope);
-            })
-            .catch(err => {
-              console.warn("Service Worker registration failed:", err);
-            });
-        });
+    // Poke Oracle button — now correctly placed
+    document.getElementById("pokeBtn").onclick = async () => {
+      const el = document.getElementById("safetyStatus");
+      try {
+        if (!signer) throw new Error("Connect wallet first");
+        el.textContent = "Sending wake-up...";
+        el.style.color = "#ffd700";
+        const tx = await oracle.connect(signer).poke();
+        await tx.wait();
+        el.textContent = "Oracle awakened!";
+        el.style.color = "#00ff9d";
+        setTimeout(checkOracleHealth, 3000);
+      } catch (e) {
+        el.textContent = e.message || "Failed";
+        el.style.color = "#ff3366";
       }
-    </script>
-  </body>
+    };
+
+    // Single clean load handler: auto-connect + PWA registration
+    window.addEventListener("load", () => {
+      connectWallet(); // your original auto-connect
+
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("sw.js")
+          .then(reg => console.log("Service Worker registered", reg.scope))
+          .catch(err => console.warn("SW registration failed:", err));
+      }
+    });
+  </script>
+</body>
 </html>
