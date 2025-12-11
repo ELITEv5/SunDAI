@@ -2,13 +2,28 @@
   "name": "pSunDAI – Golden Sun Vault",
   "short_name": "SunDAI",
   "description": "Autonomous 150% PLS-Collateralized Stable Asset on PulseChain",
-  "start_url": "./index.html",  // or just "./" if index.html is the default
-  "scope": "/SunDAI/mint/",     // ← ADD THIS: Locks the PWA to your subfolder
+  "start_url": "./index.html",
+  "scope": "/SunDAI/mint/",
   "display": "standalone",
   "background_color": "#0a001f",
   "theme_color": "#ff6b00",
   "orientation": "portrait-primary",
   "icons": [
-    // ... your icons array unchanged
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }
