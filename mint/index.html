@@ -20,28 +20,6 @@
   <link rel="icon" sizes="192x192" href="icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-192.png">
   <link rel="icon" sizes="512x512" href="icon-512.png">
-  /* Mobile fix: Scrollable modal content on small screens */
-@media (max-width: 480px) {
-  .modal-content {
-    max-width: 95%;
-    max-height: 80vh; /* Limits height to 80% of viewport */
-    overflow-y: auto; /* Enables vertical scrolling */
-    padding: 15px; /* Slightly less padding for more space */
-  }
-  .modal-content ol {
-    padding-left: 15px; /* Tighter list indent for mobile */
-    line-height: 1.4; /* Better readability */
-  }
-  .modal-content li {
-    margin-bottom: 8px;
-  }
-}
-
-/* Ensure the whole modal is scrollable if needed (fallback) */
-.modal {
-  overflow-y: auto; /* Allows scrolling the entire overlay if content overflows */
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS/MetaMask */
-}
   <script src="ethers.umd.min.js"></script>
   <style>
     body {
@@ -122,6 +100,28 @@
     .modal-content h3 { color: #ffd700; }
     .modal-content ul { list-style: disc; padding-left: 20px; }
     .close { color: #ff3366; float: right; font-size: 1.5em; cursor: pointer; }
+    /* Mobile fix: Scrollable modal content on small screens */
+@media (max-width: 480px) {
+  .modal-content {
+    max-width: 95%;
+    max-height: 80vh; /* Limits height to 80% of viewport */
+    overflow-y: auto; /* Enables vertical scrolling */
+    padding: 15px; /* Slightly less padding for more space */
+  }
+  .modal-content ol {
+    padding-left: 15px; /* Tighter list indent for mobile */
+    line-height: 1.4; /* Better readability */
+  }
+  .modal-content li {
+    margin-bottom: 8px;
+  }
+}
+
+/* Ensure the whole modal is scrollable if needed (fallback) */
+.modal {
+  overflow-y: auto; /* Allows scrolling the entire overlay if content overflows */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS/MetaMask */
+}
   </style>
 </head>
 <body>
