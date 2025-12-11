@@ -94,34 +94,51 @@
     @media (max-width: 480px) { .contracts { font-size: 0.75em; gap: 8px; } .contracts a { font-size: 0.75em; } }
     #bg { opacity: 0; animation: fadeIn 2s ease forwards; }
     @keyframes fadeIn { to { opacity: 1; } }
-    /* Popup Modal */
-    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; display: none; align-items: center; justify-content: center; }
-    .modal-content { background: #110022; border: 2px solid #ff6b00; border-radius: 10px; padding: 20px; max-width: 400px; color: #ffebd1; }
-    .modal-content h3 { color: #ffd700; }
-    .modal-content ul { list-style: disc; padding-left: 20px; }
-    .close { color: #ff3366; float: right; font-size: 1.5em; cursor: pointer; }
-    /* Mobile fix: Scrollable modal content on small screens */
-@media (max-width: 480px) {
-  .modal-content {
-    max-width: 95%;
-    max-height: 80vh; /* Limits height to 80% of viewport */
-    overflow-y: auto; /* Enables vertical scrolling */
-    padding: 15px; /* Slightly less padding for more space */
-  }
-  .modal-content ol {
-    padding-left: 15px; /* Tighter list indent for mobile */
-    line-height: 1.4; /* Better readability */
-  }
-  .modal-content li {
-    margin-bottom: 8px;
-  }
-}
+        /* Popup Modal — FINAL VERSION (MetaMask + all phones perfect) */
+    .modal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 10000;
+      display: none;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 20px 10px;
+      box-sizing: border-box;
+    }
 
-/* Ensure the whole modal is scrollable if needed (fallback) */
-.modal {
-  overflow-y: auto; /* Allows scrolling the entire overlay if content overflows */
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS/MetaMask */
-}
+    .modal-content {
+      background: #110022;
+      border: 2px solid #ff6b00;
+      border-radius: 16px;
+      padding: 24px 20px;
+      max-width: 420px;
+      width: 95%;
+      max-height: 85vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      margin: 0 auto;
+      position: relative;
+      box-shadow: 0 10px 40px rgba(255,107,0,0.4);
+    }
+
+    .modal-content h3 { color: #ffd700; margin-top: 0; }
+    .close { 
+      color: #ff3366; 
+      float: right; 
+      font-size: 2em; 
+      cursor: pointer; 
+      line-height: 0.8;
+      margin-top: -10px;
+    }
+
+    /* Mobile extra safety */
+    @media (max-width: 480px) {
+      .modal-content { 
+        border-radius: 20px; 
+        padding: 20px 16px; 
+      }
+    }
   </style>
 </head>
 <body>
