@@ -616,10 +616,24 @@ howToBtn.onclick = () => modal.style.display = "flex";
 modal.onclick = e => {
   if (e.target.className === "modal" || e.target.className === "close") modal.style.display = "none";
 };
-    window.addEventListener("load", () => {
-  connectWallet(); // ← Automatically connect on load
-});
+      // Auto-connect wallet on page load (keeps your current behaviour)
+      window.addEventListener("load", () => {
+        connectWallet();
+      });
 
-  </script>
-</body>
+      // PWA Service Worker Registration
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("sw.js")
+            .then(reg => {
+              console.log("Service Worker registered successfully", reg.scope);
+            })
+            .catch(err => {
+              console.warn("Service Worker registration failed:", err);
+            });
+        });
+      }
+    </script>
+  </body>
 </html>
