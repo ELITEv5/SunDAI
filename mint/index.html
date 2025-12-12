@@ -23,18 +23,41 @@
   <link rel="apple-touch-icon" sizes="180x180" href="icon-192.png">
   <link rel="icon" sizes="512x512" href="icon-512.png">
 
-  <!-- FORCE OPEN IN METAMASK (Android + iOS) -->
-  <script>
-    // Only run on mobile devices
-    if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-      // If not already inside MetaMask browser → redirect to deep link
-      if (!navigator.userAgent.includes("MetaMaskMobile")) {
-        const currentUrl = location.origin + location.pathname + location.search + location.hash;
-        const deepLink = "https://metamask.app.link/dapp/" + encodeURIComponent(currentUrl);
-        location.replace(deepLink);
+  <!-- FORCE OPEN IN METAMASK (iOS + Android Bulletproof) -->
+<script>
+  // Only run on mobile devices
+  if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+    // If not already inside MetaMask browser → try deep link
+    if (!navigator.userAgent.includes("MetaMaskMobile")) {
+      const currentUrl = location.origin + location.pathname + location.search + location.hash;
+      
+      // iOS-safe deep link (try metamask:// first to avoid App Store redirect)
+      let deepLink;
+      if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        deepLink = "metamask://dapp/" + encodeURIComponent(currentUrl);
+      } else {
+        // Android fallback to app.link
+        deepLink = "https://metamask.app.link/dapp/" + encodeURIComponent(currentUrl);
       }
+      
+      // Try the deep link, but with a timeout fallback (prevents infinite App Store loop)
+      const startTime = Date.now();
+      window.location.href = deepLink;
+      
+      // If it doesn't redirect in 2 seconds, show manual prompt
+      setTimeout(() => {
+        if (Date.now() - startTime < 2000) return; // Still loading
+        
+        // User-friendly alert with manual open instructions
+        if (confirm("Open in MetaMask? (Tap OK to retry or manual open below)")) {
+          window.open(deepLink, '_blank');
+        } else {
+          alert("Manual Open:\n1. Close this tab.\n2. Open MetaMask app.\n3. Tap the browser icon (top-right).\n4. Paste: " + currentUrl);
+        }
+      }, 2000);
     }
-  </script>
+  }
+</script>
   <script src="ethers.umd.min.js"></script>
   <style>
     body {
