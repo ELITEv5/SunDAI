@@ -13,7 +13,6 @@
     { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png" },
     { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
-
   "prefer_related_applications": true,
   "related_applications": [
     {
@@ -22,7 +21,9 @@
     },
     {
       "platform": "itunes",
-      "id": "1438144202"
+      "id": "1438144202",
+      "url": "https://apps.apple.com/app/metamask/id1438144202"  // ← ADD THIS URL BACK
     }
-  ]
+  ],
+  "display_override": ["standalone", "minimal-ui", "window-controls-overlay"]  // ← ADD THIS FOR iOS
 }
