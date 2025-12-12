@@ -24,16 +24,21 @@
   <link rel="icon" sizes="512x512" href="icon-512.png">
 
   <!-- FINAL: Force MetaMask + correct landing page (Android + iOS) -->
+<!-- FINAL FINAL: Works on iPhone + Android + never blank -->
 <script>
   if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
     if (!navigator.userAgent.includes("MetaMaskMobile")) {
-      // ←←← THIS LINE IS THE FIX ←←←
-      const fullUrl = location.href; // includes /mint/index.html + any #hash
-      // iOS: use direct scheme (never goes to App Store)
-      // Android: use universal link (more reliable)
-      const deepLink = /iPhone|iPad|iPod/i.test(navigator.userAgent)
-        ? "metamask://dapp/" + encodeURIComponent(fullUrl)
-        : "https://metamask.app.link/dapp/" + encodeURIComponent(fullUrl);
+      // Build the EXACT URL MetaMask expects
+      const url = location.origin + location.pathname + location.search + location.hash;
+      
+      let deepLink;
+      if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        // iOS: strip https:// and use raw path — this is the magic fix
+        deepLink = "metamask://dapp/" + url.replace(/^https?:\/\//, '');
+      } else {
+        // Android: normal universal link works fine
+        deepLink = "https://metamask.app.link/dapp/" + encodeURIComponent(url);
+      }
 
       location.replace(deepLink);
     }
