@@ -9,6 +9,7 @@
   <meta name="theme-color" content="#FF6B00" />
   <meta name="robots" content="index,follow" />
   <meta name="author" content="SunDAI Protocol" />
+
   <!-- PWA meta tags -->
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="sundailogo.png">
@@ -16,10 +17,24 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="msapplication-TileColor" content="#ff6b00">
   <meta name="msapplication-TileImage" content="sundailogo.png">
+
   <!-- Splash screen & better icons -->
   <link rel="icon" sizes="192x192" href="icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-192.png">
   <link rel="icon" sizes="512x512" href="icon-512.png">
+
+  <!-- FORCE OPEN IN METAMASK (Android + iOS) -->
+  <script>
+    // Only run on mobile devices
+    if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      // If not already inside MetaMask browser → redirect to deep link
+      if (!navigator.userAgent.includes("MetaMaskMobile")) {
+        const currentUrl = location.origin + location.pathname + location.search + location.hash;
+        const deepLink = "https://metamask.app.link/dapp/" + encodeURIComponent(currentUrl);
+        location.replace(deepLink);
+      }
+    }
+  </script>
   <script src="ethers.umd.min.js"></script>
   <style>
     body {
