@@ -151,9 +151,7 @@ SunDAI frees stability from permission.
 
 The sun has risen.  
 And it will never set.
-
-**SHA-256 Genesis Hash (v5.3):**  
-`e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01e3e3f5c1d7f7a4b3b`  
+ 
 *(SunDAI Whitepaper — Immortal Edition | December 2025)*
 
 **ELITE TEAM6** — We don’t build protocols.  
