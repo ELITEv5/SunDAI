@@ -170,7 +170,5 @@ It is not “stable” by force, but *stable by design*.
 > — *ELITE TEAM6*
 
 ---
-UPDATED November 21,2025 with the addition of the PLSX4 "Creeping" Oracle. A more forgiving mechanism to follow price and mitigate risk of drastic price swings.
-**SHA-256 Genesis Hash:**  
-`3963cceb85918f26a6388563ece860a398850638b6c50ad9fe3394e51d29aadc`  
+UPDATED November 21,2025 with the addition of the PLSX4 "Creeping" Oracle. A more forgiving mechanism to follow price and mitigate risk of drastic price swings. 
 *(SunDAI “Creeping ASA” Whitepaper — October 31 2025)*
