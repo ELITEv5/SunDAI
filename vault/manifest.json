@@ -1,0 +1,29 @@
+{
+  "name": "SunDAI",
+  "short_name": "SunDAI",
+  "description": "Autonomous 150% PLS-Collateralized Stable Asset on PulseChain",
+  "start_url": "./index.html",
+  "scope": "/SunDAI/mint/",
+  "display": "standalone",
+  "background_color": "#0a001f",
+  "theme_color": "#ff6b00",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "prefer_related_applications": true,
+  "related_applications": [
+    {
+      "platform": "play",
+      "id": "io.metamask"
+    },
+    {
+      "platform": "itunes",
+      "id": "1438144202",
+      "url": "https://apps.apple.com/app/metamask/id1438144202"  // ← ADD THIS URL BACK
+    }
+  ],
+  "display_override": ["standalone", "minimal-ui", "window-controls-overlay"]  // ← ADD THIS FOR iOS
+}
