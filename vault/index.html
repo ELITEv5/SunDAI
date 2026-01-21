@@ -472,6 +472,39 @@
         btn.disabled = false;
       }
     }
+    async function loadVault() {
+  try {
+    const i = await vault.vaultInfo(account);
+    const ratio = Number(i.ratio);
+    const ratioClass = ratio < 150 ? "risk" : ratio < 170 ? "warn" : "safe";
+    const ratioDisplay = ratio > 1e6 ? "Infinite" : ratio.toFixed(2) + "%";
+    stats.innerHTML = `
+      <div class="stat"><div class="label">Collateral</div><div class="value">${Math.round(Number(ethers.formatEther(i.collateral)))} PLS</div></div>
+      <div class="stat"><div class="label">Debt</div><div class="value">${Number(ethers.formatEther(i.debt)).toFixed(2)} pSunDAI</div></div>
+      <div class="stat"><div class="label">Ratio</div><div class="value ${ratioClass}">${ratioDisplay}</div></div>
+      <div class="stat"><div class="label">Can Mint</div><div class="value">${Number(ethers.formatEther(i.mintable)).toFixed(2)} pSunDAI</div></div>
+    `;
+
+    // ═══ ADD THIS SECTION ═══
+    const needed = await vault.repayToHealth(account);
+    const previewEl = document.getElementById("repayToSafePreview");
+    const btnEl = document.getElementById("repayToSafe");
+    
+    if (needed > 0n) {
+      previewEl.textContent = `Need ${Number(ethers.formatEther(needed)).toFixed(2)} pSunDAI to reach 150%`;
+      previewEl.style.color = "#ffcc00";
+      btnEl.disabled = false;
+    } else {
+      previewEl.textContent = "✓ Already safe at 150%+";
+      previewEl.style.color = "#00ff9d";
+      btnEl.disabled = true;
+    }
+    // ═══ END ADDITION ═══
+
+  } catch (e) {
+    stats.innerHTML = "Failed to load vault";
+  }
+}
 
     // Live previews
     ["usdIn", "usdOut", "usdOneClick"].forEach(id => {
@@ -529,6 +562,13 @@
         ? '<span class="risk">LIQUIDATION RISK</span>'
         : '<span class="safe">You are safe</span>';
     });
+    document.getElementById("repayToSafe").onclick = () => withLoading(document.getElementById("repayToSafe"), async () => {
+  const needed = await vault.repayToHealth(account);
+  if (needed == 0n) throw new Error("Already safe - ratio above 150%");
+  await (await token.approve(VAULT, needed)).wait();
+  await (await vault.autoRepayToHealth()).wait();
+  status.textContent = `Repaid ${ethers.formatEther(needed)} pSunDAI - now at 150%`;
+});
     document.getElementById("oneClickBtn").onclick = () => withLoading(document.getElementById("oneClickBtn"), async () => {
       const usd = parseFloat(document.getElementById("usdOneClick").value);
       if (!usd || usd <= 0) throw new Error("Enter amount");
