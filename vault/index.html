@@ -217,6 +217,10 @@
       <button class="btn" id="mint" disabled>Mint pSunDAI</button>
     </div>
     <div class="card">
+  <button class="btn" id="mintMax" disabled style="background:#ffaa00">Mint Max Safe (150%)</button>
+  <div class="preview" id="mintMaxPreview"></div>
+</div>
+    <div class="card">
       <input id="usdRepay" type="number" step="0.01" placeholder="Repay pSunDAI amount" />
       <button class="btn" id="repay" disabled>Repay Debt</button>
     </div>
@@ -226,12 +230,16 @@
       <button class="btn" id="withdraw" disabled>Withdraw PLS</button>
     </div>
     <div class="card">
+  <input id="usdRepayAuto" type="number" step="0.01" placeholder="Repay amount (auto-withdraws excess)" />
+  <button class="btn" id="repayAuto" disabled>Repay & Withdraw Excess</button>
+</div>
+    <div class="card">
       <button class="btn" id="risk" disabled style="background:#ff3366">Check Liquidation Risk</button>
       <div id="riskText" style="margin-top:10px;text-align:center;font-weight:700"></div>
     </div>
     <div class="card">
-  <input id="usdRepayAuto" type="number" step="0.01" placeholder="Repay amount (auto-withdraws excess)" />
-  <button class="btn" id="repayAuto" disabled>Repay & Withdraw Excess</button>
+  <button class="btn" id="repayToSafe" disabled style="background:#ffcc00">Repay to Safe (150%)</button>
+  <div class="preview" id="repayToSafePreview"></div>
 </div>
     <div class="card" id="safetyCard" style="margin-top: 12px;">
       <div id="safetyStatus" style="text-align:center;font-weight:700;color:#ffd700;margin-bottom:8px;">
