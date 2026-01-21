@@ -75,7 +75,7 @@ No external triggers. No debt ceiling. Pure time-based accrual.
 - **No owner**  
 - **No upgradeability**  
 - **No pausable functions**  
-- **No emergency withdrawal for admins**  
+- **No admin emergency withdrawal. Users can recover collateral after 30 days if debt is zero (user-controlled delayed recovery).**  
 - All parameters hardcoded forever  
 
 Even if the oracle dies completely, users can always repay and withdraw their collateral.
