@@ -242,18 +242,18 @@
     <h3>Official Contracts</h3>
     <div class="contracts">
       <div><span class="label">pSunDAI Token:</span>
-        <a href="https://scan.pulsechain.com/address/0x76C7E03b6Ba3366Cc03BB3171b53677aeF46d602" target="_blank">
-          0x76C7E03b6Ba3366Cc03BB3171b53677aeF46d602
+        <a href="https://scan.pulsechain.com/address/0x5529c1cb179b2c256501031adCDAfC22D9c6d236" target="_blank">
+          0x5529c1cb179b2c256501031adCDAfC22D9c6d236
         </a>
       </div>
       <div><span class="label">Vault:</span>
-        <a href="https://scan.pulsechain.com/address/0xD54Ef2894649345fa5aAA36875cF36F971d6E9B4" target="_blank">
-          0xD54Ef2894649345fa5aAA36875cF36F971d6E9B4
+        <a href="https://scan.pulsechain.com/address/0x789472Ef7fa74cB8898Ed38cAa5d18f4D49EcC6d" target="_blank">
+          0x789472Ef7fa74cB8898Ed38cAa5d18f4D49EcC6d
         </a>
       </div>
       <div><span class="label">Oracle:</span>
-        <a href="https://scan.pulsechain.com/address/0x271e9A9CE4Ac786E0B0d3D9892d171837Adb5b0a" target="_blank">
-          0x271e9A9CE4Ac786E0B0d3D9892d171837Adb5b0a
+        <a href="https://scan.pulsechain.com/address/0xC19C8201701585D9087F261eaCd3Ee3345251Da3" target="_blank">
+          0xC19C8201701585D9087F261eaCd3Ee3345251Da3
         </a>
       </div>
     </div>
@@ -262,9 +262,9 @@
   <script>
     const ethers = window.ethers;
     if (!ethers || !ethers.Contract) alert("Ethers.js failed to load");
-    const VAULT = "0xD54Ef2894649345fa5aAA36875cF36F971d6E9B4";
-    const TOKEN = "0x76C7E03b6Ba3366Cc03BB3171b53677aeF46d602";
-    const ORACLE = "0x271e9A9CE4Ac786E0B0d3D9892d171837Adb5b0a";
+    const VAULT = "0x789472Ef7fa74cB8898Ed38cAa5d18f4D49EcC6d";
+    const TOKEN = "0x5529c1cb179b2c256501031adCDAfC22D9c6d236";
+    const ORACLE = "0xC19C8201701585D9087F261eaCd3Ee3345251Da3";
     let provider, signer, vault, token, oracle, account, price = 0n, minRatio = 15500n;
     const DECIMALS = 10n ** 18n;
     const status = document.getElementById("status");
