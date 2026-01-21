@@ -229,6 +229,10 @@
       <button class="btn" id="risk" disabled style="background:#ff3366">Check Liquidation Risk</button>
       <div id="riskText" style="margin-top:10px;text-align:center;font-weight:700"></div>
     </div>
+    <div class="card">
+  <input id="usdRepayAuto" type="number" step="0.01" placeholder="Repay amount (auto-withdraws excess)" />
+  <button class="btn" id="repayAuto" disabled style="background:#00cc88">Repay & Withdraw Excess</button>
+</div>
     <div class="card" id="safetyCard" style="margin-top: 12px;">
       <div id="safetyStatus" style="text-align:center;font-weight:700;color:#ffd700;margin-bottom:8px;">
         Wake up Oracle for Most Current Price
@@ -505,6 +509,12 @@
       if (!u || u <= 0) throw new Error("Enter amount");
       await (await vault.withdrawPLS(usdToPLS(u))).wait();
     });
+    document.getElementById("repayAuto").onclick = () => withLoading(document.getElementById("repayAuto"), async () => {
+  const u = parseFloat(document.getElementById("usdRepayAuto").value);
+  if (!u || u <= 0) throw new Error("Enter amount");
+  await (await token.approve(VAULT, usdToPSun(u))).wait();
+  await (await vault.repayAndAutoWithdraw(usdToPSun(u))).wait();
+});
     document.getElementById("risk").onclick = () => withLoading(document.getElementById("risk"), async () => {
       const can = await vault.canLiquidate(account);
       document.getElementById("riskText").innerHTML = can
