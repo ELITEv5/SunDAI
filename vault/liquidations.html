@@ -8,9 +8,6 @@
   <meta name="description" content="Real-time liquidation opportunities for SunDAI vaults on PulseChain." />
   <meta name="theme-color" content="#FF6B00" />
   <meta name="robots" content="index,follow" />
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
   
   <script src="ethers.umd.min.js"></script>
   <style>
@@ -120,7 +117,7 @@
 <body>
   <div id="bg"></div>
   
-  <a href="#" class="back-btn" onclick="window.location.href = `index.html?t=${Date.now()}`; return false;">← Back to Vault</a>
+  <a href="index.html" class="back-btn">← Back to Vault</a>
   <div class="wallet" id="walletBtn"><span id="walletText">Connect Wallet</span></div>
   
   <div class="container">
@@ -160,10 +157,6 @@
   <script>
     const ethers = window.ethers;
     if (!ethers || !ethers.Contract) alert("Ethers.js failed to load");
-    // Bypass GitHub Pages cache
-if (performance.navigation.type !== 1) {
-  window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
-}
     
     const VAULT = "0x789472Ef7fa74cB8898Ed38cAa5d18f4D49EcC6d";
     const TOKEN = "0x5529c1cb179b2c256501031adCDAfC22D9c6d236";
@@ -582,9 +575,8 @@ if (performance.navigation.type !== 1) {
     });
     animate();
 
-
-// Auto-connect on load
-window.addEventListener("load", connectWallet);
+    // Auto-connect on load
+    window.addEventListener("load", connectWallet);
     
     // Auto-rescan every 2 minutes if data exists
     setInterval(() => {
