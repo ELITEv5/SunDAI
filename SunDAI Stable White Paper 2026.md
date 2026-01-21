@@ -1,7 +1,7 @@
 # SunDAI: A Peer-to-Peer Autonomous Stable Asset for Decentralized Finance
 
 **Author:** ELITE TEAM6  
-**Version:** v5.5 Immortal Edition  
+**Version:** v5.6 Immortal Edition  
 **Date:** January 2026  
 
 ---
@@ -12,7 +12,7 @@ SunDAI is the world's first **fully autonomous stable asset (ASA)** — a decent
 No custodians. No governance. No admin keys. No upgrades.  
 Stability is enforced by pure mathematics, self-healing oracle consensus, and asymmetric volatility protection — not human discretion.  
 
-SunDAI v5.5 Immortal Edition introduces the most advanced oracle and volatility guard system ever deployed in DeFi, ensuring both **maximum safety** and **maximum fluidity** in all market conditions.
+SunDAI v5.6 Immortal Edition introduces the most advanced oracle and volatility guard system ever deployed in DeFi, ensuring both **maximum safety** and **maximum fluidity** in all market conditions.
 
 ---
 
@@ -23,7 +23,7 @@ Like Bitcoin removed banks from money, SunDAI removes custodians from stability.
 
 ---
 
-### 2. System Overview (v5.5)  
+### 2. System Overview (v5.6)  
 Each user owns an immutable personal vault.  
 Deposit collateral → mint pSunDAI → repay → withdraw.  
 
@@ -42,7 +42,7 @@ $$
 ### 3. Hybrid Oracle v5.1 — The Self-Healing Brain  
 SunDAI uses a **median-filtered TWAP + spot hybrid** across five major PulseX stable pools (USDC, DAI, USDT).  
 
-**Key innovations in v5.5:**  
+**Key innovations in v5.6:**  
 - **Self-refreshing**: Every mint/deposit calls `poke()` — no keepers needed  
 - **±10% volatility clamp** with **asymmetric cooldown**  
   - Dumps (price down): 4-hour cooldown (prevents over-minting)  
@@ -71,7 +71,7 @@ No external triggers. No debt ceiling. Pure time-based accrual.
 
 ---
 
-### 6. Autonomy & Finality (v5.5 Immortal)  
+### 6. Autonomy & Finality (v5.6 Immortal)  
 - **No owner**  
 - **No upgradeability**  
 - **No pausable functions**  
@@ -98,7 +98,7 @@ No votes. No changes. Ever.
 
 ---
 
-### 8. One-Click User Experience (v5.5 UI)  
+### 8. One-Click User Experience (v5.6 UI)  
 - Deposit + Auto-Mint (155% buffer)  
 - Repay + Auto-Withdraw Excess  
 - Repay to Safe Health (150%+)  
@@ -111,7 +111,7 @@ Zero math required.
 
 ### 9. Security & Resilience  
 - ReentrancyGuard + SafeERC20  
-- Asymmetric volatility guard (v5.5)  
+- Asymmetric volatility guard (v5.6)  
 - Early recovery from clamps  
 - Dust forgiveness  
 - Verified, immutable source on PulseScan  
@@ -126,20 +126,20 @@ Future versions will support multi-collateral (wETH, HEX, etc.) while preserving
 
 ---
 
-### 11. Live Contracts — v5.5 Immortal Edition (January 2026)
+### 11. Live Contracts — v5.6 Immortal Edition (January 2026)
 
 | Contract           | Address                                    | Explorer |
 |--------------------|--------------------------------------------|----------|
-| pSunDAI Token      | `0x76C7E03b6Ba3366Cc03BB3171b53677aeF46d602` | [View](https://scan.pulsechain.com/address/0x76C7E03b6Ba3366Cc03BB3171b53677aeF46d602) |
-| Vault (v5.5)       | `0xD54Ef2894649345fa5aAA36875cF36F971d6E9B4` | [View](https://scan.pulsechain.com/address/0xD54Ef2894649345fa5aAA36875cF36F971d6E9B4) |
-| Hybrid Oracle (v5.1) | `0x271e9A9CE4Ac786E0B0d3D9892d171837Adb5b0a` | [View](https://scan.pulsechain.com/address/0x271e9A9CE4Ac786E0B0d3D9892d171837Adb5b0a) |
+| pSunDAI Token      | `0x5529c1cb179b2c256501031adCDAfC22D9c6d236` | [View](https://scan.pulsechain.com/address/0x5529c1cb179b2c256501031adCDAfC22D9c6d236) |
+| Vault (v5.6)       | `0x789472Ef7fa74cB8898Ed38cAa5d18f4D49EcC6d` | [View](https://scan.pulsechain.com/address/0x789472Ef7fa74cB8898Ed38cAa5d18f4D49EcC6d) |
+| Hybrid Oracle (v5.1) | `0xC19C8201701585D9087F261eaCd3Ee3345251Da3` | [View](https://scan.pulsechain.com/address/0xC19C8201701585D9087F261eaCd3Ee3345251Da3) |
 
 All contracts are **verified** and **immutable**.
 
 ---
 
 ### 12. Conclusion  
-SunDAI v5.5 Immortal Edition is not just another stablecoin.  
+SunDAI v5.6 Immortal Edition is not just another stablecoin.  
 It is the **final form** of decentralized stability:  
 - Truly autonomous  
 - Mathematically enforced  
