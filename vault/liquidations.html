@@ -160,6 +160,10 @@
   <script>
     const ethers = window.ethers;
     if (!ethers || !ethers.Contract) alert("Ethers.js failed to load");
+    // Bypass GitHub Pages cache
+if (performance.navigation.type !== 1) {
+  window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
+}
     
     const VAULT = "0x789472Ef7fa74cB8898Ed38cAa5d18f4D49EcC6d";
     const TOKEN = "0x5529c1cb179b2c256501031adCDAfC22D9c6d236";
