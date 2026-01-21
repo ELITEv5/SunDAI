@@ -578,8 +578,16 @@
     });
     animate();
 
-    // Auto-connect on load
-    window.addEventListener("load", connectWallet);
+    // Force reload on first load to bypass cache
+if (!sessionStorage.getItem('liquidationsLoaded')) {
+  sessionStorage.setItem('liquidationsLoaded', 'true');
+  window.location.reload(true);
+} else {
+  sessionStorage.removeItem('liquidationsLoaded');
+}
+
+// Auto-connect on load
+window.addEventListener("load", connectWallet);
     
     // Auto-rescan every 2 minutes if data exists
     setInterval(() => {
