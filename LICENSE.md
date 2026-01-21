@@ -197,7 +197,7 @@ These are **intentional features**, not bugs:
 
 ### Technical Documentation
 
-See [WHITEPAPER.md](./WHITEPAPER.md) for complete technical specifications and economic model details.
+See SunDAI_V5_6_Stable White Paper.md for complete technical specifications and economic model details.
 
 ---
 
