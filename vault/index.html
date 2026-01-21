@@ -433,23 +433,6 @@
     }
     function usdToPSun(usd) { return ethers.parseUnits(usd.toString(), 18); }
 
-    async function loadVault() {
-      try {
-        const i = await vault.vaultInfo(account);
-        const ratio = Number(i.ratio);
-        const ratioClass = ratio < 150 ? "risk" : ratio < 170 ? "warn" : "safe";
-        const ratioDisplay = ratio > 1e6 ? "Infinite" : ratio.toFixed(2) + "%";
-        stats.innerHTML = `
-          <div class="stat"><div class="label">Collateral</div><div class="value">${Math.round(Number(ethers.formatEther(i.collateral)))} PLS</div></div>
-          <div class="stat"><div class="label">Debt</div><div class="value">${Number(ethers.formatEther(i.debt)).toFixed(2)} pSunDAI</div></div>
-          <div class="stat"><div class="label">Ratio</div><div class="value ${ratioClass}">${ratioDisplay}</div></div>
-          <div class="stat"><div class="label">Can Mint</div><div class="value">${Number(ethers.formatEther(i.mintable)).toFixed(2)} pSunDAI</div></div>
-        `;
-      } catch (e) {
-        stats.innerHTML = "Failed to load vault";
-      }
-    }
-
     async function withLoading(btn, fn) {
       const orig = btn.textContent;
       btn.disabled = true;
