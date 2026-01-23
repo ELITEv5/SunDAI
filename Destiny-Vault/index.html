@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>☀️ SunDAI Destiny Vault - Black Hole Protocol</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>☀️</text></svg>">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -595,30 +596,56 @@
     </div>
 
     <script>
-        const ethers = window.ethers;
-        if (!ethers || !ethers.Contract) alert("Ethers.js failed to load");
-
-        // CONFIG - UPDATE THESE WITH YOUR CONTRACT ADDRESSES
-        const DESTINY_VAULT = '0x0000000000000000000000000000000000000000'; // TODO: Add address
-        const SUNDAI_TOKEN = '0x0000000000000000000000000000000000000000'; // TODO: Add address  
-        const PLP_TOKEN = '0x0000000000000000000000000000000000000000'; // TODO: Add address
-        const ORACLE = '0x0000000000000000000000000000000000000000'; // TODO: Add address
-
-        let provider, signer, vaultContract, sundaiContract, plpContract, oracleContract;
-        let userAddress;
-        let updateInterval;
-
-        // Load ABIs from JSON files
-        async function loadABIs() {
-            const [v, t, o] = await Promise.all([
-                fetch("destiny-vault-abi.json").then(r => r.json()),
-                fetch("token-abi.json").then(r => r.json()),
-                fetch("sundial-oracle-abi.json").then(r => r.json())
-            ]);
-            return [v, t, o];
+        // Wait for ethers to be available
+        function waitForEthers() {
+            return new Promise((resolve, reject) => {
+                if (window.ethers && window.ethers.providers) {
+                    console.log("Ethers loaded successfully");
+                    resolve();
+                } else {
+                    let attempts = 0;
+                    const checkInterval = setInterval(() => {
+                        attempts++;
+                        if (window.ethers && window.ethers.providers) {
+                            console.log("Ethers loaded after", attempts, "attempts");
+                            clearInterval(checkInterval);
+                            resolve();
+                        } else if (attempts > 50) {
+                            clearInterval(checkInterval);
+                            reject(new Error("Ethers.js failed to load after 5 seconds"));
+                        }
+                    }, 100);
+                }
+            });
         }
 
-        // Cosmic background animation
+        // Main initialization
+        waitForEthers().then(() => {
+            const ethers = window.ethers;
+            console.log("Ethers available:", !!ethers);
+            console.log("Ethers.providers available:", !!ethers.providers);
+
+            // CONFIG - UPDATE THESE WITH YOUR CONTRACT ADDRESSES
+            const DESTINY_VAULT = '0x0000000000000000000000000000000000000000'; // TODO: Add address
+            const SUNDAI_TOKEN = '0x0000000000000000000000000000000000000000'; // TODO: Add address  
+            const PLP_TOKEN = '0x0000000000000000000000000000000000000000'; // TODO: Add address
+            const ORACLE = '0x0000000000000000000000000000000000000000'; // TODO: Add address
+
+            let provider, signer, vaultContract, sundaiContract, plpContract, oracleContract;
+            let userAddress;
+            let updateInterval;
+
+            // Load ABIs from JSON files
+            async function loadABIs() {
+                const [v, t, o] = await Promise.all([
+                    fetch("destiny-vault-abi.json").then(r => r.json()),
+                    fetch("token-abi.json").then(r => r.json()),
+                    fetch("sundial-oracle-abi.json").then(r => r.json())
+                ]);
+                return [v, t, o];
+            }
+
+            // Cosmic background animation
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
@@ -1054,6 +1081,11 @@
             if (window.ethereum && window.ethereum.selectedAddress) {
                 connectWallet();
             }
+        });
+
+        }).catch(error => {
+            alert("CRITICAL ERROR: " + error.message + "\n\nEthers.js library failed to load. Please check your internet connection.");
+            console.error(error);
         });
     </script>
 </body>
