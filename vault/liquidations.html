@@ -588,25 +588,5 @@
       }
     }, 120000);
   </script>
-  <script>
-// Force reload when navigating between pages
-document.addEventListener('DOMContentLoaded', function() {
-  // Find all links to .html pages
-  const links = document.querySelectorAll('a[href$=".html"]');
-  
-  links.forEach(link => {
-    link.addEventListener('click', function(e) {
-      e.preventDefault();
-      
-      // Force reload with cache-busting parameter
-      const url = new URL(this.href);
-      url.searchParams.set('_', Date.now());
-      
-      // Use location.replace to force reload
-      window.location.replace(url.toString());
-    });
-  });
-});
-</script>
 </body>
 </html>
