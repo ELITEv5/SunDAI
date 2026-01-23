@@ -515,6 +515,14 @@
                         <div class="status-value" id="vaultState">UNLOCKED</div>
                     </div>
                     <div class="status-item">
+                        <div class="status-label">Total SunDAI Staked</div>
+                        <div class="status-value" id="totalSundaiStaked">0</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">Total PLP Staked</div>
+                        <div class="status-value" id="totalPlpStaked">0</div>
+                    </div>
+                    <div class="status-item">
                         <div class="status-label">Total Vault Weight</div>
                         <div class="status-value" id="totalWeight">0</div>
                     </div>
@@ -674,10 +682,10 @@
             console.log("Ethers.providers available:", !!ethers.providers);
 
             // CONFIG - UPDATE THESE WITH YOUR CONTRACT ADDRESSES
-            const DESTINY_VAULT = '0x0000000000000000000000000000000000000000'; // TODO: Add address
-            const SUNDAI_TOKEN = '0x0000000000000000000000000000000000000000'; // TODO: Add address  
-            const PLP_TOKEN = '0x0000000000000000000000000000000000000000'; // TODO: Add address
-            const ORACLE = '0x0000000000000000000000000000000000000000'; // TODO: Add address
+            const DESTINY_VAULT = '0x8738C72c95177C02AB705Ebf8626f30dE6591123';
+            const SUNDAI_TOKEN = '0x41C6b24019Bd67CC58fe7bb059D532C12356712B';
+            const PLP_TOKEN = '0xc01e2eDAe9E65950bb5783A6B01DC429Cf3F0eE2';
+            const ORACLE = '0xDA5591A1DE3934B28cB1DE3Ea828606be6473236';
 
             let provider, signer, vaultContract, sundaiContract, plpContract, oracleContract;
             let userAddress;
@@ -931,6 +939,15 @@
                 }
 
                 document.getElementById('totalWeight').textContent = parseFloat(ethers.utils.formatUnits(totalWeight, 18)).toFixed(2);
+                
+                // Get total staked amounts
+                const [sundaiBalance, plpBalance] = await Promise.all([
+                    sundaiContract.balanceOf(DESTINY_VAULT),
+                    plpContract.balanceOf(DESTINY_VAULT)
+                ]);
+                
+                document.getElementById('totalSundaiStaked').textContent = parseFloat(ethers.utils.formatUnits(sundaiBalance, 18)).toFixed(2);
+                document.getElementById('totalPlpStaked').textContent = parseFloat(ethers.utils.formatUnits(plpBalance, 18)).toFixed(2);
             } catch (error) {
                 console.error('Vault status error:', error);
             }
