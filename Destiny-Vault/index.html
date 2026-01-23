@@ -50,6 +50,38 @@
             border-radius: 20px;
             margin-bottom: 30px;
             box-shadow: 0 0 40px rgba(255, 215, 0, 0.3);
+            position: relative;
+        }
+
+        /* Wallet Button in Header */
+        .wallet-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+
+        .wallet-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.6);
+        }
+
+        .wallet-btn.connected {
+            background: linear-gradient(135deg, #00ff00, #00cc00);
+            color: #000;
+        }
+
+        .wallet-btn.connected:hover {
+            box-shadow: 0 4px 15px rgba(0, 255, 0, 0.6);
         }
 
         h1 {
@@ -436,6 +468,7 @@
     
     <div class="container">
         <header>
+            <button class="wallet-btn" id="walletBtn" onclick="handleWalletClick()">Connect Wallet</button>
             <h1>☀️ DESTINY VAULT</h1>
             <div class="subtitle">Black Hole Protocol • Supernova Event • Rebirth Cycle</div>
             <div class="warning">
@@ -447,13 +480,7 @@
             </div>
         </header>
 
-        <div id="connectSection" class="connect-wallet">
-            <h2>Connect to the Cosmos</h2>
-            <button class="btn-primary" onclick="connectWallet()">Connect Wallet</button>
-            <div id="walletInfo"></div>
-        </div>
-
-        <div id="vaultInterface" style="display: none;">
+        <div id="vaultInterface">
             <!-- Status Overview -->
             <div class="status-card">
                 <h2 style="color: #ffd700; margin-bottom: 20px;">⚡ Vault Status</h2>
@@ -626,10 +653,10 @@
             console.log("Ethers.providers available:", !!ethers.providers);
 
             // CONFIG - UPDATE THESE WITH YOUR CONTRACT ADDRESSES
-            const DESTINY_VAULT = '0x8738C72c95177C02AB705Ebf8626f30dE6591123'; // TODO: Add address
-            const SUNDAI_TOKEN = '0x41C6b24019Bd67CC58fe7bb059D532C12356712B'; // TODO: Add address  
-            const PLP_TOKEN = '0xc01e2eDAe9E65950bb5783A6B01DC429Cf3F0eE2'; // TODO: Add address
-            const ORACLE = '0xDA5591A1DE3934B28cB1DE3Ea828606be6473236'; // TODO: Add address
+            const DESTINY_VAULT = '0x0000000000000000000000000000000000000000'; // TODO: Add address
+            const SUNDAI_TOKEN = '0x0000000000000000000000000000000000000000'; // TODO: Add address  
+            const PLP_TOKEN = '0x0000000000000000000000000000000000000000'; // TODO: Add address
+            const ORACLE = '0x0000000000000000000000000000000000000000'; // TODO: Add address
 
             let provider, signer, vaultContract, sundaiContract, plpContract, oracleContract;
             let userAddress;
@@ -733,20 +760,83 @@
                 plpContract = new ethers.Contract(PLP_TOKEN, TOKEN_ABI, signer);
                 oracleContract = new ethers.Contract(ORACLE, ORACLE_ABI, provider);
 
-                document.getElementById('connectSection').style.display = 'none';
-                document.getElementById('vaultInterface').style.display = 'block';
-                
+                // Update wallet button
                 const shortAddress = userAddress.slice(0, 6) + '...' + userAddress.slice(-4);
+                document.getElementById('walletBtn').textContent = shortAddress;
+                document.getElementById('walletBtn').classList.add('connected');
+                
                 showNotification(`Connected: ${shortAddress}`, 'success');
 
                 // Start updates
                 await updateAllData();
+                if (updateInterval) clearInterval(updateInterval);
                 updateInterval = setInterval(updateAllData, 10000); // Update every 10s
 
             } catch (error) {
                 console.error(error);
                 showNotification('Connection failed: ' + error.message, 'error');
             }
+        }
+
+        // Disconnect wallet
+        function disconnectWallet() {
+            if (updateInterval) clearInterval(updateInterval);
+            provider = null;
+            signer = null;
+            userAddress = null;
+            vaultContract = null;
+            sundaiContract = null;
+            plpContract = null;
+            oracleContract = null;
+
+            document.getElementById('walletBtn').textContent = 'Connect Wallet';
+            document.getElementById('walletBtn').classList.remove('connected');
+            
+            // Reset UI
+            document.getElementById('currentPrice').textContent = '$0.00';
+            document.getElementById('vaultState').textContent = 'DISCONNECTED';
+            document.getElementById('totalWeight').textContent = '0';
+            document.getElementById('userWeight').textContent = '0';
+            document.getElementById('userSundai').textContent = '0';
+            document.getElementById('userPlp').textContent = '0';
+            document.getElementById('userWeightDetail').textContent = '0';
+            document.getElementById('estimatedPayout').textContent = '0';
+            document.getElementById('sundaiBalance').textContent = '0';
+            document.getElementById('plpBalance').textContent = '0';
+            
+            showNotification('Wallet disconnected', 'info');
+        }
+
+        // Handle wallet button click
+        function handleWalletClick() {
+            if (userAddress) {
+                // Already connected - show disconnect option
+                if (confirm('Disconnect wallet?')) {
+                    disconnectWallet();
+                }
+            } else {
+                // Not connected - connect
+                connectWallet();
+            }
+        }
+
+        // Listen for account changes
+        if (window.ethereum) {
+            window.ethereum.on('accountsChanged', (accounts) => {
+                if (accounts.length === 0) {
+                    // User disconnected their wallet
+                    disconnectWallet();
+                } else {
+                    // User switched accounts
+                    showNotification('Account changed - reconnecting...', 'info');
+                    connectWallet();
+                }
+            });
+
+            window.ethereum.on('chainChanged', (chainId) => {
+                // Reload page on chain change
+                window.location.reload();
+            });
         }
 
         // Update all data
@@ -1077,6 +1167,8 @@
 
         // Make all functions globally accessible from HTML onclick handlers
         window.connectWallet = connectWallet;
+        window.disconnectWallet = disconnectWallet;
+        window.handleWalletClick = handleWalletClick;
         window.approveAndStake = approveAndStake;
         window.withdraw = withdraw;
         window.ignite = ignite;
