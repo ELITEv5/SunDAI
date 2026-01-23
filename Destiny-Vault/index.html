@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>☀️ SunDAI Destiny Vault - Black Hole Protocol</title>
-    <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>
+    <script src="https://github.com/ELITEv5/SunDAI/raw/main/Destiny-Vault/ethers.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -594,32 +594,28 @@
     </div>
 
     <script>
-        // CONFIG - REPLACE WITH YOUR CONTRACT ADDRESSES
-        const CONFIG = {
-            CHAIN_ID: 369, // PulseChain
-            DESTINY_VAULT: '0x8738C72c95177C02AB705Ebf8626f30dE6591123', // TODO: Add address
-            SUNDAI_TOKEN: '0x41C6b24019Bd67CC58fe7bb059D532C12356712B', // TODO: Add address
-            PLP_TOKEN: '0xc01e2eDAe9E65950bb5783A6B01DC429Cf3F0eE2', // TODO: Add address
-            ORACLE: '0xDA5591A1DE3934B28cB1DE3Ea828606be6473236', // TODO: Add address
-        };
+        const ethers = window.ethers;
+        if (!ethers || !ethers.Contract) alert("Ethers.js failed to load");
 
-        // Contract ABIs
-        const VAULT_ABI = [{"type":"constructor","inputs":[{"name":"_sundai","type":"address","internalType":"address"},{"name":"_psundai","type":"address","internalType":"address"},{"name":"_wpls","type":"address","internalType":"address"},{"name":"_vault","type":"address","internalType":"address"},{"name":"_router","type":"address","internalType":"address"},{"name":"_pairV1","type":"address","internalType":"address"},{"name":"_oracle","type":"address","internalType":"address"}],"stateMutability":"nonpayable"},{"name":"OwnableInvalidOwner","type":"error","inputs":[{"name":"owner","type":"address","internalType":"address"}]},{"name":"OwnableUnauthorizedAccount","type":"error","inputs":[{"name":"account","type":"address","internalType":"address"}]},{"name":"SafeERC20FailedOperation","type":"error","inputs":[{"name":"token","type":"address","internalType":"address"}]},{"name":"Claimed","type":"event","inputs":[{"name":"user","type":"address","indexed":true,"internalType":"address"},{"name":"amount","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"name":"EmergencyClaim","type":"event","inputs":[{"name":"user","type":"address","indexed":true,"internalType":"address"},{"name":"amountSundai","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"amountPlp","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"amountPls","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"name":"EmergencyExitEnabled","type":"event","inputs":[{"name":"totalPlsAvailable","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"name":"Ignited","type":"event","inputs":[{"name":"plsRecovered","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"name":"OwnershipTransferred","type":"event","inputs":[{"name":"previousOwner","type":"address","indexed":true,"internalType":"address"},{"name":"newOwner","type":"address","indexed":true,"internalType":"address"}],"anonymous":false},{"name":"Rebirth","type":"event","inputs":[{"name":"minted","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"name":"Staked","type":"event","inputs":[{"name":"user","type":"address","indexed":true,"internalType":"address"},{"name":"sundaiAmt","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"plpAmt","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"weight","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"name":"Supernova","type":"event","inputs":[{"name":"plsDeposited","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"name":"ThresholdLocked","type":"event","inputs":[],"anonymous":false},{"name":"ThresholdUpdated","type":"event","inputs":[{"name":"newThreshold","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"name":"Withdrawn","type":"event","inputs":[{"name":"user","type":"address","indexed":true,"internalType":"address"},{"name":"sundaiAmt","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"plpAmt","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"name":"LP_MULTIPLIER_BPS","type":"function","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"name":"SAFETY_BPS","type":"function","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"name":"claim","type":"function","inputs":[],"outputs":[],"stateMutability":"nonpayable"},{"name":"claimEmergency","type":"function","inputs":[],"outputs":[],"stateMutability":"nonpayable"},{"name":"emergencyExitTriggered","type":"function","inputs":[],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"view"},{"name":"enableEmergencyExit","type":"function","inputs":[],"outputs":[],"stateMutability":"nonpayable"},{"name":"ignite","type":"function","inputs":[],"outputs":[],"stateMutability":"nonpayable"},{"name":"ignited","type":"function","inputs":[],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"view"},{"name":"isLocked","type":"function","inputs":[],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"view"},{"name":"lockThreshold","type":"function","inputs":[],"outputs":[],"stateMutability":"nonpayable"},{"name":"oracle","type":"function","inputs":[],"outputs":[{"name":"","type":"address","internalType":"contract ISunDialOracle"}],"stateMutability":"view"},{"name":"owner","type":"function","inputs":[],"outputs":[{"name":"","type":"address","internalType":"address"}],"stateMutability":"view"},{"name":"pairV1","type":"function","inputs":[],"outputs":[{"name":"","type":"address","internalType":"contract IUniswapV2Pair"}],"stateMutability":"view"},{"name":"psundaiToken","type":"function","inputs":[],"outputs":[{"name":"","type":"address","internalType":"contract IPSunDAI"}],"stateMutability":"view"},{"name":"rebirth","type":"function","inputs":[],"outputs":[],"stateMutability":"nonpayable"},{"name":"rebirthTriggered","type":"function","inputs":[],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"view"},{"name":"renounceOwnership","type":"function","inputs":[],"outputs":[],"stateMutability":"nonpayable"},{"name":"router","type":"function","inputs":[],"outputs":[{"name":"","type":"address","internalType":"contract IUniswapV2Router02"}],"stateMutability":"view"},{"name":"setThreshold","type":"function","inputs":[{"name":"newThreshold","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},{"name":"snapshotPlsBal","type":"function","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"name":"stake","type":"function","inputs":[{"name":"sundaiAmt","type":"uint256","internalType":"uint256"},{"name":"plpAmt","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},{"name":"stakes","type":"function","inputs":[{"name":"","type":"address","internalType":"address"}],"outputs":[{"name":"sundaiAmt","type":"uint256","internalType":"uint256"},{"name":"plpAmt","type":"uint256","internalType":"uint256"},{"name":"weight","type":"uint256","internalType":"uint256"},{"name":"claimed","type":"bool","internalType":"bool"}],"stateMutability":"view"},{"name":"sundai","type":"function","inputs":[],"outputs":[{"name":"","type":"address","internalType":"contract IERC20"}],"stateMutability":"view"},{"name":"supernova","type":"function","inputs":[],"outputs":[],"stateMutability":"nonpayable"},{"name":"supernovaTriggered","type":"function","inputs":[],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"view"},{"name":"threshold","type":"function","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"name":"thresholdLocked","type":"function","inputs":[],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"view"},{"name":"totalPayout","type":"function","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"name":"totalWeight","type":"function","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"name":"transferOwnership","type":"function","inputs":[{"name":"newOwner","type":"address","internalType":"address"}],"outputs":[],"stateMutability":"nonpayable"},{"name":"vault","type":"function","inputs":[],"outputs":[{"name":"","type":"address","internalType":"contract IPSunDAIVault"}],"stateMutability":"view"},{"name":"withdraw","type":"function","inputs":[{"name":"sundaiAmt","type":"uint256","internalType":"uint256"},{"name":"plpAmt","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},{"name":"wpls","type":"function","inputs":[],"outputs":[{"name":"","type":"address","internalType":"contract IERC20"}],"stateMutability":"view"},{"type":"receive","stateMutability":"payable"}];
-
-        const ERC20_ABI = [
-            "function balanceOf(address owner) view returns (uint256)",
-            "function approve(address spender, uint256 amount) returns (bool)",
-            "function allowance(address owner, address spender) view returns (uint256)"
-        ];
-
-        const ORACLE_ABI = [
-            "function getPrice() view returns (uint256)",
-            "function isAtTarget() view returns (bool)"
-        ];
+        // CONFIG - UPDATE THESE WITH YOUR CONTRACT ADDRESSES
+        const DESTINY_VAULT = '0x8738C72c95177C02AB705Ebf8626f30dE6591123'; // TODO: Add address
+        const SUNDAI_TOKEN = '0x41C6b24019Bd67CC58fe7bb059D532C12356712B'; // TODO: Add address  
+        const PLP_TOKEN = '0xc01e2eDAe9E65950bb5783A6B01DC429Cf3F0eE2'; // TODO: Add address
+        const ORACLE = '0xDA5591A1DE3934B28cB1DE3Ea828606be6473236'; // TODO: Add address
 
         let provider, signer, vaultContract, sundaiContract, plpContract, oracleContract;
         let userAddress;
         let updateInterval;
+
+        // Load ABIs from JSON files
+        async function loadABIs() {
+            const [v, t, o] = await Promise.all([
+                fetch("destiny-vault-abi.json").then(r => r.json()),
+                fetch("token-abi.json").then(r => r.json()),
+                fetch("sundial-oracle-abi.json").then(r => r.json())
+            ]);
+            return [v, t, o];
+        }
 
         // Cosmic background animation
         const canvas = document.getElementById('canvas');
@@ -675,31 +671,39 @@
             }, 5000);
         }
 
-        // Connect wallet
+        // Connect wallet - works with any wallet (MetaMask, Rabby, etc.)
         async function connectWallet() {
             try {
-                if (typeof window.ethereum === 'undefined') {
-                    showNotification('Please install MetaMask!', 'error');
+                if (!window.ethereum) {
+                    showNotification('Please install MetaMask or another Web3 wallet!', 'error');
                     return;
                 }
 
                 await window.ethereum.request({ method: 'eth_requestAccounts' });
-                provider = new ethers.providers.Web3Provider(window.ethereum);
-                signer = provider.getSigner();
+                provider = new ethers.BrowserProvider(window.ethereum);
+                signer = await provider.getSigner();
                 userAddress = await signer.getAddress();
 
-                // Check network
+                // Check network and switch if needed
                 const network = await provider.getNetwork();
-                if (network.chainId !== CONFIG.CHAIN_ID) {
-                    showNotification('Please switch to PulseChain!', 'error');
-                    return;
+                if (Number(network.chainId) !== 369) {
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: '0x171' }]
+                        });
+                    } catch (e) {
+                        showNotification('Please switch to PulseChain (chainId 369)', 'error');
+                        return;
+                    }
                 }
 
-                // Initialize contracts
-                vaultContract = new ethers.Contract(CONFIG.DESTINY_VAULT, VAULT_ABI, signer);
-                sundaiContract = new ethers.Contract(CONFIG.SUNDAI_TOKEN, ERC20_ABI, signer);
-                plpContract = new ethers.Contract(CONFIG.PLP_TOKEN, ERC20_ABI, signer);
-                oracleContract = new ethers.Contract(CONFIG.ORACLE, ORACLE_ABI, provider);
+                // Load ABIs and initialize contracts
+                const [VAULT_ABI, TOKEN_ABI, ORACLE_ABI] = await loadABIs();
+                vaultContract = new ethers.Contract(DESTINY_VAULT, VAULT_ABI, signer);
+                sundaiContract = new ethers.Contract(SUNDAI_TOKEN, TOKEN_ABI, signer);
+                plpContract = new ethers.Contract(PLP_TOKEN, TOKEN_ABI, signer);
+                oracleContract = new ethers.Contract(ORACLE, ORACLE_ABI, provider);
 
                 document.getElementById('connectSection').style.display = 'none';
                 document.getElementById('vaultInterface').style.display = 'block';
@@ -737,7 +741,7 @@
         async function updatePrice() {
             try {
                 const price = await oracleContract.getPrice();
-                const priceFormatted = ethers.utils.formatUnits(price, 18);
+                const priceFormatted = ethers.formatUnits(price, 18);
                 const priceNum = parseFloat(priceFormatted);
                 
                 document.getElementById('currentPrice').textContent = '$' + priceNum.toFixed(4);
@@ -787,7 +791,7 @@
                     stateEl.classList.remove('warning', 'success');
                 }
 
-                document.getElementById('totalWeight').textContent = ethers.utils.formatUnits(totalWeight, 18);
+                document.getElementById('totalWeight').textContent = ethers.formatUnits(totalWeight, 18);
             } catch (error) {
                 console.error('Vault status error:', error);
             }
@@ -800,9 +804,9 @@
                 const totalWeight = await vaultContract.totalWeight();
                 const totalPayout = await vaultContract.totalPayout();
 
-                const sundaiAmt = ethers.utils.formatUnits(stake.sundaiAmt, 18);
-                const plpAmt = ethers.utils.formatUnits(stake.plpAmt, 18);
-                const weight = ethers.utils.formatUnits(stake.weight, 18);
+                const sundaiAmt = ethers.formatUnits(stake.sundaiAmt, 18);
+                const plpAmt = ethers.formatUnits(stake.plpAmt, 18);
+                const weight = ethers.formatUnits(stake.weight, 18);
 
                 document.getElementById('userSundai').textContent = parseFloat(sundaiAmt).toFixed(2);
                 document.getElementById('userPlp').textContent = parseFloat(plpAmt).toFixed(2);
@@ -810,9 +814,9 @@
                 document.getElementById('userWeightDetail').textContent = parseFloat(weight).toFixed(2);
 
                 // Calculate estimated payout
-                if (totalWeight.gt(0) && totalPayout.gt(0)) {
-                    const share = stake.weight.mul(totalPayout).div(totalWeight);
-                    const shareFormatted = ethers.utils.formatUnits(share, 18);
+                if (totalWeight > 0n && totalPayout > 0n) {
+                    const share = (stake.weight * totalPayout) / totalWeight;
+                    const shareFormatted = ethers.formatUnits(share, 18);
                     document.getElementById('estimatedPayout').textContent = parseFloat(shareFormatted).toFixed(2);
                 } else {
                     document.getElementById('estimatedPayout').textContent = '0';
@@ -831,41 +835,42 @@
                 ]);
 
                 document.getElementById('sundaiBalance').textContent = 
-                    parseFloat(ethers.utils.formatUnits(sundaiBalance, 18)).toFixed(2);
+                    parseFloat(ethers.formatUnits(sundaiBalance, 18)).toFixed(2);
                 document.getElementById('plpBalance').textContent = 
-                    parseFloat(ethers.utils.formatUnits(plpBalance, 18)).toFixed(2);
+                    parseFloat(ethers.formatUnits(plpBalance, 18)).toFixed(2);
             } catch (error) {
                 console.error('Balance error:', error);
             }
         }
 
         // Update phase indicators
-        function updatePhases() {
-            vaultContract.ignited().then(ignited => {
+        async function updatePhases() {
+            try {
+                const ignited = await vaultContract.ignited();
                 if (ignited) {
                     document.getElementById('phaseStaking').classList.add('complete');
                     document.getElementById('phaseIgnite').classList.add('active');
                 } else {
                     document.getElementById('phaseStaking').classList.add('active');
                 }
-            });
 
-            vaultContract.supernovaTriggered().then(triggered => {
-                if (triggered) {
+                const supernovaTriggered = await vaultContract.supernovaTriggered();
+                if (supernovaTriggered) {
                     document.getElementById('phaseIgnite').classList.remove('active');
                     document.getElementById('phaseIgnite').classList.add('complete');
                     document.getElementById('phaseSupernova').classList.add('active');
                 }
-            });
 
-            vaultContract.rebirthTriggered().then(triggered => {
-                if (triggered) {
+                const rebirthTriggered = await vaultContract.rebirthTriggered();
+                if (rebirthTriggered) {
                     document.getElementById('phaseSupernova').classList.remove('active');
                     document.getElementById('phaseSupernova').classList.add('complete');
                     document.getElementById('phaseRebirth').classList.add('active');
                     document.getElementById('phaseClaim').classList.add('active');
                 }
-            });
+            } catch (error) {
+                console.error('Phase update error:', error);
+            }
         }
 
         // Update button states
@@ -916,20 +921,20 @@
 
                 // Approve SunDAI
                 if (sundaiAmt && parseFloat(sundaiAmt) > 0) {
-                    const amount = ethers.utils.parseUnits(sundaiAmt, 18);
-                    const allowance = await sundaiContract.allowance(userAddress, CONFIG.DESTINY_VAULT);
-                    if (allowance.lt(amount)) {
-                        const tx = await sundaiContract.approve(CONFIG.DESTINY_VAULT, ethers.constants.MaxUint256);
+                    const amount = ethers.parseUnits(sundaiAmt, 18);
+                    const allowance = await sundaiContract.allowance(userAddress, DESTINY_VAULT);
+                    if (allowance < amount) {
+                        const tx = await sundaiContract.approve(DESTINY_VAULT, ethers.MaxUint256);
                         await tx.wait();
                     }
                 }
 
                 // Approve PLP
                 if (plpAmt && parseFloat(plpAmt) > 0) {
-                    const amount = ethers.utils.parseUnits(plpAmt, 18);
-                    const allowance = await plpContract.allowance(userAddress, CONFIG.DESTINY_VAULT);
-                    if (allowance.lt(amount)) {
-                        const tx = await plpContract.approve(CONFIG.DESTINY_VAULT, ethers.constants.MaxUint256);
+                    const amount = ethers.parseUnits(plpAmt, 18);
+                    const allowance = await plpContract.allowance(userAddress, DESTINY_VAULT);
+                    if (allowance < amount) {
+                        const tx = await plpContract.approve(DESTINY_VAULT, ethers.MaxUint256);
                         await tx.wait();
                     }
                 }
@@ -937,8 +942,8 @@
                 showNotification('Staking...', 'info');
 
                 const tx = await vaultContract.stake(
-                    sundaiAmt ? ethers.utils.parseUnits(sundaiAmt, 18) : 0,
-                    plpAmt ? ethers.utils.parseUnits(plpAmt, 18) : 0
+                    sundaiAmt ? ethers.parseUnits(sundaiAmt, 18) : 0,
+                    plpAmt ? ethers.parseUnits(plpAmt, 18) : 0
                 );
                 await tx.wait();
 
@@ -966,8 +971,8 @@
                 showNotification('Withdrawing...', 'info');
 
                 const tx = await vaultContract.withdraw(
-                    sundaiAmt ? ethers.utils.parseUnits(sundaiAmt, 18) : 0,
-                    plpAmt ? ethers.utils.parseUnits(plpAmt, 18) : 0
+                    sundaiAmt ? ethers.parseUnits(sundaiAmt, 18) : 0,
+                    plpAmt ? ethers.parseUnits(plpAmt, 18) : 0
                 );
                 await tx.wait();
 
@@ -1041,6 +1046,14 @@
                 showNotification('Claim failed: ' + error.message, 'error');
             }
         }
+
+        // Auto-connect on load
+        window.addEventListener('load', () => {
+            // Auto-connect if wallet is already connected
+            if (window.ethereum && window.ethereum.selectedAddress) {
+                connectWallet();
+            }
+        });
     </script>
 </body>
 </html>
