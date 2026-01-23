@@ -7,7 +7,7 @@
 ---
 
 ### Abstract  
-SunDAI is the world's first **fully autonomous stable asset (ASA)** — a decentralized, crypto-collateralized stable asset targeting a $1 unit of value minted against native crypto collateral (PLS, wETH, HEX, etc.) inside **immutable, ownerless vaults**.  
+SunDAI is a first in a new class we call a **fully autonomous stable asset (ASA)** — a decentralized, crypto-collateralized stable asset targeting a $1 unit of value minted against native crypto collateral (PLS, wETH, HEX, etc.) inside **immutable, ownerless vaults**.  
 
 No custodians. No governance. No admin keys. No upgrades.  
 Stability is enforced by pure mathematics, self-healing oracle consensus, and asymmetric volatility protection — not human discretion.  
