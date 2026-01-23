@@ -626,10 +626,10 @@
             console.log("Ethers.providers available:", !!ethers.providers);
 
             // CONFIG - UPDATE THESE WITH YOUR CONTRACT ADDRESSES
-            const DESTINY_VAULT = '0x0000000000000000000000000000000000000000'; // TODO: Add address
-            const SUNDAI_TOKEN = '0x0000000000000000000000000000000000000000'; // TODO: Add address  
-            const PLP_TOKEN = '0x0000000000000000000000000000000000000000'; // TODO: Add address
-            const ORACLE = '0x0000000000000000000000000000000000000000'; // TODO: Add address
+            const DESTINY_VAULT = '0x8738C72c95177C02AB705Ebf8626f30dE6591123'; // TODO: Add address
+            const SUNDAI_TOKEN = '0x41C6b24019Bd67CC58fe7bb059D532C12356712B'; // TODO: Add address  
+            const PLP_TOKEN = '0xc01e2eDAe9E65950bb5783A6B01DC429Cf3F0eE2'; // TODO: Add address
+            const ORACLE = '0xDA5591A1DE3934B28cB1DE3Ea828606be6473236'; // TODO: Add address
 
             let provider, signer, vaultContract, sundaiContract, plpContract, oracleContract;
             let userAddress;
@@ -1074,6 +1074,15 @@
                 showNotification('Claim failed: ' + error.message, 'error');
             }
         }
+
+        // Make all functions globally accessible from HTML onclick handlers
+        window.connectWallet = connectWallet;
+        window.approveAndStake = approveAndStake;
+        window.withdraw = withdraw;
+        window.ignite = ignite;
+        window.supernova = supernova;
+        window.rebirth = rebirth;
+        window.claim = claim;
 
         // Auto-connect on load
         window.addEventListener('load', () => {
