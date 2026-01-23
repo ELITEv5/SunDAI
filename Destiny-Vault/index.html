@@ -939,6 +939,16 @@
         // Update user position
         async function updateUserPosition() {
             try {
+                if (!userAddress || !vaultContract) {
+                    // Not connected - show zeros
+                    document.getElementById('userSundai').textContent = '0';
+                    document.getElementById('userPlp').textContent = '0';
+                    document.getElementById('userWeight').textContent = '0';
+                    document.getElementById('userWeightDetail').textContent = '0';
+                    document.getElementById('estimatedPayout').textContent = '0';
+                    return;
+                }
+
                 const stake = await vaultContract.stakes(userAddress);
                 const totalWeight = await vaultContract.totalWeight();
                 const totalPayout = await vaultContract.totalPayout();
@@ -968,6 +978,13 @@
         // Update balances
         async function updateBalances() {
             try {
+                if (!userAddress || !sundaiContract || !plpContract) {
+                    // Not connected - show zeros
+                    document.getElementById('sundaiBalance').textContent = '0';
+                    document.getElementById('plpBalance').textContent = '0';
+                    return;
+                }
+
                 const [sundaiBalance, plpBalance] = await Promise.all([
                     sundaiContract.balanceOf(userAddress),
                     plpContract.balanceOf(userAddress)
