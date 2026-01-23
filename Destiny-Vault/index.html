@@ -480,6 +480,26 @@
             border-color: #ff4500;
             box-shadow: 0 0 30px rgba(255, 69, 0, 0.5);
         }
+
+        /* External Link Buttons */
+        a.external-btn {
+            display: inline-block;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            color: #000;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+        }
+
+        a.external-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
+        }
     </style>
 </head>
 <body>
@@ -492,6 +512,22 @@
         <header>
             <h1>☀️ DESTINY VAULT</h1>
             <div class="subtitle">Black Hole Protocol • Supernova Event • Rebirth Cycle</div>
+            
+            <!-- Buy SunDAI Button -->
+            <div style="margin: 25px 0;">
+                <a href="https://libertyswap.finance/" 
+                   target="_blank" 
+                   class="external-btn">
+                    Buy SunDAI on LibertySwap
+                </a>
+                <div style="margin-top: 12px;">
+                    <button onclick="navigator.clipboard.writeText('0x41C6b24019Bd67CC58fe7bb059D532C12356712B').then(() => alert('Contract address copied!'))" 
+                            style="padding: 8px 20px; background: rgba(255, 215, 0, 0.2); border: 1px solid #ffd700; border-radius: 8px; color: #ffd700; cursor: pointer; font-family: 'Courier New', monospace; font-size: 0.85em; transition: all 0.3s ease;">
+                        Copy CA: 0x41C6...712B
+                    </button>
+                </div>
+            </div>
+            
             <div class="warning">
                 ⚠️ <strong>THE EVENT HORIZON AWAITS</strong> ⚠️<br>
                 When SunDAI touches $1.00, the vault collapses into a black hole.<br>
