@@ -598,10 +598,10 @@
         if (!ethers || !ethers.Contract) alert("Ethers.js failed to load");
 
         // CONFIG - UPDATE THESE WITH YOUR CONTRACT ADDRESSES
-        const DESTINY_VAULT = '0x8738C72c95177C02AB705Ebf8626f30dE6591123'; // TODO: Add address
-        const SUNDAI_TOKEN = '0x41C6b24019Bd67CC58fe7bb059D532C12356712B'; // TODO: Add address  
-        const PLP_TOKEN = '0xc01e2eDAe9E65950bb5783A6B01DC429Cf3F0eE2'; // TODO: Add address
-        const ORACLE = '0xDA5591A1DE3934B28cB1DE3Ea828606be6473236'; // TODO: Add address
+        const DESTINY_VAULT = '0x0000000000000000000000000000000000000000'; // TODO: Add address
+        const SUNDAI_TOKEN = '0x0000000000000000000000000000000000000000'; // TODO: Add address  
+        const PLP_TOKEN = '0x0000000000000000000000000000000000000000'; // TODO: Add address
+        const ORACLE = '0x0000000000000000000000000000000000000000'; // TODO: Add address
 
         let provider, signer, vaultContract, sundaiContract, plpContract, oracleContract;
         let userAddress;
@@ -680,8 +680,8 @@
                 }
 
                 await window.ethereum.request({ method: 'eth_requestAccounts' });
-                provider = new ethers.BrowserProvider(window.ethereum);
-                signer = await provider.getSigner();
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                signer = provider.getSigner();
                 userAddress = await signer.getAddress();
 
                 // Check network and switch if needed
@@ -741,7 +741,7 @@
         async function updatePrice() {
             try {
                 const price = await oracleContract.getPrice();
-                const priceFormatted = ethers.formatUnits(price, 18);
+                const priceFormatted = ethers.utils.formatUnits(price, 18);
                 const priceNum = parseFloat(priceFormatted);
                 
                 document.getElementById('currentPrice').textContent = '$' + priceNum.toFixed(4);
@@ -791,7 +791,7 @@
                     stateEl.classList.remove('warning', 'success');
                 }
 
-                document.getElementById('totalWeight').textContent = ethers.formatUnits(totalWeight, 18);
+                document.getElementById('totalWeight').textContent = ethers.utils.formatUnits(totalWeight, 18);
             } catch (error) {
                 console.error('Vault status error:', error);
             }
@@ -804,9 +804,9 @@
                 const totalWeight = await vaultContract.totalWeight();
                 const totalPayout = await vaultContract.totalPayout();
 
-                const sundaiAmt = ethers.formatUnits(stake.sundaiAmt, 18);
-                const plpAmt = ethers.formatUnits(stake.plpAmt, 18);
-                const weight = ethers.formatUnits(stake.weight, 18);
+                const sundaiAmt = ethers.utils.formatUnits(stake.sundaiAmt, 18);
+                const plpAmt = ethers.utils.formatUnits(stake.plpAmt, 18);
+                const weight = ethers.utils.formatUnits(stake.weight, 18);
 
                 document.getElementById('userSundai').textContent = parseFloat(sundaiAmt).toFixed(2);
                 document.getElementById('userPlp').textContent = parseFloat(plpAmt).toFixed(2);
@@ -814,9 +814,9 @@
                 document.getElementById('userWeightDetail').textContent = parseFloat(weight).toFixed(2);
 
                 // Calculate estimated payout
-                if (totalWeight > 0n && totalPayout > 0n) {
-                    const share = (stake.weight * totalPayout) / totalWeight;
-                    const shareFormatted = ethers.formatUnits(share, 18);
+                if (totalWeight.gt(0) && totalPayout.gt(0)) {
+                    const share = stake.weight.mul(totalPayout).div(totalWeight);
+                    const shareFormatted = ethers.utils.formatUnits(share, 18);
                     document.getElementById('estimatedPayout').textContent = parseFloat(shareFormatted).toFixed(2);
                 } else {
                     document.getElementById('estimatedPayout').textContent = '0';
@@ -835,9 +835,9 @@
                 ]);
 
                 document.getElementById('sundaiBalance').textContent = 
-                    parseFloat(ethers.formatUnits(sundaiBalance, 18)).toFixed(2);
+                    parseFloat(ethers.utils.formatUnits(sundaiBalance, 18)).toFixed(2);
                 document.getElementById('plpBalance').textContent = 
-                    parseFloat(ethers.formatUnits(plpBalance, 18)).toFixed(2);
+                    parseFloat(ethers.utils.formatUnits(plpBalance, 18)).toFixed(2);
             } catch (error) {
                 console.error('Balance error:', error);
             }
@@ -921,20 +921,20 @@
 
                 // Approve SunDAI
                 if (sundaiAmt && parseFloat(sundaiAmt) > 0) {
-                    const amount = ethers.parseUnits(sundaiAmt, 18);
+                    const amount = ethers.utils.parseUnits(sundaiAmt, 18);
                     const allowance = await sundaiContract.allowance(userAddress, DESTINY_VAULT);
-                    if (allowance < amount) {
-                        const tx = await sundaiContract.approve(DESTINY_VAULT, ethers.MaxUint256);
+                    if (allowance.lt(amount)) {
+                        const tx = await sundaiContract.approve(DESTINY_VAULT, ethers.constants.MaxUint256);
                         await tx.wait();
                     }
                 }
 
                 // Approve PLP
                 if (plpAmt && parseFloat(plpAmt) > 0) {
-                    const amount = ethers.parseUnits(plpAmt, 18);
+                    const amount = ethers.utils.parseUnits(plpAmt, 18);
                     const allowance = await plpContract.allowance(userAddress, DESTINY_VAULT);
-                    if (allowance < amount) {
-                        const tx = await plpContract.approve(DESTINY_VAULT, ethers.MaxUint256);
+                    if (allowance.lt(amount)) {
+                        const tx = await plpContract.approve(DESTINY_VAULT, ethers.constants.MaxUint256);
                         await tx.wait();
                     }
                 }
@@ -942,8 +942,8 @@
                 showNotification('Staking...', 'info');
 
                 const tx = await vaultContract.stake(
-                    sundaiAmt ? ethers.parseUnits(sundaiAmt, 18) : 0,
-                    plpAmt ? ethers.parseUnits(plpAmt, 18) : 0
+                    sundaiAmt ? ethers.utils.parseUnits(sundaiAmt, 18) : 0,
+                    plpAmt ? ethers.utils.parseUnits(plpAmt, 18) : 0
                 );
                 await tx.wait();
 
@@ -971,8 +971,8 @@
                 showNotification('Withdrawing...', 'info');
 
                 const tx = await vaultContract.withdraw(
-                    sundaiAmt ? ethers.parseUnits(sundaiAmt, 18) : 0,
-                    plpAmt ? ethers.parseUnits(plpAmt, 18) : 0
+                    sundaiAmt ? ethers.utils.parseUnits(sundaiAmt, 18) : 0,
+                    plpAmt ? ethers.utils.parseUnits(plpAmt, 18) : 0
                 );
                 await tx.wait();
 
