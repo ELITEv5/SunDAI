@@ -565,7 +565,7 @@
                         <div class="phase-status">Pending</div>
                     </div>
                     <div class="phase" id="phaseClaim">
-                        <div class="phase-icon">🎁</div>
+                        <div class="phase-icon">☀️</div>
                         <div class="phase-name">Claim</div>
                         <div class="phase-status">Pending</div>
                     </div>
@@ -637,14 +637,18 @@
                         ✨ REBIRTH
                     </button>
                     <button class="btn-primary" id="claimBtn" onclick="claim()" disabled>
-                        🎁 CLAIM pSunDAI
+                        ☀️ CLAIM pSunDAI
                     </button>
                     <div class="info-box warning">
-                        ⚡ These functions execute the ritual<br>
-                        🔥 Ignite: Destroy all assets → PLS<br>
-                        💥 Supernova: Deposit PLS as collateral<br>
-                        ✨ Rebirth: Mint pSunDAI<br>
-                        🎁 Claim: Receive your share
+                        ⚡ <strong>These functions execute the ritual after SunDAI reaches $1</strong><br><br>
+                        🔥 <strong>Ignite:</strong> Available when vault locks at $1<br>
+                        Destroys all staked assets → converts to PLS<br><br>
+                        💥 <strong>Supernova:</strong> Available after Ignite<br>
+                        Deposits PLS as collateral into pSunDAI vault<br><br>
+                        ✨ <strong>Rebirth:</strong> Available after Supernova<br>
+                        Mints new pSunDAI from deposited collateral<br><br>
+                        ☀️ <strong>Claim:</strong> Available after Rebirth<br>
+                        Receive your proportional share of the new Sun
                     </div>
                 </div>
             </div>
@@ -1225,10 +1229,10 @@
         // Claim
         async function claim() {
             try {
-                showNotification('🎁 Claiming your pSunDAI...', 'info');
+                showNotification('☀️ Claiming your pSunDAI...', 'info');
                 const tx = await vaultContract.claim();
                 await tx.wait();
-                showNotification('🎁 CLAIM SUCCESSFUL! You have received your pSunDAI!', 'success');
+                showNotification('☀️ CLAIM SUCCESSFUL! You have received your share of the new Sun!', 'success');
                 await updateAllData();
             } catch (error) {
                 console.error(error);
