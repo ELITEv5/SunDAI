@@ -1027,10 +1027,10 @@
         // Approve and stake
         async function approveAndStake() {
             try {
-                const sundaiAmt = document.getElementById('sundaiAmount').value;
-                const plpAmt = document.getElementById('plpAmount').value;
+                const sundaiAmt = document.getElementById('sundaiAmount').value.trim();
+                const plpAmt = document.getElementById('plpAmount').value.trim();
 
-                if (!sundaiAmt && !plpAmt) {
+                if ((!sundaiAmt || sundaiAmt === '0') && (!plpAmt || plpAmt === '0')) {
                     showNotification('Enter an amount to stake', 'error');
                     return;
                 }
@@ -1044,6 +1044,7 @@
                     if (allowance.lt(amount)) {
                         const tx = await sundaiContract.approve(DESTINY_VAULT, ethers.constants.MaxUint256);
                         await tx.wait();
+                        showNotification('SunDAI approved', 'success');
                     }
                 }
 
@@ -1054,14 +1055,15 @@
                     if (allowance.lt(amount)) {
                         const tx = await plpContract.approve(DESTINY_VAULT, ethers.constants.MaxUint256);
                         await tx.wait();
+                        showNotification('PLP approved', 'success');
                     }
                 }
 
                 showNotification('Staking...', 'info');
 
                 const tx = await vaultContract.stake(
-                    sundaiAmt ? ethers.utils.parseUnits(sundaiAmt, 18) : 0,
-                    plpAmt ? ethers.utils.parseUnits(plpAmt, 18) : 0
+                    (sundaiAmt && parseFloat(sundaiAmt) > 0) ? ethers.utils.parseUnits(sundaiAmt, 18) : 0,
+                    (plpAmt && parseFloat(plpAmt) > 0) ? ethers.utils.parseUnits(plpAmt, 18) : 0
                 );
                 await tx.wait();
 
@@ -1078,10 +1080,10 @@
         // Withdraw
         async function withdraw() {
             try {
-                const sundaiAmt = document.getElementById('sundaiAmount').value;
-                const plpAmt = document.getElementById('plpAmount').value;
+                const sundaiAmt = document.getElementById('sundaiAmount').value.trim();
+                const plpAmt = document.getElementById('plpAmount').value.trim();
 
-                if (!sundaiAmt && !plpAmt) {
+                if ((!sundaiAmt || sundaiAmt === '0') && (!plpAmt || plpAmt === '0')) {
                     showNotification('Enter an amount to withdraw', 'error');
                     return;
                 }
@@ -1089,8 +1091,8 @@
                 showNotification('Withdrawing...', 'info');
 
                 const tx = await vaultContract.withdraw(
-                    sundaiAmt ? ethers.utils.parseUnits(sundaiAmt, 18) : 0,
-                    plpAmt ? ethers.utils.parseUnits(plpAmt, 18) : 0
+                    (sundaiAmt && parseFloat(sundaiAmt) > 0) ? ethers.utils.parseUnits(sundaiAmt, 18) : 0,
+                    (plpAmt && parseFloat(plpAmt) > 0) ? ethers.utils.parseUnits(plpAmt, 18) : 0
                 );
                 await tx.wait();
 
