@@ -69,6 +69,8 @@
             font-size: 0.85em;
             z-index: 9999;
             box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+            white-space: nowrap;
+            width: auto;
         }
 
         .wallet-btn:hover {
@@ -81,16 +83,12 @@
             border-color: #00ff00;
             color: #00ff00;
             font-size: 0.75em;
-            padding: 8px 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            padding: 6px 12px;
         }
 
         .wallet-btn.connected::before {
-            content: '●';
+            content: '● ';
             color: #00ff00;
-            font-size: 1.2em;
             animation: connectedPulse 2s ease-in-out infinite;
         }
 
