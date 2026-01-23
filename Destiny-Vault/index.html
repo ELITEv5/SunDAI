@@ -683,6 +683,37 @@
             let userAddress;
             let updateInterval;
 
+            // Initialize read-only contracts (no wallet needed)
+            async function initReadOnlyContracts() {
+                try {
+                    const [VAULT_ABI, TOKEN_ABI, ORACLE_ABI] = await loadABIs();
+                    
+                    // Use a public RPC provider for read-only access
+                    const readOnlyProvider = new ethers.providers.JsonRpcProvider('https://rpc.pulsechain.com');
+                    
+                    // Initialize read-only contracts
+                    if (!vaultContract) {
+                        vaultContract = new ethers.Contract(DESTINY_VAULT, VAULT_ABI, readOnlyProvider);
+                    }
+                    if (!oracleContract) {
+                        oracleContract = new ethers.Contract(ORACLE, ORACLE_ABI, readOnlyProvider);
+                    }
+                    
+                    // Start updating public data
+                    await updatePrice();
+                    await updateVaultStatus();
+                    
+                    if (!updateInterval) {
+                        updateInterval = setInterval(async () => {
+                            await updatePrice();
+                            await updateVaultStatus();
+                        }, 10000);
+                    }
+                } catch (error) {
+                    console.error('Failed to initialize read-only contracts:', error);
+                }
+            }
+
             // Load ABIs from JSON files
             async function loadABIs() {
                 const [v, t, o] = await Promise.all([
@@ -776,6 +807,8 @@
 
                 // Load ABIs and initialize contracts
                 const [VAULT_ABI, TOKEN_ABI, ORACLE_ABI] = await loadABIs();
+                
+                // Reinitialize contracts with signer for write operations
                 vaultContract = new ethers.Contract(DESTINY_VAULT, VAULT_ABI, signer);
                 sundaiContract = new ethers.Contract(SUNDAI_TOKEN, TOKEN_ABI, signer);
                 plpContract = new ethers.Contract(PLP_TOKEN, TOKEN_ABI, signer);
@@ -801,22 +834,22 @@
 
         // Disconnect wallet
         function disconnectWallet() {
-            if (updateInterval) clearInterval(updateInterval);
+            // Keep the update interval running for read-only data
+            // Don't clear updateInterval
+            
             provider = null;
             signer = null;
             userAddress = null;
-            vaultContract = null;
             sundaiContract = null;
             plpContract = null;
-            oracleContract = null;
+            
+            // Reinitialize read-only contracts
+            initReadOnlyContracts();
 
             document.getElementById('walletBtn').textContent = 'Connect Wallet';
             document.getElementById('walletBtn').classList.remove('connected');
             
-            // Reset UI
-            document.getElementById('currentPrice').textContent = '$0.00';
-            document.getElementById('vaultState').textContent = 'DISCONNECTED';
-            document.getElementById('totalWeight').textContent = '0';
+            // Reset user-specific UI
             document.getElementById('userWeight').textContent = '0';
             document.getElementById('userSundai').textContent = '0';
             document.getElementById('userPlp').textContent = '0';
@@ -879,6 +912,11 @@
         // Update price and progress
         async function updatePrice() {
             try {
+                if (!oracleContract) {
+                    document.getElementById('currentPrice').textContent = 'Connect wallet';
+                    return;
+                }
+
                 const price = await oracleContract.getPrice();
                 const priceFormatted = ethers.utils.formatUnits(price, 18);
                 const priceNum = parseFloat(priceFormatted);
@@ -897,12 +935,19 @@
                 }
             } catch (error) {
                 console.error('Price update error:', error);
+                document.getElementById('currentPrice').textContent = 'Error loading';
             }
         }
 
         // Update vault status
         async function updateVaultStatus() {
             try {
+                if (!vaultContract) {
+                    document.getElementById('vaultState').textContent = 'DISCONNECTED';
+                    document.getElementById('totalWeight').textContent = '0';
+                    return;
+                }
+
                 const [ignited, supernovaTriggered, rebirthTriggered, totalWeight, totalPayout, isLocked] = await Promise.all([
                     vaultContract.ignited(),
                     vaultContract.supernovaTriggered(),
@@ -930,7 +975,7 @@
                     stateEl.classList.remove('warning', 'success');
                 }
 
-                document.getElementById('totalWeight').textContent = ethers.utils.formatUnits(totalWeight, 18);
+                document.getElementById('totalWeight').textContent = parseFloat(ethers.utils.formatUnits(totalWeight, 18)).toFixed(2);
             } catch (error) {
                 console.error('Vault status error:', error);
             }
@@ -1218,6 +1263,9 @@
 
         // Auto-connect on load
         window.addEventListener('load', () => {
+            // Initialize read-only contracts first (for public data)
+            initReadOnlyContracts();
+            
             // Auto-connect if wallet is already connected
             if (window.ethereum && window.ethereum.selectedAddress) {
                 connectWallet();
