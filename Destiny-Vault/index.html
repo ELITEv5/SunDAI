@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>☀️ SunDAI Destiny Vault - Black Hole Protocol</title>
-    <script src="ethers.umd.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -598,10 +599,10 @@
         if (!ethers || !ethers.Contract) alert("Ethers.js failed to load");
 
         // CONFIG - UPDATE THESE WITH YOUR CONTRACT ADDRESSES
-        const DESTINY_VAULT = '0x8738C72c95177C02AB705Ebf8626f30dE6591123'; // TODO: Add address
-        const SUNDAI_TOKEN = '0x41C6b24019Bd67CC58fe7bb059D532C12356712B'; // TODO: Add address  
-        const PLP_TOKEN = '0xc01e2eDAe9E65950bb5783A6B01DC429Cf3F0eE2'; // TODO: Add address
-        const ORACLE = '0xDA5591A1DE3934B28cB1DE3Ea828606be6473236'; // TODO: Add address
+        const DESTINY_VAULT = '0x0000000000000000000000000000000000000000'; // TODO: Add address
+        const SUNDAI_TOKEN = '0x0000000000000000000000000000000000000000'; // TODO: Add address  
+        const PLP_TOKEN = '0x0000000000000000000000000000000000000000'; // TODO: Add address
+        const ORACLE = '0x0000000000000000000000000000000000000000'; // TODO: Add address
 
         let provider, signer, vaultContract, sundaiContract, plpContract, oracleContract;
         let userAddress;
