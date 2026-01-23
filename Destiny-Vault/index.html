@@ -523,10 +523,6 @@
                         <div class="status-value" id="totalPlpStaked">0</div>
                     </div>
                     <div class="status-item">
-                        <div class="status-label">Total Believers</div>
-                        <div class="status-value" id="totalStakers">0</div>
-                    </div>
-                    <div class="status-item">
                         <div class="status-label">Your Share of Vault</div>
                         <div class="status-value" id="userShare">0%</div>
                     </div>
@@ -804,12 +800,6 @@
                 if (updateInterval) clearInterval(updateInterval);
                 updateInterval = setInterval(updateAllData, 10000); // Update every 10s
 
-            } catch (error) {
-                console.error(error);
-                showNotification('Connection failed: ' + error.message, 'error');
-            }
-        }
-
         // Disconnect wallet
         function disconnectWallet() {
             if (updateInterval) clearInterval(updateInterval);
@@ -829,7 +819,6 @@
             document.getElementById('vaultState').textContent = 'DISCONNECTED';
             document.getElementById('totalSundaiStaked').textContent = '0';
             document.getElementById('totalPlpStaked').textContent = '0';
-            document.getElementById('totalStakers').textContent = '0';
             document.getElementById('userShare').textContent = '0%';
             document.getElementById('userSundai').textContent = '0';
             document.getElementById('userPlp').textContent = '0';
@@ -942,19 +931,23 @@
                     stateEl.textContent = 'UNLOCKED';
                     stateEl.classList.remove('warning', 'success');
                 }
-
-                document.getElementById('totalWeight').textContent = parseFloat(ethers.utils.formatUnits(totalWeight, 18)).toFixed(2);
                 
                 // Get total staked amounts
+                console.log('Fetching token balances...', sundaiContract, plpContract);
                 const [sundaiBalance, plpBalance] = await Promise.all([
                     sundaiContract.balanceOf(DESTINY_VAULT),
                     plpContract.balanceOf(DESTINY_VAULT)
                 ]);
                 
+                console.log('SunDAI balance:', sundaiBalance.toString());
+                console.log('PLP balance:', plpBalance.toString());
+                
                 document.getElementById('totalSundaiStaked').textContent = parseFloat(ethers.utils.formatUnits(sundaiBalance, 18)).toFixed(2);
                 document.getElementById('totalPlpStaked').textContent = parseFloat(ethers.utils.formatUnits(plpBalance, 18)).toFixed(2);
             } catch (error) {
                 console.error('Vault status error:', error);
+                // Show error details
+                if (error.message) console.error('Error message:', error.message);
             }
         }
 
