@@ -523,12 +523,12 @@
                         <div class="status-value" id="totalPlpStaked">0</div>
                     </div>
                     <div class="status-item">
-                        <div class="status-label">Total Vault Weight</div>
-                        <div class="status-value" id="totalWeight">0</div>
+                        <div class="status-label">Total Believers</div>
+                        <div class="status-value" id="totalStakers">0</div>
                     </div>
                     <div class="status-item">
-                        <div class="status-label">Your Weight</div>
-                        <div class="status-value" id="userWeight">0</div>
+                        <div class="status-label">Your Share of Vault</div>
+                        <div class="status-value" id="userShare">0%</div>
                     </div>
                 </div>
 
@@ -597,9 +597,12 @@
                     <button class="btn-primary" onclick="approveAndStake()">Stake Assets</button>
                     <button class="btn-secondary" onclick="withdraw()">Withdraw</button>
                     <div class="info-box">
-                        💎 LP tokens receive 1.5x weight multiplier<br>
-                        🔒 Assets locked when vault reaches $1<br>
-                        📊 Your share = Your Weight / Total Weight
+                        💎 <strong>LP tokens get 1.5x bonus!</strong><br>
+                        Stake 100 PLP = counts as 150 in your share calculation<br><br>
+                        📊 <strong>Your Share % = Your pSunDAI %</strong><br>
+                        If you have 10% of vault → you get 10% of all pSunDAI<br><br>
+                        🔒 <strong>Locked when SunDAI hits $1</strong><br>
+                        After ignition, stakes become permanent collateral
                     </div>
                 </div>
 
@@ -611,15 +614,15 @@
                         <div class="status-value" id="userSundai" style="font-size: 1.5em;">0</div>
                     </div>
                     <div class="status-item" style="margin-bottom: 15px;">
-                        <div class="status-label">Staked PLP</div>
+                        <div class="status-label">Staked PLP (1.5x bonus)</div>
                         <div class="status-value" id="userPlp" style="font-size: 1.5em;">0</div>
                     </div>
                     <div class="status-item" style="margin-bottom: 15px;">
-                        <div class="status-label">Your Weight</div>
-                        <div class="status-value" id="userWeightDetail" style="font-size: 1.5em;">0</div>
+                        <div class="status-label">Your Vault Share</div>
+                        <div class="status-value" id="userShareDetail" style="font-size: 1.5em;">0%</div>
                     </div>
                     <div class="status-item">
-                        <div class="status-label">Estimated pSunDAI</div>
+                        <div class="status-label">Est. pSunDAI Reward</div>
                         <div class="status-value success" id="estimatedPayout" style="font-size: 1.5em;">0</div>
                     </div>
                 </div>
@@ -824,11 +827,13 @@
             // Reset UI
             document.getElementById('currentPrice').textContent = 'Connect wallet';
             document.getElementById('vaultState').textContent = 'DISCONNECTED';
-            document.getElementById('totalWeight').textContent = '0';
-            document.getElementById('userWeight').textContent = '0';
+            document.getElementById('totalSundaiStaked').textContent = '0';
+            document.getElementById('totalPlpStaked').textContent = '0';
+            document.getElementById('totalStakers').textContent = '0';
+            document.getElementById('userShare').textContent = '0%';
             document.getElementById('userSundai').textContent = '0';
             document.getElementById('userPlp').textContent = '0';
-            document.getElementById('userWeightDetail').textContent = '0';
+            document.getElementById('userShareDetail').textContent = '0%';
             document.getElementById('estimatedPayout').textContent = '0';
             document.getElementById('sundaiBalance').textContent = '0';
             document.getElementById('plpBalance').textContent = '0';
@@ -960,8 +965,8 @@
                     // Not connected - show zeros
                     document.getElementById('userSundai').textContent = '0';
                     document.getElementById('userPlp').textContent = '0';
-                    document.getElementById('userWeight').textContent = '0';
-                    document.getElementById('userWeightDetail').textContent = '0';
+                    document.getElementById('userShare').textContent = '0%';
+                    document.getElementById('userShareDetail').textContent = '0%';
                     document.getElementById('estimatedPayout').textContent = '0';
                     return;
                 }
@@ -973,11 +978,20 @@
                 const sundaiAmt = ethers.utils.formatUnits(stake.sundaiAmt, 18);
                 const plpAmt = ethers.utils.formatUnits(stake.plpAmt, 18);
                 const weight = ethers.utils.formatUnits(stake.weight, 18);
+                const totalWeightNum = parseFloat(ethers.utils.formatUnits(totalWeight, 18));
 
                 document.getElementById('userSundai').textContent = parseFloat(sundaiAmt).toFixed(2);
                 document.getElementById('userPlp').textContent = parseFloat(plpAmt).toFixed(2);
-                document.getElementById('userWeight').textContent = parseFloat(weight).toFixed(2);
-                document.getElementById('userWeightDetail').textContent = parseFloat(weight).toFixed(2);
+
+                // Calculate percentage share
+                let sharePercent = 0;
+                if (totalWeightNum > 0 && parseFloat(weight) > 0) {
+                    sharePercent = (parseFloat(weight) / totalWeightNum) * 100;
+                }
+                
+                const shareDisplay = sharePercent < 0.01 && sharePercent > 0 ? '<0.01%' : sharePercent.toFixed(2) + '%';
+                document.getElementById('userShare').textContent = shareDisplay;
+                document.getElementById('userShareDetail').textContent = shareDisplay;
 
                 // Calculate estimated payout
                 if (totalWeight.gt(0) && totalPayout.gt(0)) {
