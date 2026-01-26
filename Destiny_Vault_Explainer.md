@@ -200,7 +200,7 @@ The Simple Oracle calculates SunDAI price by:
 
 **Data Flow:**
 ```
-pSunDAI 5-Pair Oracle → WPLS Price → SunDial Simple Oracle → SunDAI Price
+pSunDAI 5-Pair Oracle (0xC19C8201...) → WPLS Price → SunDial Simple Oracle → SunDAI Price
 ```
 
 ### pSunDAI 5-Pair Oracle (Upstream)
@@ -359,7 +359,7 @@ constructor(
     address _vault,       // 0x789472Ef7fa74cB8898Ed38cAa5d18f4D49EcC6d
     address _router,      // 0x165C3410fC91EF562C50559f7d2289fEbed552d9
     address _pairV1,      // 0xc01e2eDAe9E65950bb5783A6B01DC429Cf3F0eE2
-    address _oracle       // 0xDA5591A1DE3934B28cB1DE3Ea828606be6473236
+    address _oracle       // 0xa2Bf4FBc3CF16e37550E7571c3816f9AE6c73A4F
 )
 ```
 
@@ -434,13 +434,22 @@ SAFETY_BPS = 9000;          // 90% of maxMint
 
 | Contract | Address | Verified |
 |----------|---------|----------|
-| Destiny Vault | `0x8738C72c95177C02AB705Ebf8626f30dE6591123` | ✅ |
+| **Destiny Vault (Current)** | `0x652137bf4a3CA4c7eb70981b4eB821C4Fd3F11c3` | ✅ |
 | SunDAI Token | `0x41C6b24019Bd67CC58fe7bb059D532C12356712B` | ✅ |
 | pSunDAI Token | `0x5529c1cb179b2c256501031adCDAfC22D9c6d236` | ✅ |
-| pSunDAI Vault | `0x789472Ef7fa74cB8898Ed38cAa5d18f4D49EcC6d` | ✅ |
-| SunDial Oracle | `0xDA5591A1DE3934B28cB1DE3Ea828606be6473236` | ✅ |
+| pSunDAI Vault v5.6 | `0x789472Ef7fa74cB8898Ed38cAa5d18f4D49EcC6d` | ✅ |
+| **SunDial Oracle Simple (Current)** | `0xa2Bf4FBc3CF16e37550E7571c3816f9AE6c73A4F` | ✅ |
+| pSunDAI 5-Pair Oracle v5.1 | `0xC19C8201701585D9087F261eaCd3Ee3345251Da3` | ✅ |
 | SunDAI/WPLS LP | `0xc01e2eDAe9E65950bb5783A6B01DC429Cf3F0eE2` | ✅ |
 | PulseX Router | `0x165C3410fC91EF562C50559f7d2289fEbed552d9` | ✅ |
+| WPLS | `0xA1077a294dDE1B09bB078844df40758a5D0f9a27` | ✅ |
+
+### Legacy Contracts (Deprecated)
+
+| Contract | Address | Status |
+|----------|---------|--------|
+| Destiny Vault (Old) | `0x8738C72c95177C02AB705Ebf8626f30dE6591123` | ⚠️ Deprecated |
+| SunDial Oracle Simple (Old) | `0xDA5591A1DE3934B28cB1DE3Ea828606be6473236` | ⚠️ Deprecated |
 
 ### Web Interface
 
@@ -459,6 +468,14 @@ Features:
 ## Integration Guide
 
 ### For Stakers
+
+**Contract Addresses:**
+```javascript
+const DESTINY_VAULT = '0x652137bf4a3CA4c7eb70981b4eB821C4Fd3F11c3';
+const SUNDAI_TOKEN = '0x41C6b24019Bd67CC58fe7bb059D532C12356712B';
+const PLP_TOKEN = '0xc01e2eDAe9E65950bb5783A6B01DC429Cf3F0eE2';
+const ORACLE = '0xa2Bf4FBc3CF16e37550E7571c3816f9AE6c73A4F';
+```
 
 **1. Approve Tokens**
 ```javascript
