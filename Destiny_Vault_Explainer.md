@@ -189,21 +189,62 @@ userShare = (totalPayout × userWeight) / totalWeight;
 ## Oracle Design
 
 **Contract:** SunDial Oracle Simple  
-**Method:** 5-pair median aggregation  
-**Update Frequency:** Per-block  
+**Address:** `0xDA5591A1DE3934B28cB1DE3Ea828606be6473236`
+
+### Architecture
+
+The Simple Oracle calculates SunDAI price by:
+1. Reading WPLS price from the pSunDAI 5-pair median oracle
+2. Querying SunDAI/WPLS pair reserves
+3. Computing SunDAI price: `(WPLS_reserve × WPLS_price) / SunDAI_reserve`
+
+**Data Flow:**
+```
+pSunDAI 5-Pair Oracle → WPLS Price → SunDial Simple Oracle → SunDAI Price
+```
+
+### pSunDAI 5-Pair Oracle (Upstream)
+
+**Method:** Median aggregation across 5 DEX pairs  
+**Update Frequency:** Per-block with cooldown  
 
 **Manipulation Resistance:**
-- Median of 5 DEX pairs (not TWAP)
+- Median of 5 pairs (not TWAP)
 - Requires coordinating manipulation across majority of pairs
 - 30-minute cooldown between updates
-- Asymmetric delays: 4hr for drops, 1hr for increases
+- Asymmetric delays: 4hr for price drops, 1hr for increases
 
-**Pairs Monitored:**
-1. SunDAI/WPLS (PulseX)
-2. SunDAI/DAI (PulseX)
-3. SunDAI/USDC (PulseX)
-4. SunDAI/HEX (PulseX)
-5. SunDAI/PLSX (PulseX)
+**Pairs Monitored (for WPLS price):**
+1. WPLS/DAI (PulseX)
+2. WPLS/USDC (PulseX)
+3. WPLS/HEX (PulseX)
+4. WPLS/PLSX (PulseX)
+5. WPLS/INC (PulseX)
+
+### SunDial Simple Oracle (This Contract)
+
+**Method:** Spot price calculation from single pair  
+**Pair:** SunDAI/WPLS (PulseX)  
+**Formula:**
+```solidity
+WPLS_price = pSunDAIOracleV5.getPrice();  // From 5-pair oracle
+(reserve_WPLS, reserve_SunDAI) = pair.getReserves();
+SunDAI_price = (reserve_WPLS × WPLS_price) / reserve_SunDAI;
+```
+
+**Trade-offs:**
+- ✅ Simple, gas-efficient
+- ✅ Inherits WPLS price manipulation resistance from upstream oracle
+- ⚠️ SunDAI/WPLS pair itself vulnerable to flash loans
+- ⚠️ No TWAP, no cooldown on SunDAI price calculation
+- ⚠️ Single-pair dependency for SunDAI side
+
+**Risk Assessment:**
+For Destiny Vault's use case (one-time $1 threshold check), flash loan manipulation is economically unfeasible:
+- Attack cost: Manipulate deep liquidity pool to $1
+- Attack duration: Must hold through transaction execution
+- Attack profit: None (attacker doesn't benefit from vault ignition)
+- MEV extraction: More profitable to front-run legitimate ignition
 
 ---
 
