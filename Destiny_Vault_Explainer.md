@@ -401,6 +401,18 @@ SAFETY_BPS = 9000;          // 90% of maxMint
 | SunDAI/WPLS LP | `0xc01e2eDAe9E65950bb5783A6B01DC429Cf3F0eE2` | ✅ |
 | PulseX Router | `0x165C3410fC91EF562C50559f7d2289fEbed552d9` | ✅ |
 
+### Web Interface
+
+**Destiny Vault Interface:** https://elitev5.github.io/SunDAI/Destiny-Vault/
+
+Features:
+- PulseChain-themed cosmic nebula background
+- Real-time oracle price tracking
+- Live vault statistics and user position
+- Phase indicators for ritual progression
+- One-click execution when conditions met
+- Automatic share calculation
+
 ---
 
 ## Integration Guide
