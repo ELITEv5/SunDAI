@@ -189,7 +189,7 @@ userShare = (totalPayout × userWeight) / totalWeight;
 ## Oracle Design
 
 **Contract:** SunDial Oracle Simple  
-**Address:** `0xDA5591A1DE3934B28cB1DE3Ea828606be6473236`
+**Address:** `0xa2Bf4FBc3CF16e37550E7571c3816f9AE6c73A4F`
 
 ### Architecture
 
