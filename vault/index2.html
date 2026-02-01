@@ -97,6 +97,11 @@
     .btn:disabled { background: #444; color: #999; cursor: not-allowed; border-color: transparent; }
     .card input + .btn { margin-top: 8px; }
     .preview { color: #ffbd70; text-align: center; font-size: 0.9em; margin-top: 4px; }
+    .helper-text { color: #999; text-align: center; font-size: 0.8em; margin-top: 6px; font-style: italic; }
+    .warning-text { color: #ffcc00; text-align: center; font-size: 0.85em; margin-top: 6px; padding: 6px; 
+      background: rgba(255,204,0,0.1); border-radius: 6px; border: 1px solid rgba(255,204,0,0.2); }
+    .info-text { color: #00ff9d; text-align: center; font-size: 0.85em; margin-top: 6px; padding: 6px;
+      background: rgba(0,255,157,0.1); border-radius: 6px; border: 1px solid rgba(0,255,157,0.2); }
     .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center; font-size: 0.9em; }
     .stat { background: rgba(255, 107, 0, 0.12); padding: 10px; border-radius: 10px; }
     .label { color: #ffbd70; }
@@ -226,6 +231,7 @@
     <div class="card">
       <button class="btn" id="mintMaxSafe" disabled>Mint Max Safe (Stay 150%)</button>
       <div class="preview" id="mintMaxPreview"></div>
+      <div class="helper-text">Mints maximum pSunDAI while keeping your vault at exactly 150% (safe zone)</div>
     </div>
     
     <div class="card">
@@ -244,6 +250,10 @@
     <div class="card">
       <button class="btn" id="withdrawMaxSafe" disabled style="background:#00ff9d;color:#000">Withdraw Max Safe (Stay 150%)</button>
       <div class="preview" id="withdrawMaxPreview"></div>
+      <div class="helper-text">Take maximum profits while keeping your vault safe at 150%</div>
+      <div class="warning-text" id="withdrawCooldownWarning" style="display:none">
+        5-minute cooldown after depositing (security protection)
+      </div>
     </div>
     
     <div class="card">
@@ -263,8 +273,11 @@
     <!-- NEW BUTTON 3: EMERGENCY UNLOCK (shows only when available) -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <div class="card" id="emergencyCard" style="display:none">
-      <button class="btn" id="emergencyUnlock" disabled style="background:#ff6b00;color:#fff">🔓 Emergency Unlock (30-day recovery)</button>
+      <button class="btn" id="emergencyUnlock" disabled style="background:#ff6b00;color:#fff">Emergency Unlock (30-day recovery)</button>
       <div class="preview" id="emergencyPreview"></div>
+      <div class="info-text">
+        Safety feature: If you have zero debt, you can always recover your collateral after 30 days
+      </div>
     </div>
 
    <div class="card" style="margin-bottom:12px">
@@ -521,11 +534,16 @@
     const mintMaxBtn = document.getElementById("mintMaxSafe");
     
     if (i.mintable > 0n) {
-      mintMaxPreviewEl.textContent = `Can mint ${Number(ethers.formatEther(i.mintable)).toFixed(2)} pSunDAI safely`;
+      const mintableNum = Number(ethers.formatEther(i.mintable));
+      mintMaxPreviewEl.textContent = `Will mint ${mintableNum.toFixed(2)} pSunDAI (your vault stays at 150%)`;
       mintMaxPreviewEl.style.color = "#00ff9d";
       mintMaxBtn.disabled = false;
+    } else if (i.collateral == 0n) {
+      mintMaxPreviewEl.textContent = "Deposit collateral first using buttons above";
+      mintMaxPreviewEl.style.color = "#ffbd70";
+      mintMaxBtn.disabled = true;
     } else {
-      mintMaxPreviewEl.textContent = "No collateral or already at max";
+      mintMaxPreviewEl.textContent = "Already at maximum safe leverage (150%)";
       mintMaxPreviewEl.style.color = "#ffbd70";
       mintMaxBtn.disabled = true;
     }
@@ -535,32 +553,53 @@
     // ═══════════════════════════════════════════════════════════════
     const withdrawMaxPreviewEl = document.getElementById("withdrawMaxPreview");
     const withdrawMaxBtn = document.getElementById("withdrawMaxSafe");
+    const withdrawCooldownWarning = document.getElementById("withdrawCooldownWarning");
     
-    if (i.debt == 0n && i.collateral > 0n) {
-      // No debt - can withdraw all
-      withdrawMaxPreviewEl.textContent = `Can withdraw all ${Number(ethers.formatEther(i.collateral)).toFixed(2)} PLS`;
-      withdrawMaxPreviewEl.style.color = "#00ff9d";
-      withdrawMaxBtn.disabled = false;
-    } else if (i.debt > 0n && i.collateral > 0n && price > 0n) {
-      // Has debt - calculate safe withdrawal
-      const requiredCollateral = (i.debt * 150n * DECIMALS) / (price * 100n);
-      const withdrawable = i.collateral > requiredCollateral ? i.collateral - requiredCollateral : 0n;
+    // Check cooldown status
+    const v = await vault.vaults(account);
+    const currentTime = Math.floor(Date.now() / 1000);
+    const lastDepositTime = Number(v.lastDepositTime);
+    const cooldownRemaining = 300 - (currentTime - lastDepositTime);
+    
+    if (cooldownRemaining > 0) {
+      // Cooldown active - show warning
+      withdrawCooldownWarning.style.display = "block";
+      withdrawCooldownWarning.textContent = `Withdraw available in ${Math.ceil(cooldownRemaining / 60)} minute${Math.ceil(cooldownRemaining / 60) === 1 ? '' : 's'} (security cooldown)`;
+      withdrawMaxBtn.disabled = true;
+      withdrawMaxPreviewEl.textContent = "Waiting for cooldown...";
+      withdrawMaxPreviewEl.style.color = "#ffcc00";
+    } else {
+      // Cooldown passed - hide warning
+      withdrawCooldownWarning.style.display = "none";
       
-      if (withdrawable > 0n) {
-        const withdrawableNum = Number(ethers.formatEther(withdrawable));
-        const withdrawableUSD = withdrawableNum * (Number(price) / 1e18);
-        withdrawMaxPreviewEl.textContent = `Can withdraw ${withdrawableNum.toFixed(2)} PLS (~$${withdrawableUSD.toFixed(2)}) safely`;
+      if (i.debt == 0n && i.collateral > 0n) {
+        // No debt - can withdraw all
+        const plsNum = Number(ethers.formatEther(i.collateral));
+        const usdValue = plsNum * (Number(i.price) / 1e18);
+        withdrawMaxPreviewEl.textContent = `Will withdraw all ${plsNum.toFixed(2)} PLS (~$${usdValue.toFixed(2)})`;
         withdrawMaxPreviewEl.style.color = "#00ff9d";
         withdrawMaxBtn.disabled = false;
+      } else if (i.debt > 0n && i.collateral > 0n && i.price > 0n) {
+        // Has debt - calculate safe withdrawal using price from vaultInfo
+        const requiredCollateral = (i.debt * 150n * DECIMALS) / (i.price * 100n);
+        const withdrawable = i.collateral > requiredCollateral ? i.collateral - requiredCollateral : 0n;
+        
+        if (withdrawable > 0n) {
+          const withdrawableNum = Number(ethers.formatEther(withdrawable));
+          const withdrawableUSD = withdrawableNum * (Number(i.price) / 1e18);
+          withdrawMaxPreviewEl.textContent = `Will withdraw ${withdrawableNum.toFixed(2)} PLS (~$${withdrawableUSD.toFixed(2)}) safely`;
+          withdrawMaxPreviewEl.style.color = "#00ff9d";
+          withdrawMaxBtn.disabled = false;
+        } else {
+          withdrawMaxPreviewEl.textContent = "Already at minimum safe collateral - repay debt to withdraw more";
+          withdrawMaxPreviewEl.style.color = "#ffbd70";
+          withdrawMaxBtn.disabled = true;
+        }
       } else {
-        withdrawMaxPreviewEl.textContent = "Already at minimum (150%)";
+        withdrawMaxPreviewEl.textContent = "No collateral available to withdraw";
         withdrawMaxPreviewEl.style.color = "#ffbd70";
         withdrawMaxBtn.disabled = true;
       }
-    } else {
-      withdrawMaxPreviewEl.textContent = "No collateral to withdraw";
-      withdrawMaxPreviewEl.style.color = "#ffbd70";
-      withdrawMaxBtn.disabled = true;
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -579,7 +618,7 @@
       
       if (daysSinceDeposit >= 30) {
         emergencyCard.style.display = "block";
-        emergencyPreviewEl.textContent = `✓ Ready! Can recover ${Number(ethers.formatEther(i.collateral)).toFixed(2)} PLS`;
+        emergencyPreviewEl.textContent = `Ready! Can recover ${Number(ethers.formatEther(i.collateral)).toFixed(2)} PLS`;
         emergencyPreviewEl.style.color = "#00ff9d";
         emergencyBtn.disabled = false;
       } else {
@@ -677,44 +716,60 @@
     // MINT MAX SAFE
     document.getElementById("mintMaxSafe").onclick = () => withLoading(document.getElementById("mintMaxSafe"), async () => {
       const maxMintable = await vault.maxMint(account);
-      if (maxMintable == 0n) throw new Error("No collateral or already at max");
+      if (maxMintable == 0n) throw new Error("Need collateral first - use 'Deposit PLS' or '1-Click Auto Mint' above");
       await (await vault.mint(maxMintable)).wait();
-      status.textContent = `Minted ${Number(ethers.formatEther(maxMintable)).toFixed(2)} pSunDAI - at 150% ratio`;
+      status.textContent = `Minted ${Number(ethers.formatEther(maxMintable)).toFixed(2)} pSunDAI - vault at safe 150% ratio`;
     });
 
     // WITHDRAW MAX SAFE
     document.getElementById("withdrawMaxSafe").onclick = () => withLoading(document.getElementById("withdrawMaxSafe"), async () => {
       const info = await vault.vaultInfo(account);
+      const v = await vault.vaults(account);
+      
+      // Check cooldown (5 minutes = 300 seconds)
+      const currentTime = Math.floor(Date.now() / 1000);
+      const lastDepositTime = Number(v.lastDepositTime);
+      const cooldownRemaining = 300 - (currentTime - lastDepositTime);
+      
+      if (cooldownRemaining > 0) {
+        const minutes = Math.ceil(cooldownRemaining / 60);
+        throw new Error(`Security cooldown active - please wait ${minutes} more minute${minutes === 1 ? '' : 's'}`);
+      }
       
       if (info.debt == 0n) {
         // No debt - withdraw everything
         if (info.collateral == 0n) throw new Error("No collateral to withdraw");
         await (await vault.withdrawPLS(info.collateral)).wait();
-        status.textContent = `Withdrew all ${Number(ethers.formatEther(info.collateral)).toFixed(2)} PLS!`;
+        const plsAmount = Number(ethers.formatEther(info.collateral));
+        const usdValue = plsAmount * (Number(info.price) / 1e18);
+        status.textContent = `Withdrew all ${plsAmount.toFixed(2)} PLS (~$${usdValue.toFixed(2)}) - vault closed!`;
       } else {
         // Has debt - calculate safe withdrawal
-        const p = (await oracle.peekPriceView())[0];
-        if (p == 0n) throw new Error("Oracle price unavailable");
+        const p = info.price > 0n ? info.price : (await oracle.peekPriceView())[0];
+        if (p == 0n) throw new Error("Oracle price unavailable - try again in a moment");
         
         const requiredCollateral = (info.debt * 150n * DECIMALS) / (p * 100n);
         const withdrawable = info.collateral > requiredCollateral ? info.collateral - requiredCollateral : 0n;
         
-        if (withdrawable <= 0n) throw new Error("Already at minimum collateral (150%)");
+        if (withdrawable <= 0n) throw new Error("Already at minimum safe collateral (150%) - repay some debt first to withdraw more");
         
         await (await vault.withdrawPLS(withdrawable)).wait();
         const withdrawnNum = Number(ethers.formatEther(withdrawable));
-        status.textContent = `Withdrew ${withdrawnNum.toFixed(2)} PLS - still safe at 150%`;
+        const withdrawnUSD = withdrawnNum * (Number(p) / 1e18);
+        status.textContent = `Withdrew ${withdrawnNum.toFixed(2)} PLS (~$${withdrawnUSD.toFixed(2)}) - vault still safe at 150%!`;
       }
     });
 
     // EMERGENCY UNLOCK
     document.getElementById("emergencyUnlock").onclick = () => withLoading(document.getElementById("emergencyUnlock"), async () => {
       const info = await vault.vaultInfo(account);
-      if (info.debt > 0n) throw new Error("Must repay all debt first");
+      if (info.debt > 0n) throw new Error("Must repay all debt first - use 'Repay Debt' or 'Repay & Withdraw Excess' above");
       if (info.collateral == 0n) throw new Error("No collateral to unlock");
       
       await (await vault.emergencyUnlock()).wait();
-      status.textContent = `Emergency unlock successful! Recovered ${Number(ethers.formatEther(info.collateral)).toFixed(2)} PLS`;
+      const plsAmount = Number(ethers.formatEther(info.collateral));
+      const usdValue = plsAmount * (Number(info.price) / 1e18);
+      status.textContent = `Emergency unlock successful! Recovered ${plsAmount.toFixed(2)} PLS (~$${usdValue.toFixed(2)})`;
     });
 
     walletBtn.onclick = connectWallet;
