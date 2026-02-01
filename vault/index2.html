@@ -63,15 +63,15 @@
     canvas { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
     .wallet {
       position: fixed; top: 20px; right: 20px; background: #111; padding: 10px 22px;
-      border: 2px solid #ff6b00; border-radius: 10px; color: #fff; font-weight: 700;
+      border: 2px solid #ff8c00; border-radius: 10px; color: #fff; font-weight: 700;
       cursor: pointer; z-index: 9999; transition: all 0.2s ease; pointer-events: auto;
     }
-    .wallet:hover { background: #222; }
-    .wallet.connected { border-color: #ffd700; color: #ffd700; }
+    .wallet:hover { background: #222; box-shadow: 0 0 15px rgba(255, 140, 0, 0.4); }
+    .wallet.connected { border-color: #fbbf24; color: #fbbf24; box-shadow: 0 0 20px rgba(251, 191, 36, 0.5); }
     .container {
       background: rgba(10, 0, 30, 0.8); backdrop-filter: blur(20px);
-      border: 2px solid #ff6b00; border-radius: 20px;
-      box-shadow: 0 0 40px rgba(255, 215, 0, 0.25); padding: 30px 25px;
+      border: 2px solid #ff8c00; border-radius: 20px;
+      box-shadow: 0 0 40px rgba(255, 140, 0, 0.3); padding: 30px 25px;
       max-width: 480px; width: 90%; margin: 80px 0; position: relative; z-index: 10;
     }
     .logo { display: block; max-width: 240px; margin: 0 auto 10px;
@@ -81,20 +81,22 @@
       50% { filter: drop-shadow(0 0 35px rgba(255, 180, 255, 0.85)); }
       100% { filter: drop-shadow(0 0 10px rgba(180, 120, 255, 0.5)); }
     }
-    h1 { text-align: center; font-size: 2em; background: linear-gradient(90deg, #ff6b00, #ffd700, #ffa500);
+    h1 { text-align: center; font-size: 2em; background: linear-gradient(90deg, #ff8c00, #ffa500, #fbbf24, #fde047);
       -webkit-background-clip: text; color: transparent; margin-bottom: 8px; }
     h2 { text-align: center; color: #ffebd1; font-size: 1.1em; margin-top: 0; }
     .price { text-align: center; color: #ffd700; font-weight: 800; font-size: 1.2em; margin-bottom: 10px; }
-    .card { background: rgba(255, 107, 0, 0.1); border: 1px solid rgba(255, 107, 0, 0.3);
+    .card { background: rgba(255, 140, 0, 0.08); border: 1px solid rgba(255, 140, 0, 0.3);
       border-radius: 14px; padding: 16px; margin-bottom: 12px; transition: box-shadow .2s ease; }
-    .card:hover { box-shadow: 0 0 12px rgba(255,215,0,0.15); }
+    .card:hover { box-shadow: 0 0 12px rgba(255, 165, 0, 0.2); }
     input, .btn { width: 100%; display: block; box-sizing: border-box; font-size: 1em;
       font-weight: 700; text-align: center; border-radius: 10px; padding: 14px; transition: all 0.2s ease; }
-    input { background: #110022; border: 2px solid rgba(255, 107, 0, 0.4); color: #fff; }
-    input:focus { border-color: #ffd700; outline: none; }
-    .btn { background: #ff6b00; border: 2px solid transparent; color: #000; cursor: pointer; }
-    .btn:hover:not(:disabled) { background: #ffd700; transform: translateY(-2px); }
-    .btn:disabled { background: #444; color: #999; cursor: not-allowed; border-color: transparent; }
+    input { background: #110022; border: 2px solid rgba(255, 140, 0, 0.4); color: #fff; }
+    input:focus { border-color: #fbbf24; outline: none; box-shadow: 0 0 10px rgba(251, 191, 36, 0.3); }
+    .btn { background: linear-gradient(135deg, #ff8c00, #ffa500); border: 2px solid transparent; color: #000; cursor: pointer; 
+      box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3); }
+    .btn:hover:not(:disabled) { background: linear-gradient(135deg, #ffa500, #ffd700); 
+      transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5); }
+    .btn:disabled { background: #2a2a2a; color: #666; cursor: not-allowed; border-color: transparent; box-shadow: none; }
     .card input + .btn { margin-top: 8px; }
     .preview { color: #ffbd70; text-align: center; font-size: 0.9em; margin-top: 4px; }
     .helper-text { color: #999; text-align: center; font-size: 0.8em; margin-top: 6px; font-style: italic; }
@@ -208,7 +210,7 @@
     </div>
     <!-- HOW TO BUTTON -->
     <div class="card" style="margin-bottom:12px">
-      <button class="btn" id="howToBtn" style="background:#ffaa00;color:#000;font-weight:800">How to Use SunDAI</button>
+      <button class="btn" id="howToBtn" style="background:linear-gradient(135deg, #f59e0b, #fbbf24);color:#000;font-weight:800;box-shadow:0 4px 15px rgba(245,158,11,0.4)">How to Use SunDAI</button>
     </div>
     <div class="card">
       <input id="usdOneClick" type="number" step="0.01" placeholder="Deposit & Auto Mint (USD)" />
@@ -253,7 +255,7 @@
     <!-- NEW BUTTON 2: WITHDRAW MAX SAFE -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <div class="card">
-      <button class="btn" id="withdrawMaxSafe" disabled style="background:#00ff9d;color:#000">Withdraw Max Safe (Stay 150%)</button>
+      <button class="btn" id="withdrawMaxSafe" disabled style="background:linear-gradient(135deg, #8b5cf6, #a78bfa);color:#fff;box-shadow:0 4px 15px rgba(139,92,246,0.4)">Withdraw Max Safe (Stay 150%)</button>
       <div class="preview" id="withdrawMaxPreview"></div>
       <div class="helper-text">Take maximum profits while keeping your vault safe at 150%</div>
       <div class="warning-text" id="withdrawCooldownWarning" style="display:none">
@@ -267,7 +269,7 @@
   <div class="helper-text">Smart exit: Repay debt and automatically withdraw any collateral above 150%</div>
 </div>
     <div class="card">
-      <button class="btn" id="risk" disabled style="background:#ff3366">Check Liquidation Risk</button>
+      <button class="btn" id="risk" disabled style="background:linear-gradient(135deg, #dc2626, #f97316);color:#fff;box-shadow:0 4px 15px rgba(220,38,38,0.4)">Check Liquidation Risk</button>
       <div id="riskText" style="margin-top:10px;text-align:center;font-weight:700"></div>
       <div class="helper-text">Shows if your vault is in danger of liquidation (below 110% ratio)</div>
     </div>
@@ -291,15 +293,15 @@
     </div>
 
    <div class="card" style="margin-bottom:12px">
-  <button class="btn" style="background:#ff3366;color:#fff;font-weight:800" onclick="window.location.href='liquidations.html?t=' + Date.now()">
-    🔍 View Liquidation Dashboard
+  <button class="btn" style="background:linear-gradient(135deg, #6366f1, #8b5cf6);color:#fff;font-weight:800;box-shadow:0 4px 15px rgba(99,102,241,0.4)" onclick="window.location.href='liquidations.html?t=' + Date.now()">
+    View Liquidation Dashboard
   </button>
 </div>
     <div class="card" id="safetyCard" style="margin-top: 12px;">
       <div id="safetyStatus" style="text-align:center;font-weight:700;color:#ffd700;margin-bottom:8px;">
         Wake up Oracle for Most Current Price
       </div>
-      <button class="btn" id="pokeBtn" disabled style="background:#ffaa00;border-color:#ffcc00;">
+      <button class="btn" id="pokeBtn" disabled style="background:linear-gradient(135deg, #fbbf24, #fde047);color:#000;font-weight:700;box-shadow:0 4px 15px rgba(251,191,36,0.4)">
         Wake Oracle
       </button>
     </div>
