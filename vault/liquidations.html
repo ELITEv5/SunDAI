@@ -424,7 +424,9 @@
               <button 
                 class="btn danger" 
                 style="margin-top:12px;"
-                onclick="liquidateVault('${v.owner}', '${ethers.parseUnits(v.minRepay.toString(), 18)}')"
+                data-owner="${v.owner}"
+                data-repay="${v.minRepay}"
+                onclick="liquidateVault(this.dataset.owner, this.dataset.repay)"
               >
                 🔥 Liquidate Now
               </button>
@@ -516,7 +518,10 @@
       results.innerHTML = html;
     }
 
-    async function liquidateVault(owner, repayAmount) {
+    // ═══════════════════════════════════════════════════════════════
+    // FIXED LIQUIDATION FUNCTION - Properly handles BigInt conversion
+    // ═══════════════════════════════════════════════════════════════
+    async function liquidateVault(owner, repayAmountFloat) {
       try {
         const btn = event.target;
         const originalText = btn.textContent;
@@ -524,24 +529,33 @@
         btn.textContent = "⏳ Approving...";
         document.getElementById("error").textContent = "";
         
+        // CRITICAL FIX: Convert float string to BigInt here
+        const repayAmount = ethers.parseUnits(repayAmountFloat.toString(), 18);
+        
+        console.log("Liquidating vault:", owner);
+        console.log("Repay amount (float):", repayAmountFloat);
+        console.log("Repay amount (BigInt):", repayAmount.toString());
+        
+        // Step 1: Approve pSunDAI spending
         const approveTx = await token.approve(VAULT, repayAmount);
         await approveTx.wait();
         
         btn.textContent = "⏳ Liquidating...";
         
+        // Step 2: Execute liquidation
         const liqTx = await vault.liquidate(owner, repayAmount);
         await liqTx.wait();
         
         document.getElementById("status").textContent = "✅ Liquidation successful! 🎉";
         setTimeout(() => document.getElementById("status").textContent = "", 5000);
         
-        // Rescan
+        // Rescan to update dashboard
         await scanAll();
         
       } catch (e) {
-        document.getElementById("error").textContent = "Liquidation failed: " + (e.message || "Unknown error");
+        document.getElementById("error").textContent = "Liquidation failed: " + (e.reason || e.message || "Unknown error");
         setTimeout(() => document.getElementById("error").textContent = "", 8000);
-        console.error(e);
+        console.error("Liquidation error:", e);
         event.target.disabled = false;
         event.target.textContent = "🔥 Liquidate Now";
       }
