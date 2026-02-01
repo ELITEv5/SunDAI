@@ -271,6 +271,8 @@
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- NEW BUTTON 3: EMERGENCY UNLOCK (shows only when available) -->
+    <!-- NOTE: Only appears when you have ZERO DEBT and some COLLATERAL -->
+    <!-- If you have debt, repay it first to see this option -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <div class="card" id="emergencyCard" style="display:none">
       <button class="btn" id="emergencyUnlock" disabled style="background:#ff6b00;color:#fff">Emergency Unlock (30-day recovery)</button>
@@ -316,19 +318,35 @@
   </footer>
 
   <script>
+    // ═══════════════════════════════════════════════════════════════════
+    // SUNDAI VAULT INTERFACE - v5.6 Immortal Edition
+    // Core functionality: Deposit, Mint, Repay, Withdraw, Liquidation Check
+    // New features: Mint Max Safe, Withdraw Max Safe, Emergency Unlock
+    // ═══════════════════════════════════════════════════════════════════
+    
     const ethers = window.ethers;
     if (!ethers || !ethers.Contract) alert("Ethers.js failed to load");
+    
+    // Contract addresses (immutable, verified on PulseScan)
     const VAULT = "0x789472Ef7fa74cB8898Ed38cAa5d18f4D49EcC6d";
     const TOKEN = "0x5529c1cb179b2c256501031adCDAfC22D9c6d236";
     const ORACLE = "0xC19C8201701585D9087F261eaCd3Ee3345251Da3";
+    
+    // Global state variables
     let provider, signer, vault, token, oracle, account, price = 0n, minRatio = 15500n;
     const DECIMALS = 10n ** 18n;
+    
+    // DOM element references
     const status = document.getElementById("status");
     const error = document.getElementById("error");
     const stats = document.getElementById("stats");
     const walletText = document.getElementById("walletText");
     const walletBtn = document.getElementById("walletBtn");
 
+    // ═══════════════════════════════════════════════════════════════════
+    // LOAD CONTRACT ABIs
+    // Fetches the contract interfaces from JSON files
+    // ═══════════════════════════════════════════════════════════════════
     async function loadABIs() {
       const [v, t, o] = await Promise.all([
         fetch("vault-abi.json").then(r => r.json()),
@@ -338,7 +356,12 @@
       return [v, t, o];
     }
 
-    // HELPER FUNCTIONS for Oracle Health Check
+    // ═══════════════════════════════════════════════════════════════════
+    // ORACLE HEALTH CHECK HELPERS
+    // These functions monitor oracle status and display warnings if needed
+    // ═══════════════════════════════════════════════════════════════════
+    
+    // Wait for oracle to be available (with timeout)
     async function waitForOracle(ms = 10000) {
       const start = Date.now();
       while ((!window.oracle || !window.oracle.isHealthy) && Date.now() - start < ms)
@@ -346,9 +369,13 @@
       if (!window.oracle) throw new Error("Oracle not ready");
       return window.oracle;
     }
+    
+    // Safe promise wrapper with timeout
     async function safeCall(p, t = 4000) {
       return Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error("timeout")), t))]);
     }
+    
+    // Check and display oracle health status
     async function checkOracleHealth() {
       try {
         const el = document.getElementById("safetyStatus");
@@ -386,7 +413,10 @@
       }
     }
 
-    // FIXED connectWallet() FUNCTION
+    // ═══════════════════════════════════════════════════════════════════
+    // WALLET CONNECTION
+    // Connects MetaMask, switches to PulseChain, loads contracts
+    // ═══════════════════════════════════════════════════════════════════
     async function connectWallet() {
       try {
         if (!window.ethereum) return alert("Please install MetaMask");
@@ -428,6 +458,10 @@
       }
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    // LOAD GLOBAL SYSTEM STATS
+    // Shows total collateral, debt, system health across all users
+    // ═══════════════════════════════════════════════════════════════════
     async function loadGlobalStats() {
       try {
         const [totalColl, totalDebt, health] = await Promise.all([
@@ -456,6 +490,10 @@
       }
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    // UPDATE PLS PRICE
+    // Fetches current price from oracle (runs every 60 seconds)
+    // ═══════════════════════════════════════════════════════════════════
     async function updatePrice() {
       try {
         let p, t;
@@ -474,13 +512,25 @@
       }
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    // CONVERSION HELPERS
+    // Convert between USD and PLS/pSunDAI values
+    // ═══════════════════════════════════════════════════════════════════
+    
+    // Convert USD amount to PLS (using current price)
     function usdToPLS(usd) {
       if (!price || price === 0n) return 0n;
       const usdWei = ethers.parseUnits(usd.toString(), 18);
       return (usdWei * DECIMALS) / price;
     }
+    
+    // Convert USD amount to pSunDAI (1:1 peg)
     function usdToPSun(usd) { return ethers.parseUnits(usd.toString(), 18); }
 
+    // ═══════════════════════════════════════════════════════════════════
+    // TRANSACTION WRAPPER
+    // Handles loading states, errors, and success messages for all buttons
+    // ═══════════════════════════════════════════════════════════════════
     async function withLoading(btn, fn) {
       const orig = btn.textContent;
       btn.disabled = true;
@@ -499,6 +549,11 @@
         btn.disabled = false;
       }
     }
+    // ═══════════════════════════════════════════════════════════════════
+    // LOAD VAULT DATA
+    // Fetches user's vault info and updates all previews/buttons
+    // Updates: stats display, button states, all preview calculations
+    // ═══════════════════════════════════════════════════════════════════
     async function loadVault() {
   try {
     const i = await vault.vaultInfo(account);
@@ -603,7 +658,9 @@
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // NEW: Emergency Unlock check
+    // EMERGENCY UNLOCK CHECK
+    // Only shows when: (1) debt is zero AND (2) collateral exists
+    // If you have debt or no collateral, this card won't appear
     // ═══════════════════════════════════════════════════════════════
     const emergencyCard = document.getElementById("emergencyCard");
     const emergencyPreviewEl = document.getElementById("emergencyPreview");
@@ -659,40 +716,57 @@
       });
     });
 
-    // Actions (EXISTING - UNCHANGED)
+    // ═══════════════════════════════════════════════════════════════════
+    // BUTTON ACTION HANDLERS
+    // All user interaction handlers for deposits, mints, repays, withdrawals
+    // ═══════════════════════════════════════════════════════════════════
+    
+    // DEPOSIT PLS - Add collateral to vault
     document.getElementById("deposit").onclick = () => withLoading(document.getElementById("deposit"), async () => {
       const u = parseFloat(document.getElementById("usdIn").value);
       if (!u || u <= 0) throw new Error("Enter amount");
       await (await vault.depositPLS({ value: usdToPLS(u) })).wait();
     });
+    
+    // MINT pSunDAI - Create new pSunDAI against existing collateral
     document.getElementById("mint").onclick = () => withLoading(document.getElementById("mint"), async () => {
       const u = parseFloat(document.getElementById("usdMint").value);
       if (!u || u <= 0) throw new Error("Enter amount");
       await (await vault.mint(usdToPSun(u))).wait();
     });
+    
+    // REPAY DEBT - Burn pSunDAI to reduce debt
     document.getElementById("repay").onclick = () => withLoading(document.getElementById("repay"), async () => {
       const u = parseFloat(document.getElementById("usdRepay").value);
       if (!u || u <= 0) throw new Error("Enter amount");
       await (await token.approve(VAULT, usdToPSun(u))).wait();
       await (await vault.repay(usdToPSun(u))).wait();
     });
+    
+    // WITHDRAW PLS - Remove collateral from vault (if safe)
     document.getElementById("withdraw").onclick = () => withLoading(document.getElementById("withdraw"), async () => {
       const u = parseFloat(document.getElementById("usdOut").value);
       if (!u || u <= 0) throw new Error("Enter amount");
       await (await vault.withdrawPLS(usdToPLS(u))).wait();
     });
+    
+    // REPAY & AUTO-WITHDRAW - Repay debt and automatically withdraw excess collateral
     document.getElementById("repayAuto").onclick = () => withLoading(document.getElementById("repayAuto"), async () => {
   const u = parseFloat(document.getElementById("usdRepayAuto").value);
   if (!u || u <= 0) throw new Error("Enter amount");
   await (await token.approve(VAULT, usdToPSun(u))).wait();
   await (await vault.repayAndAutoWithdraw(usdToPSun(u))).wait();
 });
+    
+    // CHECK LIQUIDATION RISK - Shows if vault is in danger
     document.getElementById("risk").onclick = () => withLoading(document.getElementById("risk"), async () => {
       const can = await vault.canLiquidate(account);
       document.getElementById("riskText").innerHTML = can
         ? '<span class="risk">LIQUIDATION RISK</span>'
         : '<span class="safe">You are safe</span>';
     });
+    
+    // REPAY TO SAFE - Auto-calculate and repay exact amount to reach 150%
     document.getElementById("repayToSafe").onclick = () => withLoading(document.getElementById("repayToSafe"), async () => {
   const needed = await vault.repayToHealth(account);
   if (needed == 0n) throw new Error("Already safe - ratio above 150%");
@@ -700,6 +774,8 @@
   await (await vault.autoRepayToHealth()).wait();
   status.textContent = `Repaid ${ethers.formatEther(needed)} pSunDAI - now at 150%`;
 });
+    
+    // 1-CLICK AUTO MINT - Deposit PLS and mint pSunDAI in one transaction (155% buffer)
     document.getElementById("oneClickBtn").onclick = () => withLoading(document.getElementById("oneClickBtn"), async () => {
       const usd = parseFloat(document.getElementById("usdOneClick").value);
       if (!usd || usd <= 0) throw new Error("Enter amount");
@@ -709,11 +785,12 @@
       status.textContent = `Minted ${(usd / (Number(minRatio)/10000)).toFixed(2)} pSunDAI at ${(Number(minRatio)/100).toFixed(1)}%`;
     });
 
-    // ═══════════════════════════════════════════════════════════════
-    // NEW BUTTON HANDLERS
-    // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
+    // NEW BUTTON HANDLERS (v5.6)
+    // Advanced features: Mint Max Safe, Withdraw Max Safe, Emergency Unlock
+    // ═══════════════════════════════════════════════════════════════════
     
-    // MINT MAX SAFE
+    // MINT MAX SAFE - Mint maximum pSunDAI while staying at exactly 150% ratio
     document.getElementById("mintMaxSafe").onclick = () => withLoading(document.getElementById("mintMaxSafe"), async () => {
       const maxMintable = await vault.maxMint(account);
       if (maxMintable == 0n) throw new Error("Need collateral first - use 'Deposit PLS' or '1-Click Auto Mint' above");
@@ -721,7 +798,7 @@
       status.textContent = `Minted ${Number(ethers.formatEther(maxMintable)).toFixed(2)} pSunDAI - vault at safe 150% ratio`;
     });
 
-    // WITHDRAW MAX SAFE
+    // WITHDRAW MAX SAFE - Withdraw maximum PLS while staying at exactly 150% ratio (profit taking)
     document.getElementById("withdrawMaxSafe").onclick = () => withLoading(document.getElementById("withdrawMaxSafe"), async () => {
       const info = await vault.vaultInfo(account);
       const v = await vault.vaults(account);
@@ -760,7 +837,7 @@
       }
     });
 
-    // EMERGENCY UNLOCK
+    // EMERGENCY UNLOCK - Recover all collateral after 30 days with zero debt (safety feature)
     document.getElementById("emergencyUnlock").onclick = () => withLoading(document.getElementById("emergencyUnlock"), async () => {
       const info = await vault.vaultInfo(account);
       if (info.debt > 0n) throw new Error("Must repay all debt first - use 'Repay Debt' or 'Repay & Withdraw Excess' above");
@@ -838,7 +915,10 @@
       if (e.target.className === "modal" || e.target.className === "close") modal.style.display = "none";
     };
 
-    // Poke Oracle button — now correctly placed
+    // ═══════════════════════════════════════════════════════════════════
+    // ORACLE MANUAL POKE
+    // Manually refresh oracle price (30-minute cooldown between pokes)
+    // ═══════════════════════════════════════════════════════════════════
     document.getElementById("pokeBtn").onclick = async () => {
       const el = document.getElementById("safetyStatus");
       try {
