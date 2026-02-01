@@ -20,8 +20,8 @@ Just pure math, on-chain collateral, and self-healing code.
 | Feature                        | Description                                                                                       |
 |--------------------------------|---------------------------------------------------------------------------------------------------|
 | Immutable Vaults               | Every user owns a personal, keyless vault. No one can pause, freeze, or rug it.                  |
-| Hybrid Oracle (v5.1)           | Median-filtered TWAP + spot hybrid across 5 PulseX stable pools. Self-refreshing with every mint. |
-| Smart Volatility Guard         | ±10% price clamp with **asymmetric cooldown** (4h on dumps, 1h on pumps) + **instant recovery** when price returns to normal range. |
+| Hybrid Oracle (v5.1)           | Median-filtered TWAP + spot hybrid across 5 PulseX stable pools with dual-layer protection.      |
+| Dual Volatility Protection     | Oracle confirmation system (4h/1h) + vault-level ±10% clamp with asymmetric cooldown.           |
 | Full Autonomy                  | No admin keys, no pausable functions, no upgrades. 100% immortal.                                |
 | 0.5% Annual Stability Fee      | Accrues only when you interact — fair, gas-efficient, and automatic.                             |
 | 150% Collateral Ratio          | Safe over-collateralization. Liquidation at 110%.                                                 |
@@ -51,7 +51,7 @@ SunDAI v5.6 Immortal Edition is engineered to survive anything:
 - No emergency pauses (users control their own recovery after 30 days with zero debt)
 - Even if the oracle stops forever, you can always repay and withdraw your collateral
 - Verified source code on PulseScan
-- Most advanced oracle system ever deployed in autonomous DeFi
+- Most advanced dual-layer oracle protection system ever deployed in autonomous DeFi
 
 Audited logic. Battle-tested on mainnet.
 
@@ -79,15 +79,30 @@ Zero math. Zero stress.
 
 ---
 
-## Advanced Oracle System (v5.1)
-The Hybrid Oracle v5.1 represents the most sophisticated price protection system in DeFi:
-- **Self-healing**: Automatically refreshes with every vault interaction
-- **Asymmetric volatility protection**: 
-  - Price dumps (↓): 4-hour cooldown (prevents over-minting in crashes)
-  - Price pumps (↑): 1-hour cooldown (faster response to positive moves)
-- **Instant recovery**: Clamps lift immediately when price returns to ±10% normal range
-- **Stale-price fallback**: Uses last valid price if oracle lags (guarantees continuity)
-- **Flash loan resistant**: Median aggregation across 5 major PulseX pairs
+## Advanced Oracle System (v5.1 + v5.6 Dual-Layer Protection)
+
+The Hybrid Oracle v5.1 + Vault v5.6 represent the most sophisticated price protection system in DeFi with dual-layer defense:
+
+### Oracle Layer (v5.1 - Confirmation System)
+- **Flash crash immunity**: 4-hour confirmation period before accepting price drops
+- **Responsive to pumps**: 1-hour confirmation period for upward price movements
+- **Progressive stepping**: After confirmation, steps 5% (down) or 10% (up) every 30 min toward target
+- **Smart recovery**: Cancels confirmation if price recovers, updates immediately
+- **Anti-grief protection**: Manual `poke()` rate-limited to once per 30 minutes
+- **Median aggregation**: Combines 5 major PulseX pairs (DAI v1/v2, USDC v1/v2, USDT)
+
+### Vault Layer (v5.6 - Volatility Guard)
+- **Price clamp**: ±10% maximum movement per update
+- **Asymmetric cooldown**: 4h for dumps (safety), 1h for pumps (responsiveness)  
+- **Instant recovery**: Clamp lifts immediately when price returns to normal range
+- **Rate-limit resistant**: Uses `peekPriceView()` to avoid oracle cooldown issues
+
+### Combined Effect
+- **Flash crashes (<4h)**: Completely ignored, zero liquidation risk
+- **Real market drops (>4h)**: 4h confirm + gradual stepping = safe, measured response
+- **Real market pumps (>1h)**: 1h confirm + faster stepping = quicker value recognition
+- **Oracle failures**: Vault continues operating with last known good price
+- **24h fallback**: Emergency price recovery from live pairs if oracle becomes stale
 
 ---
 
