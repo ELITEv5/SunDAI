@@ -214,15 +214,18 @@
       <input id="usdOneClick" type="number" step="0.01" placeholder="Deposit & Auto Mint (USD)" />
       <div class="preview" id="plsOneClick"></div>
       <button class="btn" id="oneClickBtn" disabled>1-Click Auto Mint</button>
+      <div class="helper-text">Easiest method: Deposit PLS and mint pSunDAI in one transaction at 155% (safe buffer)</div>
     </div>
     <div class="card">
       <input id="usdIn" type="number" step="0.01" placeholder="Deposit USD value" />
       <div class="preview" id="plsOut"></div>
       <button class="btn" id="deposit" disabled>Deposit PLS</button>
+      <div class="helper-text">Add collateral to your vault (improves your ratio, allows you to mint more)</div>
     </div>
     <div class="card">
       <input id="usdMint" type="number" step="0.01" placeholder="Mint USD amount" />
       <button class="btn" id="mint" disabled>Mint pSunDAI</button>
+      <div class="helper-text">Create pSunDAI against your existing collateral (lowers your ratio)</div>
     </div>
     
     <!-- ═══════════════════════════════════════════════════════════════ -->
@@ -237,11 +240,13 @@
     <div class="card">
       <input id="usdRepay" type="number" step="0.01" placeholder="Repay pSunDAI amount" />
       <button class="btn" id="repay" disabled>Repay Debt</button>
+      <div class="helper-text">Burn pSunDAI to reduce debt (improves your ratio, instant - no cooldown)</div>
     </div>
     <div class="card">
       <input id="usdOut" type="number" step="0.01" placeholder="Withdraw USD value" />
       <div class="preview" id="plsIn"></div>
       <button class="btn" id="withdraw" disabled>Withdraw PLS</button>
+      <div class="helper-text">Remove collateral from vault (lowers ratio, 5-min cooldown after depositing)</div>
     </div>
     
     <!-- ═══════════════════════════════════════════════════════════════ -->
@@ -259,14 +264,17 @@
     <div class="card">
   <input id="usdRepayAuto" type="number" step="0.01" placeholder="Repay amount (auto-withdraws excess)" />
   <button class="btn" id="repayAuto" disabled>Repay & Withdraw Excess</button>
+  <div class="helper-text">Smart exit: Repay debt and automatically withdraw any collateral above 150%</div>
 </div>
     <div class="card">
       <button class="btn" id="risk" disabled style="background:#ff3366">Check Liquidation Risk</button>
       <div id="riskText" style="margin-top:10px;text-align:center;font-weight:700"></div>
+      <div class="helper-text">Shows if your vault is in danger of liquidation (below 110% ratio)</div>
     </div>
     <div class="card">
   <button class="btn" id="repayToSafe" disabled>Repay to Safe (150%)</button>
   <div class="preview" id="repayToSafePreview"></div>
+  <div class="helper-text">Auto-calculates exact repay amount to bring your vault to safe 150% ratio</div>
 </div>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
@@ -936,15 +944,19 @@
       }
     };
 
-    // Single clean load handler: auto-connect + PWA registration
+    // Single clean load handler: auto-connect
     window.addEventListener("load", () => {
       connectWallet(); // your original auto-connect
 
+      // Service Worker for PWA (Progressive Web App) - optional
+      // Uncomment when you have sw.js file deployed
+      /*
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("sw.js")
           .then(reg => console.log("Service Worker registered", reg.scope))
           .catch(err => console.warn("SW registration failed:", err));
       }
+      */
     });
   </script>
 </body>
