@@ -414,7 +414,7 @@
 
     async function updatePrice() {
       try {
-        const [p, timestamp] = await oracle.getPriceWithTimestamp();
+        const [p, timestamp] = await oracle.peekPrice();
         price = p;
         document.getElementById("price").textContent = "$" + (Number(p)/1e18).toFixed(2) + " per ETH";
       } catch (e) {
