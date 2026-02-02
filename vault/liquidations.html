@@ -301,6 +301,7 @@
               // Liquidatable
               const liqInfo = await vault.liquidationInfo(owner);
               vaultData.minRepay = Number(ethers.formatEther(liqInfo.minRepay));
+              vaultData.minRepayBigInt = liqInfo.minRepay; // Store BigInt for approval
               vaultData.reward = Number(ethers.formatEther(liqInfo.reward));
               vaultData.bonusBps = Number(liqInfo.bonusBps);
               
@@ -425,8 +426,7 @@
                 class="btn danger" 
                 style="margin-top:12px;"
                 data-owner="${v.owner}"
-                data-repay="${v.minRepay}"
-                onclick="liquidateVault(this.dataset.owner, this.dataset.repay)"
+                onclick="liquidateVault('${v.owner}')"
               >
                 🔥 Liquidate Now
               </button>
@@ -519,43 +519,93 @@
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // FIXED LIQUIDATION FUNCTION - Properly handles BigInt conversion
+    // FIXED LIQUIDATION FUNCTION - Correct approval math
     // ═══════════════════════════════════════════════════════════════
-    async function liquidateVault(owner, repayAmountFloat) {
+    async function liquidateVault(ownerAddress) {
       try {
         const btn = event.target;
         const originalText = btn.textContent;
         btn.disabled = true;
-        btn.textContent = "⏳ Approving...";
+        btn.textContent = "⏳ Fetching data...";
         document.getElementById("error").textContent = "";
         
-        // CRITICAL FIX: Convert float string to BigInt here
-        const repayAmount = ethers.parseUnits(repayAmountFloat.toString(), 18);
+        // Get fresh liquidation info to ensure accurate numbers
+        const liqInfo = await vault.liquidationInfo(ownerAddress);
+        const minRepay = liqInfo.minRepay;
+        const bonusBps = Number(liqInfo.bonusBps);
         
-        console.log("Liquidating vault:", owner);
-        console.log("Repay amount (float):", repayAmountFloat);
-        console.log("Repay amount (BigInt):", repayAmount.toString());
+        console.log("═══════════════════════════════════════");
+        console.log("LIQUIDATION DETAILS:");
+        console.log("Vault:", ownerAddress);
+        console.log("Min repay:", ethers.formatEther(minRepay), "pSunDAI");
+        console.log("Bonus:", bonusBps / 100, "%");
+        console.log("═══════════════════════════════════════");
         
-        // Step 1: Approve pSunDAI spending
-        const approveTx = await token.approve(VAULT, repayAmount);
+        // The contract will burn exactly minRepay from liquidator
+        // But we approve slightly more (0.5%) to handle any rounding edge cases
+        const approvalAmount = (minRepay * 10050n) / 10000n;
+        
+        console.log("Approving:", ethers.formatEther(approvalAmount), "pSunDAI");
+        
+        btn.textContent = "⏳ Checking balance...";
+        
+        // Check liquidator has enough pSunDAI
+        const balance = await token.balanceOf(account);
+        const balanceFormatted = ethers.formatEther(balance);
+        const neededFormatted = ethers.formatEther(minRepay);
+        
+        console.log("Your balance:", balanceFormatted, "pSunDAI");
+        console.log("Need:", neededFormatted, "pSunDAI");
+        
+        if (balance < minRepay) {
+          throw new Error(`Insufficient pSunDAI. Need ${neededFormatted}, have ${balanceFormatted}`);
+        }
+        
+        btn.textContent = "⏳ Approving...";
+        
+        // Approve with safety buffer
+        const approveTx = await token.approve(VAULT, approvalAmount);
+        console.log("Approval tx:", approveTx.hash);
         await approveTx.wait();
+        console.log("✅ Approval confirmed");
         
         btn.textContent = "⏳ Liquidating...";
         
-        // Step 2: Execute liquidation
-        const liqTx = await vault.liquidate(owner, repayAmount);
-        await liqTx.wait();
+        // Execute liquidation with exact minRepay amount
+        const liqTx = await vault.liquidate(ownerAddress, minRepay);
+        console.log("Liquidation tx:", liqTx.hash);
+        const receipt = await liqTx.wait();
+        console.log("✅ Liquidation confirmed");
         
-        document.getElementById("status").textContent = "✅ Liquidation successful! 🎉";
-        setTimeout(() => document.getElementById("status").textContent = "", 5000);
+        // Parse reward from events
+        let rewardPLS = "unknown";
+        try {
+          const liquidateEvent = receipt.logs.find(log => {
+            try {
+              const parsed = vault.interface.parseLog(log);
+              return parsed.name === "Liquidate";
+            } catch { return false; }
+          });
+          if (liquidateEvent) {
+            const parsed = vault.interface.parseLog(liquidateEvent);
+            rewardPLS = ethers.formatEther(parsed.args.reward);
+            console.log("Reward received:", rewardPLS, "PLS");
+          }
+        } catch (e) {
+          console.log("Could not parse reward:", e);
+        }
         
-        // Rescan to update dashboard
-        await scanAll();
+        document.getElementById("status").textContent = `✅ Liquidation successful! Received ${rewardPLS} PLS 🎉`;
+        setTimeout(() => document.getElementById("status").textContent = "", 8000);
+        
+        // Rescan after short delay
+        setTimeout(() => scanAll(), 2000);
         
       } catch (e) {
-        document.getElementById("error").textContent = "Liquidation failed: " + (e.reason || e.message || "Unknown error");
+        console.error("LIQUIDATION ERROR:", e);
+        const errorMsg = e.reason || e.message || "Unknown error";
+        document.getElementById("error").textContent = "Liquidation failed: " + errorMsg;
         setTimeout(() => document.getElementById("error").textContent = "", 8000);
-        console.error("Liquidation error:", e);
         event.target.disabled = false;
         event.target.textContent = "🔥 Liquidate Now";
       }
