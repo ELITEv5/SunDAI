@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>pSunDAI – Golden Sun Vault</title>
+  <link rel="icon" href="sundailogo.png" type="image/png" />
+  <meta name="description" content="Autonomous 150% PLS-Collateralized Stable Asset on PulseChain." />
+  <meta name="theme-color" content="#FF6B00" />
+  <meta name="robots" content="index,follow" />
+  <meta name="author" content="SunDAI Protocol" />
+
+  <!-- PWA meta tags -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="sundailogo.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="msapplication-TileColor" content="#ff6b00">
+  <meta name="msapplication-TileImage" content="sundailogo.png">
+
+  <!-- Splash screen & better icons -->
+  <link rel="icon" sizes="192x192" href="icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icon-192.png">
+  <link rel="icon" sizes="512x512" href="icon-512.png">
+
+  <!-- FINAL: Force MetaMask + correct landing page (Android + iOS) -->
+<!-- FINAL FINAL: Works on iPhone + Android + never blank -->
+<script>
+  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    if (!navigator.userAgent.includes("MetaMaskMobile")) {
+      // Build the EXACT URL MetaMask expects
+      const url = location.origin + location.pathname + location.search + location.hash;
+      
+      let deepLink;
+      if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        // iOS: strip https:// and use raw path — this is the magic fix
+        deepLink = "metamask://dapp/" + url.replace(/^https?:\/\//, '');
+      } else {
+        // Android: normal universal link works fine
+        deepLink = "https://metamask.app.link/dapp/" + encodeURIComponent(url);
+      }
+
+      location.replace(deepLink);
+    }
+  }
+</script>
+  <script src="ethers.umd.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      background: #0a001f;
+      color: #ffebd1;
+      font-family: Segoe UI, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      overflow-y: auto;
+    }
+    canvas { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+    .wallet {
+      position: fixed; top: 20px; right: 20px; background: #111; padding: 10px 22px;
+      border: 2px solid #ff8c00; border-radius: 10px; color: #fff; font-weight: 700;
+      cursor: pointer; z-index: 9999; transition: all 0.2s ease; pointer-events: auto;
+    }
+    .wallet:hover { background: #222; box-shadow: 0 0 15px rgba(255, 140, 0, 0.4); }
+    .wallet.connected { border-color: #fbbf24; color: #fbbf24; box-shadow: 0 0 20px rgba(251, 191, 36, 0.5); }
+    .container {
+      background: rgba(10, 0, 30, 0.8); backdrop-filter: blur(20px);
+      border: 2px solid #ff8c00; border-radius: 20px;
+      box-shadow: 0 0 40px rgba(255, 140, 0, 0.3); padding: 30px 25px;
+      max-width: 480px; width: 90%; margin: 80px 0; position: relative; z-index: 10;
+    }
+    .logo { display: block; max-width: 240px; margin: 0 auto 10px;
+      animation: pulseGlow 4s ease-in-out infinite; transform-origin: center; }
+    @keyframes pulseGlow {
+      0% { filter: drop-shadow(0 0 10px rgba(180, 120, 255, 0.5)); }
+      50% { filter: drop-shadow(0 0 35px rgba(255, 180, 255, 0.85)); }
+      100% { filter: drop-shadow(0 0 10px rgba(180, 120, 255, 0.5)); }
+    }
+    h1 { text-align: center; font-size: 2em; background: linear-gradient(90deg, #ff8c00, #ffa500, #fbbf24, #fde047);
+      -webkit-background-clip: text; color: transparent; margin-bottom: 8px; }
+    h2 { text-align: center; color: #ffebd1; font-size: 1.1em; margin-top: 0; }
+    .price { text-align: center; color: #ffd700; font-weight: 800; font-size: 1.2em; margin-bottom: 10px; }
+    .card { background: rgba(255, 140, 0, 0.08); border: 1px solid rgba(255, 140, 0, 0.3);
+      border-radius: 14px; padding: 16px; margin-bottom: 12px; transition: box-shadow .2s ease; }
+    .card:hover { box-shadow: 0 0 12px rgba(255, 165, 0, 0.2); }
+    input, .btn { width: 100%; display: block; box-sizing: border-box; font-size: 1em;
+      font-weight: 700; text-align: center; border-radius: 10px; padding: 14px; transition: all 0.2s ease; }
+    input { background: #110022; border: 2px solid rgba(255, 140, 0, 0.4); color: #fff; }
+    input:focus { border-color: #fbbf24; outline: none; box-shadow: 0 0 10px rgba(251, 191, 36, 0.3); }
+    .btn { background: linear-gradient(135deg, #ff8c00, #ffa500); border: 2px solid transparent; color: #000; cursor: pointer; 
+      box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3); }
+    .btn:hover:not(:disabled) { background: linear-gradient(135deg, #ffa500, #ffd700); 
+      transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5); }
+    .btn:disabled { background: #2a2a2a; color: #666; cursor: not-allowed; border-color: transparent; box-shadow: none; }
+    .card input + .btn { margin-top: 8px; }
+    .preview { color: #ffbd70; text-align: center; font-size: 0.9em; margin-top: 4px; }
+    .helper-text { color: #999; text-align: center; font-size: 0.8em; margin-top: 6px; font-style: italic; }
+    .warning-text { color: #ffcc00; text-align: center; font-size: 0.85em; margin-top: 6px; padding: 6px; 
+      background: rgba(255,204,0,0.1); border-radius: 6px; border: 1px solid rgba(255,204,0,0.2); }
+    .info-text { color: #00ff9d; text-align: center; font-size: 0.85em; margin-top: 6px; padding: 6px;
+      background: rgba(0,255,157,0.1); border-radius: 6px; border: 1px solid rgba(0,255,157,0.2); }
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center; font-size: 0.9em; }
+    .stat { background: rgba(255, 107, 0, 0.12); padding: 10px; border-radius: 10px; }
+    .label { color: #ffbd70; }
+    .value { color: #ffd700; font-weight: 700; }
+    .status, .error { text-align: center; font-weight: bold; margin-top: 10px; transition: opacity .4s ease; }
+    .status { color: #00ff9d; }
+    .error { color: #ff3366; }
+    .value.safe { color: #00ff9d; text-shadow: 0 0 8px rgba(0,255,157,0.5); }
+    .value.warn { color: #ffcc00; text-shadow: 0 0 8px rgba(255,204,0,0.5); }
+    .value.risk { color: #ff3366; text-shadow: 0 0 8px rgba(255,51,102,0.5); }
+    .footer { text-align: center; margin: 40px 0 20px; padding: 20px 10px; font-size: 0.85em;
+      color: #ffbd70; border-top: 1px solid rgba(255, 215, 0, 0.15); width: 100%; max-width: 800px; z-index: 5; }
+    .footer h3 { margin-bottom: 10px; color: #ffd700; letter-spacing: 0.5px; font-size: 1.1em; }
+    .contracts { display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
+      text-align: left; line-height: 1.6; word-wrap: break-word; overflow-wrap: anywhere;
+      padding: 0 10px; max-width: 100%; box-sizing: border-box; }
+    .contracts a { color: #ffebd1; text-decoration: none; font-family: monospace;
+      word-break: break-all; display: inline-block; max-width: 100%; overflow-wrap: anywhere;
+      transition: color 0.2s ease; }
+    .contracts a:hover { color: #ffd700; }
+    .contracts .label { color: #ff6b00; font-weight: 700; display: block; margin-bottom: 2px; }
+    @media (max-width: 480px) { .contracts { font-size: 0.75em; gap: 8px; } .contracts a { font-size: 0.75em; } }
+    #bg { opacity: 0; animation: fadeIn 2s ease forwards; }
+    @keyframes fadeIn { to { opacity: 1; } }
+        /* Popup Modal — FINAL VERSION (MetaMask + all phones perfect) */
+    .modal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 10000;
+      display: none;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 20px 10px;
+      box-sizing: border-box;
+    }
+
+    .modal-content {
+      background: #110022;
+      border: 2px solid #ff6b00;
+      border-radius: 16px;
+      padding: 24px 20px;
+      max-width: 420px;
+      width: 95%;
+      max-height: 85vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      margin: 0 auto;
+      position: relative;
+      box-shadow: 0 10px 40px rgba(255,107,0,0.4);
+    }
+
+    .modal-content h3 { color: #ffd700; margin-top: 0; }
+    .close { 
+      color: #ff3366; 
+      float: right; 
+      font-size: 2em; 
+      cursor: pointer; 
+      line-height: 0.8;
+      margin-top: -10px;
+    }
+
+    /* Mobile extra safety */
+    @media (max-width: 480px) {
+      .modal-content { 
+        border-radius: 20px; 
+        padding: 20px 16px; 
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="bg"></div>
+  <div class="wallet" id="walletBtn"><span id="walletText">Connect Wallet</span></div>
+  <div class="container">
+    <img src="sundailogo.png" class="logo" alt="SunDAI Logo" />
+    <h1>SunDAI</h1>
+    <h2>Autonomous Stable Asset</h2>
+    <div class="price" id="price">Loading price...</div>
+    <div class="status" id="status"></div>
+    <div class="error" id="error"></div>
+    <div class="card"><div class="stats" id="stats">Connect wallet to begin</div></div>
+    <!-- GLOBAL SYSTEM STATS — FUN & TRANSPARENT -->
+    <div class="card" id="globalStats" style="margin-top:12px;display:none">
+      <div style="text-align:center;font-size:0.9em;color:#ffbd70;margin-bottom:8px">Global SunDAI System</div>
+      <div class="stats">
+        <div class="stat">
+          <div class="label">Total Collateral</div>
+          <div class="value" id="totalColl">—</div>
+        </div>
+        <div class="stat">
+          <div class="label">Total Minted</div>
+          <div class="value" id="totalDebt">—</div>
+        </div>
+        <div class="stat">
+          <div class="label">System Health</div>
+          <div class="value" id="sysHealth">—</div>
+        </div>
+        <div class="stat">
+          <div class="label">Your Share</div>
+          <div class="value" id="yourShare">—</div>
+        </div>
+      </div>
+    </div>
+    <!-- HOW TO BUTTON -->
+    <div class="card" style="margin-bottom:12px">
+      <button class="btn" id="howToBtn" style="background:linear-gradient(135deg, #f59e0b, #fbbf24);color:#000;font-weight:800;box-shadow:0 4px 15px rgba(245,158,11,0.4)">How to Use SunDAI</button>
+    </div>
+    <div class="card">
+      <input id="usdOneClick" type="number" step="0.01" placeholder="Deposit & Auto Mint (USD)" />
+      <div class="preview" id="plsOneClick"></div>
+      <button class="btn" id="oneClickBtn" disabled>1-Click Auto Mint</button>
+      <div class="helper-text">Easiest method: Deposit PLS and mint pSunDAI in one transaction at 155% (safe buffer)</div>
+    </div>
+    <div class="card">
+      <input id="usdIn" type="number" step="0.01" placeholder="Deposit USD value" />
+      <div class="preview" id="plsOut"></div>
+      <button class="btn" id="deposit" disabled>Deposit PLS</button>
+      <div class="helper-text">Add collateral to your vault (improves your ratio, allows you to mint more)</div>
+    </div>
+    <div class="card">
+      <input id="usdMint" type="number" step="0.01" placeholder="Mint USD amount" />
+      <button class="btn" id="mint" disabled>Mint pSunDAI</button>
+      <div class="helper-text">Create pSunDAI against your existing collateral (lowers your ratio)</div>
+    </div>
+    
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- NEW BUTTON 1: MINT MAX SAFE -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="card">
+      <button class="btn" id="mintMaxSafe" disabled>Mint Max Safe (Stay 150%)</button>
+      <div class="preview" id="mintMaxPreview"></div>
+      <div class="helper-text">Mints maximum pSunDAI while keeping your vault at exactly 150% (safe zone)</div>
+    </div>
+    
+    <div class="card">
+      <input id="usdRepay" type="number" step="0.01" placeholder="Repay pSunDAI amount" />
+      <button class="btn" id="repay" disabled>Repay Debt</button>
+      <div class="helper-text">Burn pSunDAI to reduce debt (improves your ratio, instant - no cooldown)</div>
+    </div>
+    <div class="card">
+      <input id="usdOut" type="number" step="0.01" placeholder="Withdraw USD value" />
+      <div class="preview" id="plsIn"></div>
+      <button class="btn" id="withdraw" disabled>Withdraw PLS</button>
+      <div class="helper-text">Remove collateral from vault (lowers ratio, 5-min cooldown after depositing)</div>
+    </div>
+    
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- NEW BUTTON 2: WITHDRAW MAX SAFE -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="card">
+      <button class="btn" id="withdrawMaxSafe" disabled style="background:linear-gradient(135deg, #8b5cf6, #a78bfa);color:#fff;box-shadow:0 4px 15px rgba(139,92,246,0.4)">Withdraw Max Safe (Stay 150%)</button>
+      <div class="preview" id="withdrawMaxPreview"></div>
+      <div class="helper-text">Take maximum profits while keeping your vault safe at 150%</div>
+      <div class="warning-text" id="withdrawCooldownWarning" style="display:none">
+        5-minute cooldown after depositing (security protection)
+      </div>
+    </div>
+    
+    <div class="card">
+  <input id="usdRepayAuto" type="number" step="0.01" placeholder="Repay amount (auto-withdraws excess)" />
+  <button class="btn" id="repayAuto" disabled>Repay & Withdraw Excess</button>
+  <div class="helper-text">Smart exit: Repay debt and automatically withdraw any collateral above 150%</div>
+</div>
+    <div class="card">
+      <button class="btn" id="risk" disabled style="background:linear-gradient(135deg, #dc2626, #f97316);color:#fff;box-shadow:0 4px 15px rgba(220,38,38,0.4)">Check Liquidation Risk</button>
+      <div id="riskText" style="margin-top:10px;text-align:center;font-weight:700"></div>
+      <div class="helper-text">Shows if your vault is in danger of liquidation (below 110% ratio)</div>
+    </div>
+    <div class="card">
+  <button class="btn" id="repayToSafe" disabled>Repay to Safe (150%)</button>
+  <div class="preview" id="repayToSafePreview"></div>
+  <div class="helper-text">Auto-calculates exact repay amount to bring your vault to safe 150% ratio</div>
+</div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- NEW BUTTON 3: EMERGENCY UNLOCK (shows only when available) -->
+    <!-- NOTE: Only appears when you have ZERO DEBT and some COLLATERAL -->
+    <!-- If you have debt, repay it first to see this option -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="card" id="emergencyCard" style="display:none">
+      <button class="btn" id="emergencyUnlock" disabled style="background:#ff6b00;color:#fff">Emergency Unlock (30-day recovery)</button>
+      <div class="preview" id="emergencyPreview"></div>
+      <div class="info-text">
+        Safety feature: If you have zero debt, you can always recover your collateral after 30 days
+      </div>
+    </div>
+
+   <div class="card" style="margin-bottom:12px">
+  <button class="btn" style="background:linear-gradient(135deg, #6366f1, #8b5cf6);color:#fff;font-weight:800;box-shadow:0 4px 15px rgba(99,102,241,0.4)" onclick="window.location.href='liquidations.html?t=' + Date.now()">
+    View Liquidation Dashboard
+  </button>
+</div>
+    <div class="card" id="safetyCard" style="margin-top: 12px;">
+      <div id="safetyStatus" style="text-align:center;font-weight:700;color:#ffd700;margin-bottom:8px;">
+        Wake up Oracle for Most Current Price
+      </div>
+      <button class="btn" id="pokeBtn" disabled style="background:linear-gradient(135deg, #fbbf24, #fde047);color:#000;font-weight:700;box-shadow:0 4px 15px rgba(251,191,36,0.4)">
+        Wake Oracle
+      </button>
+    </div>
+  </div>
+  <footer class="footer">
+    <h3>Official Contracts</h3>
+    <div class="contracts">
+      <div><span class="label">pSunDAI Token:</span>
+        <a href="https://scan.pulsechain.com/address/0x5529c1cb179b2c256501031adCDAfC22D9c6d236" target="_blank">
+          0x5529c1cb179b2c256501031adCDAfC22D9c6d236
+        </a>
+      </div>
+      <div><span class="label">Vault:</span>
+        <a href="https://scan.pulsechain.com/address/0x789472Ef7fa74cB8898Ed38cAa5d18f4D49EcC6d" target="_blank">
+          0x789472Ef7fa74cB8898Ed38cAa5d18f4D49EcC6d
+        </a>
+      </div>
+      <div><span class="label">Oracle:</span>
+        <a href="https://scan.pulsechain.com/address/0xC19C8201701585D9087F261eaCd3Ee3345251Da3" target="_blank">
+          0xC19C8201701585D9087F261eaCd3Ee3345251Da3
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════════
+    // SUNDAI VAULT INTERFACE - v5.6 Immortal Edition
+    // Core functionality: Deposit, Mint, Repay, Withdraw, Liquidation Check
+    // New features: Mint Max Safe, Withdraw Max Safe, Emergency Unlock
+    // ═══════════════════════════════════════════════════════════════════
+    
+    const ethers = window.ethers;
+    if (!ethers || !ethers.Contract) alert("Ethers.js failed to load");
+    
+    // Contract addresses (immutable, verified on PulseScan)
+    const VAULT = "0x789472Ef7fa74cB8898Ed38cAa5d18f4D49EcC6d";
+    const TOKEN = "0x5529c1cb179b2c256501031adCDAfC22D9c6d236";
+    const ORACLE = "0xC19C8201701585D9087F261eaCd3Ee3345251Da3";
+    
+    // Global state variables
+    let provider, signer, vault, token, oracle, account, price = 0n, minRatio = 15500n;
+    const DECIMALS = 10n ** 18n;
+    
+    // DOM element references
+    const status = document.getElementById("status");
+    const error = document.getElementById("error");
+    const stats = document.getElementById("stats");
+    const walletText = document.getElementById("walletText");
+    const walletBtn = document.getElementById("walletBtn");
+
+    // ═══════════════════════════════════════════════════════════════════
+    // LOAD CONTRACT ABIs
+    // Fetches the contract interfaces from JSON files
+    // ═══════════════════════════════════════════════════════════════════
+    async function loadABIs() {
+      const [v, t, o] = await Promise.all([
+        fetch("vault-abi.json").then(r => r.json()),
+        fetch("token-abi.json").then(r => r.json()),
+        fetch("oracle-abi.json").then(r => r.json())
+      ]);
+      return [v, t, o];
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // ORACLE HEALTH CHECK HELPERS
+    // These functions monitor oracle status and display warnings if needed
+    // ═══════════════════════════════════════════════════════════════════
+    
+    // Wait for oracle to be available (with timeout)
+    async function waitForOracle(ms = 10000) {
+      const start = Date.now();
+      while ((!window.oracle || !window.oracle.isHealthy) && Date.now() - start < ms)
+        await new Promise(r => setTimeout(r, 300));
+      if (!window.oracle) throw new Error("Oracle not ready");
+      return window.oracle;
+    }
+    
+    // Safe promise wrapper with timeout
+    async function safeCall(p, t = 4000) {
+      return Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error("timeout")), t))]);
+    }
+    
+    // Check and display oracle health status
+    async function checkOracleHealth() {
+      try {
+        const el = document.getElementById("safetyStatus");
+        const btn = document.getElementById("pokeBtn");
+        const o = await waitForOracle();
+        el.textContent = "Checking Oracle...";
+        el.style.color = "#ffd700";
+        btn.disabled = true;
+        let p, ts;
+        try {
+          [p, ts] = await o.callStatic.getPriceWithTimestamp();
+        } catch {
+          [p, ts] = await safeCall(o.peekPriceView(), 3000);
+        }
+        const healthy = await safeCall(o.isHealthy(), 3000);
+        const age = Math.floor(Date.now() / 1000) - Number(ts);
+        if (healthy && age < 86400) {
+          el.innerHTML = `Vault & Oracle synced – fresh (${(age / 60).toFixed(1)} min ago)`;
+          el.style.color = "#00ff9d";
+          btn.disabled = true;
+        } else {
+          el.innerHTML = "Oracle stale – press <b>Wake Oracle</b>";
+          el.style.color = "#ff3366";
+          btn.disabled = false;
+        }
+      } catch (e) {
+        console.error("Oracle health check failed:", e);
+        const el = document.getElementById("safetyStatus");
+        const btn = document.getElementById("pokeBtn");
+        if (el) {
+          el.textContent = "Oracle error";
+          el.style.color = "#ff3366";
+        }
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // WALLET CONNECTION
+    // Connects MetaMask, switches to PulseChain, loads contracts
+    // ═══════════════════════════════════════════════════════════════════
+    async function connectWallet() {
+      try {
+        if (!window.ethereum) return alert("Please install MetaMask");
+        await window.ethereum.request({ method: "eth_requestAccounts" });
+        provider = new ethers.BrowserProvider(window.ethereum);
+        signer = await provider.getSigner();
+        account = await signer.getAddress();
+        const network = await provider.getNetwork();
+        if (Number(network.chainId) !== 369) {
+          try {
+            await window.ethereum.request({
+              method: "wallet_switchEthereumChain",
+              params: [{ chainId: "0x171" }]
+            });
+          } catch (e) {
+            return alert("Please switch to PulseChain (chainId 369)");
+          }
+        }
+        const [VAULT_ABI, TOKEN_ABI, ORACLE_ABI] = await loadABIs();
+        vault = new ethers.Contract(VAULT, VAULT_ABI, signer);
+        token = new ethers.Contract(TOKEN, TOKEN_ABI, signer);
+        oracle = new ethers.Contract(ORACLE, ORACLE_ABI, provider);
+        window.oracle = oracle;
+        minRatio = await vault.COLLATERAL_RATIO();
+        document.getElementById("oneClickBtn").textContent = "1-Click Auto Mint (155%)";
+        walletText.textContent = account.slice(0,6) + "..." + account.slice(-4);
+        walletBtn.classList.add("connected");
+        document.querySelectorAll(".btn").forEach(b => b.disabled = false);
+        await Promise.all([updatePrice(), loadVault()]);
+        setInterval(updatePrice, 60000);
+        document.getElementById("safetyCard").style.opacity = "1";
+        await checkOracleHealth();
+        setInterval(checkOracleHealth, 20000);
+        await loadGlobalStats();
+        setInterval(loadGlobalStats, 60000);
+      } catch (e) {
+        error.textContent = e.message || "Connection failed";
+        console.error(e);
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // LOAD GLOBAL SYSTEM STATS
+    // Shows total collateral, debt, system health across all users
+    // ═══════════════════════════════════════════════════════════════════
+    async function loadGlobalStats() {
+      try {
+        const [totalColl, totalDebt, health] = await Promise.all([
+          vault.totalCollateral(),
+          vault.totalDebt(),
+          vault.systemHealth()
+        ]);
+        const collNum = Number(ethers.formatEther(totalColl));
+        const debtNum = Number(ethers.formatEther(totalDebt));
+        const healthNum = Number(health) / 1;
+        document.getElementById("totalColl").textContent = collNum.toFixed(0) + " PLS";
+        document.getElementById("totalDebt").textContent = debtNum.toFixed(0) + " pSunDAI";
+        const healthEl = document.getElementById("sysHealth");
+        healthEl.textContent = healthNum.toFixed(1) + "%";
+        healthEl.className = "value " + (healthNum < 130 ? "risk" : healthNum < 150 ? "warn" : "safe");
+        const yourColl = Number(ethers.formatEther((await vault.vaultInfo(account)).collateral));
+        if (yourColl > 0 && collNum > 0) {
+          const share = (yourColl / collNum) * 100;
+          document.getElementById("yourShare").textContent = share < 0.01 ? "<0.01%" : share.toFixed(2) + "%";
+        } else {
+          document.getElementById("yourShare").textContent = "0%";
+        }
+        document.getElementById("globalStats").style.display = "block";
+      } catch (e) {
+        console.log("Global stats failed (normal if no vault yet)");
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // UPDATE PLS PRICE
+    // Fetches current price from oracle (runs every 60 seconds)
+    // ═══════════════════════════════════════════════════════════════════
+    async function updatePrice() {
+      try {
+        let p, t;
+        try {
+          [p, t] = await oracle.getPriceWithTimestamp();
+        } catch {
+          [p, t] = await oracle.peekPriceView();
+        }
+        const age = Math.floor(Date.now()/1000) - Number(t);
+        if (age > 86400) throw new Error("Oracle data stale");
+        price = p;
+        document.getElementById("price").textContent = "$" + (Number(p)/1e18).toFixed(6) + " per PLS";
+      } catch {
+        document.getElementById("price").textContent = "Oracle offline";
+        price = 0n;
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // CONVERSION HELPERS
+    // Convert between USD and PLS/pSunDAI values
+    // ═══════════════════════════════════════════════════════════════════
+    
+    // Convert USD amount to PLS (using current price)
+    function usdToPLS(usd) {
+      if (!price || price === 0n) return 0n;
+      const usdWei = ethers.parseUnits(usd.toString(), 18);
+      return (usdWei * DECIMALS) / price;
+    }
+    
+    // Convert USD amount to pSunDAI (1:1 peg)
+    function usdToPSun(usd) { return ethers.parseUnits(usd.toString(), 18); }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // TRANSACTION WRAPPER
+    // Handles loading states, errors, and success messages for all buttons
+    // ═══════════════════════════════════════════════════════════════════
+    async function withLoading(btn, fn) {
+      const orig = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Processing...";
+      error.textContent = "";
+      try {
+        await fn();
+        status.textContent = "Success!";
+        setTimeout(() => status.textContent = "", 4000);
+        await loadVault();
+      } catch (e) {
+        error.textContent = e.message || "Transaction failed";
+        setTimeout(() => error.textContent = "", 8000);
+      } finally {
+        btn.textContent = orig;
+        btn.disabled = false;
+      }
+    }
+    // ═══════════════════════════════════════════════════════════════════
+    // LOAD VAULT DATA
+    // Fetches user's vault info and updates all previews/buttons
+    // Updates: stats display, button states, all preview calculations
+    // ═══════════════════════════════════════════════════════════════════
+    async function loadVault() {
+  try {
+    const i = await vault.vaultInfo(account);
+    const ratio = Number(i.ratio);
+    const ratioClass = ratio < 150 ? "risk" : ratio < 170 ? "warn" : "safe";
+    const ratioDisplay = ratio > 1e6 ? "Infinite" : ratio.toFixed(2) + "%";
+    stats.innerHTML = `
+      <div class="stat"><div class="label">Collateral</div><div class="value">${Math.round(Number(ethers.formatEther(i.collateral)))} PLS</div></div>
+      <div class="stat"><div class="label">Debt</div><div class="value">${Number(ethers.formatEther(i.debt)).toFixed(2)} pSunDAI</div></div>
+      <div class="stat"><div class="label">Ratio</div><div class="value ${ratioClass}">${ratioDisplay}</div></div>
+      <div class="stat"><div class="label">Can Mint</div><div class="value">${Number(ethers.formatEther(i.mintable)).toFixed(2)} pSunDAI</div></div>
+    `;
+
+    // Repay to Safe preview
+    const needed = await vault.repayToHealth(account);
+    const previewEl = document.getElementById("repayToSafePreview");
+    const btnEl = document.getElementById("repayToSafe");
+    
+    if (needed > 0n) {
+      previewEl.textContent = `Need ${Number(ethers.formatEther(needed)).toFixed(2)} pSunDAI to reach 150%`;
+      previewEl.style.color = "#ffcc00";
+      btnEl.disabled = false;
+    } else {
+      previewEl.textContent = "✓ Already safe at 150%+";
+      previewEl.style.color = "#00ff9d";
+      btnEl.disabled = true;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // NEW: Mint Max Safe preview
+    // ═══════════════════════════════════════════════════════════════
+    const mintMaxPreviewEl = document.getElementById("mintMaxPreview");
+    const mintMaxBtn = document.getElementById("mintMaxSafe");
+    
+    if (i.mintable > 0n) {
+      const mintableNum = Number(ethers.formatEther(i.mintable));
+      mintMaxPreviewEl.textContent = `Will mint ${mintableNum.toFixed(2)} pSunDAI (your vault stays at 150%)`;
+      mintMaxPreviewEl.style.color = "#00ff9d";
+      mintMaxBtn.disabled = false;
+    } else if (i.collateral == 0n) {
+      mintMaxPreviewEl.textContent = "Deposit collateral first using buttons above";
+      mintMaxPreviewEl.style.color = "#ffbd70";
+      mintMaxBtn.disabled = true;
+    } else {
+      mintMaxPreviewEl.textContent = "Already at maximum safe leverage (150%)";
+      mintMaxPreviewEl.style.color = "#ffbd70";
+      mintMaxBtn.disabled = true;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // NEW: Withdraw Max Safe preview
+    // ═══════════════════════════════════════════════════════════════
+    const withdrawMaxPreviewEl = document.getElementById("withdrawMaxPreview");
+    const withdrawMaxBtn = document.getElementById("withdrawMaxSafe");
+    const withdrawCooldownWarning = document.getElementById("withdrawCooldownWarning");
+    
+    // Check cooldown status
+    const v = await vault.vaults(account);
+    const currentTime = Math.floor(Date.now() / 1000);
+    const lastDepositTime = Number(v.lastDepositTime);
+    const cooldownRemaining = 300 - (currentTime - lastDepositTime);
+    
+    if (cooldownRemaining > 0) {
+      // Cooldown active - show warning
+      withdrawCooldownWarning.style.display = "block";
+      withdrawCooldownWarning.textContent = `Withdraw available in ${Math.ceil(cooldownRemaining / 60)} minute${Math.ceil(cooldownRemaining / 60) === 1 ? '' : 's'} (security cooldown)`;
+      withdrawMaxBtn.disabled = true;
+      withdrawMaxPreviewEl.textContent = "Waiting for cooldown...";
+      withdrawMaxPreviewEl.style.color = "#ffcc00";
+    } else {
+      // Cooldown passed - hide warning
+      withdrawCooldownWarning.style.display = "none";
+      
+      if (i.debt == 0n && i.collateral > 0n) {
+        // No debt - can withdraw all
+        const plsNum = Number(ethers.formatEther(i.collateral));
+        const usdValue = plsNum * (Number(i.price) / 1e18);
+        withdrawMaxPreviewEl.textContent = `Will withdraw all ${plsNum.toFixed(2)} PLS (~$${usdValue.toFixed(2)})`;
+        withdrawMaxPreviewEl.style.color = "#00ff9d";
+        withdrawMaxBtn.disabled = false;
+      } else if (i.debt > 0n && i.collateral > 0n && i.price > 0n) {
+        // Has debt - calculate safe withdrawal using price from vaultInfo
+        const requiredCollateral = (i.debt * 150n * DECIMALS) / (i.price * 100n);
+        const withdrawable = i.collateral > requiredCollateral ? i.collateral - requiredCollateral : 0n;
+        
+        if (withdrawable > 0n) {
+          const withdrawableNum = Number(ethers.formatEther(withdrawable));
+          const withdrawableUSD = withdrawableNum * (Number(i.price) / 1e18);
+          withdrawMaxPreviewEl.textContent = `Will withdraw ${withdrawableNum.toFixed(2)} PLS (~$${withdrawableUSD.toFixed(2)}) safely`;
+          withdrawMaxPreviewEl.style.color = "#00ff9d";
+          withdrawMaxBtn.disabled = false;
+        } else {
+          withdrawMaxPreviewEl.textContent = "Already at minimum safe collateral - repay debt to withdraw more";
+          withdrawMaxPreviewEl.style.color = "#ffbd70";
+          withdrawMaxBtn.disabled = true;
+        }
+      } else {
+        withdrawMaxPreviewEl.textContent = "No collateral available to withdraw";
+        withdrawMaxPreviewEl.style.color = "#ffbd70";
+        withdrawMaxBtn.disabled = true;
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // EMERGENCY UNLOCK CHECK
+    // Only shows when: (1) debt is zero AND (2) collateral exists
+    // If you have debt or no collateral, this card won't appear
+    // ═══════════════════════════════════════════════════════════════
+    const emergencyCard = document.getElementById("emergencyCard");
+    const emergencyPreviewEl = document.getElementById("emergencyPreview");
+    const emergencyBtn = document.getElementById("emergencyUnlock");
+    
+    if (i.debt == 0n && i.collateral > 0n) {
+      // Get vault struct to check lastDepositTime
+      const v = await vault.vaults(account);
+      const lastDepositTime = Number(v.lastDepositTime);
+      const currentTime = Math.floor(Date.now() / 1000);
+      const daysSinceDeposit = Math.floor((currentTime - lastDepositTime) / 86400);
+      
+      if (daysSinceDeposit >= 30) {
+        emergencyCard.style.display = "block";
+        emergencyPreviewEl.textContent = `Ready! Can recover ${Number(ethers.formatEther(i.collateral)).toFixed(2)} PLS`;
+        emergencyPreviewEl.style.color = "#00ff9d";
+        emergencyBtn.disabled = false;
+      } else {
+        emergencyCard.style.display = "block";
+        emergencyPreviewEl.textContent = `Available in ${30 - daysSinceDeposit} days`;
+        emergencyPreviewEl.style.color = "#ffbd70";
+        emergencyBtn.disabled = true;
+      }
+    } else {
+      emergencyCard.style.display = "none";
+    }
+
+  } catch (e) {
+    stats.innerHTML = "Failed to load vault";
+    console.error("loadVault error:", e);
+  }
+}
+
+    // Live previews
+    ["usdIn", "usdOut", "usdOneClick"].forEach(id => {
+      document.getElementById(id).addEventListener("input", () => {
+        const usd = parseFloat(document.getElementById(id).value) || 0;
+        const target = document.getElementById(
+          id === "usdOneClick" ? "plsOneClick" : id === "usdIn" ? "plsOut" : "plsIn"
+        );
+        if (!usd || !price) {
+          target.textContent = "";
+          return;
+        }
+        const plsWei = usdToPLS(usd);
+        const plsNum = Number(ethers.formatEther(plsWei));
+        if (id === "usdOneClick") {
+          const mintable = usd / 1.55;
+          target.textContent = `≈ ${plsNum.toLocaleString(undefined, {maximumFractionDigits: 0})} PLS → ${mintable.toFixed(2)} pSunDAI (at 155%)`;
+        } else {
+          target.textContent = `≈ ${plsNum.toLocaleString(undefined, {maximumFractionDigits: 0})} PLS`;
+        }
+      });
+    });
+
+    // ═══════════════════════════════════════════════════════════════════
+    // BUTTON ACTION HANDLERS
+    // All user interaction handlers for deposits, mints, repays, withdrawals
+    // ═══════════════════════════════════════════════════════════════════
+    
+    // DEPOSIT PLS - Add collateral to vault
+    document.getElementById("deposit").onclick = () => withLoading(document.getElementById("deposit"), async () => {
+      const u = parseFloat(document.getElementById("usdIn").value);
+      if (!u || u <= 0) throw new Error("Enter amount");
+      await (await vault.depositPLS({ value: usdToPLS(u) })).wait();
+    });
+    
+    // MINT pSunDAI - Create new pSunDAI against existing collateral
+    document.getElementById("mint").onclick = () => withLoading(document.getElementById("mint"), async () => {
+      const u = parseFloat(document.getElementById("usdMint").value);
+      if (!u || u <= 0) throw new Error("Enter amount");
+      await (await vault.mint(usdToPSun(u))).wait();
+    });
+    
+    // REPAY DEBT - Burn pSunDAI to reduce debt
+    document.getElementById("repay").onclick = () => withLoading(document.getElementById("repay"), async () => {
+      const u = parseFloat(document.getElementById("usdRepay").value);
+      if (!u || u <= 0) throw new Error("Enter amount");
+      await (await token.approve(VAULT, usdToPSun(u))).wait();
+      await (await vault.repay(usdToPSun(u))).wait();
+    });
+    
+    // WITHDRAW PLS - Remove collateral from vault (if safe)
+    document.getElementById("withdraw").onclick = () => withLoading(document.getElementById("withdraw"), async () => {
+      const u = parseFloat(document.getElementById("usdOut").value);
+      if (!u || u <= 0) throw new Error("Enter amount");
+      await (await vault.withdrawPLS(usdToPLS(u))).wait();
+    });
+    
+    // REPAY & AUTO-WITHDRAW - Repay debt and automatically withdraw excess collateral
+    document.getElementById("repayAuto").onclick = () => withLoading(document.getElementById("repayAuto"), async () => {
+  const u = parseFloat(document.getElementById("usdRepayAuto").value);
+  if (!u || u <= 0) throw new Error("Enter amount");
+  await (await token.approve(VAULT, usdToPSun(u))).wait();
+  await (await vault.repayAndAutoWithdraw(usdToPSun(u))).wait();
+});
+    
+    // CHECK LIQUIDATION RISK - Shows if vault is in danger
+    document.getElementById("risk").onclick = () => withLoading(document.getElementById("risk"), async () => {
+      const can = await vault.canLiquidate(account);
+      document.getElementById("riskText").innerHTML = can
+        ? '<span class="risk">LIQUIDATION RISK</span>'
+        : '<span class="safe">You are safe</span>';
+    });
+    
+    // REPAY TO SAFE - Auto-calculate and repay exact amount to reach 150%
+    document.getElementById("repayToSafe").onclick = () => withLoading(document.getElementById("repayToSafe"), async () => {
+  const needed = await vault.repayToHealth(account);
+  if (needed == 0n) throw new Error("Already safe - ratio above 150%");
+  await (await token.approve(VAULT, needed)).wait();
+  await (await vault.autoRepayToHealth()).wait();
+  status.textContent = `Repaid ${ethers.formatEther(needed)} pSunDAI - now at 150%`;
+});
+    
+    // 1-CLICK AUTO MINT - Deposit PLS and mint pSunDAI in one transaction (155% buffer)
+    document.getElementById("oneClickBtn").onclick = () => withLoading(document.getElementById("oneClickBtn"), async () => {
+      const usd = parseFloat(document.getElementById("usdOneClick").value);
+      if (!usd || usd <= 0) throw new Error("Enter amount");
+      const plsValue = usdToPLS(usd);
+      const tx = await vault.depositAndAutoMintPLS({ value: plsValue });
+      await tx.wait();
+      status.textContent = `Minted ${(usd / (Number(minRatio)/10000)).toFixed(2)} pSunDAI at ${(Number(minRatio)/100).toFixed(1)}%`;
+    });
+
+    // ═══════════════════════════════════════════════════════════════════
+    // NEW BUTTON HANDLERS (v5.6)
+    // Advanced features: Mint Max Safe, Withdraw Max Safe, Emergency Unlock
+    // ═══════════════════════════════════════════════════════════════════
+    
+    // MINT MAX SAFE - Mint maximum pSunDAI while staying at exactly 150% ratio
+    document.getElementById("mintMaxSafe").onclick = () => withLoading(document.getElementById("mintMaxSafe"), async () => {
+      const maxMintable = await vault.maxMint(account);
+      if (maxMintable == 0n) throw new Error("Need collateral first - use 'Deposit PLS' or '1-Click Auto Mint' above");
+      await (await vault.mint(maxMintable)).wait();
+      status.textContent = `Minted ${Number(ethers.formatEther(maxMintable)).toFixed(2)} pSunDAI - vault at safe 150% ratio`;
+    });
+
+    // WITHDRAW MAX SAFE - Withdraw maximum PLS while staying at exactly 150% ratio (profit taking)
+    document.getElementById("withdrawMaxSafe").onclick = () => withLoading(document.getElementById("withdrawMaxSafe"), async () => {
+      const info = await vault.vaultInfo(account);
+      const v = await vault.vaults(account);
+      
+      // Check cooldown (5 minutes = 300 seconds)
+      const currentTime = Math.floor(Date.now() / 1000);
+      const lastDepositTime = Number(v.lastDepositTime);
+      const cooldownRemaining = 300 - (currentTime - lastDepositTime);
+      
+      if (cooldownRemaining > 0) {
+        const minutes = Math.ceil(cooldownRemaining / 60);
+        throw new Error(`Security cooldown active - please wait ${minutes} more minute${minutes === 1 ? '' : 's'}`);
+      }
+      
+      if (info.debt == 0n) {
+        // No debt - withdraw everything
+        if (info.collateral == 0n) throw new Error("No collateral to withdraw");
+        await (await vault.withdrawPLS(info.collateral)).wait();
+        const plsAmount = Number(ethers.formatEther(info.collateral));
+        const usdValue = plsAmount * (Number(info.price) / 1e18);
+        status.textContent = `Withdrew all ${plsAmount.toFixed(2)} PLS (~$${usdValue.toFixed(2)}) - vault closed!`;
+      } else {
+        // Has debt - calculate safe withdrawal
+        const p = info.price > 0n ? info.price : (await oracle.peekPriceView())[0];
+        if (p == 0n) throw new Error("Oracle price unavailable - try again in a moment");
+        
+        const requiredCollateral = (info.debt * 150n * DECIMALS) / (p * 100n);
+        const withdrawable = info.collateral > requiredCollateral ? info.collateral - requiredCollateral : 0n;
+        
+        if (withdrawable <= 0n) throw new Error("Already at minimum safe collateral (150%) - repay some debt first to withdraw more");
+        
+        await (await vault.withdrawPLS(withdrawable)).wait();
+        const withdrawnNum = Number(ethers.formatEther(withdrawable));
+        const withdrawnUSD = withdrawnNum * (Number(p) / 1e18);
+        status.textContent = `Withdrew ${withdrawnNum.toFixed(2)} PLS (~$${withdrawnUSD.toFixed(2)}) - vault still safe at 150%!`;
+      }
+    });
+
+    // EMERGENCY UNLOCK - Recover all collateral after 30 days with zero debt (safety feature)
+    document.getElementById("emergencyUnlock").onclick = () => withLoading(document.getElementById("emergencyUnlock"), async () => {
+      const info = await vault.vaultInfo(account);
+      if (info.debt > 0n) throw new Error("Must repay all debt first - use 'Repay Debt' or 'Repay & Withdraw Excess' above");
+      if (info.collateral == 0n) throw new Error("No collateral to unlock");
+      
+      await (await vault.emergencyUnlock()).wait();
+      const plsAmount = Number(ethers.formatEther(info.collateral));
+      const usdValue = plsAmount * (Number(info.price) / 1e18);
+      status.textContent = `Emergency unlock successful! Recovered ${plsAmount.toFixed(2)} PLS (~$${usdValue.toFixed(2)})`;
+    });
+
+    walletBtn.onclick = connectWallet;
+
+    // Nebula Background
+    const bg = document.getElementById("bg");
+    let t = 0, mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
+    function animate() {
+      t += 0.004;
+      mouseX += (targetX - mouseX) * 0.05;
+      mouseY += (targetY - mouseY) * 0.05;
+      const x1 = 25 + Math.sin(t * 0.7) * 20 + mouseX * 15;
+      const y1 = 25 + Math.cos(t * 0.8) * 15 + mouseY * 10;
+      const x2 = 75 + Math.cos(t * 0.5) * 18 - mouseX * 12;
+      const y2 = 70 + Math.sin(t * 0.6) * 14 - mouseY * 10;
+      const x3 = 50 + Math.sin(t * 0.3) * 15 + mouseX * 10;
+      const y3 = 50 + Math.cos(t * 0.4) * 12 + mouseY * 10;
+      bg.style.background = `
+        radial-gradient(circle at ${x1}% ${y1}%, rgba(255,200,100,0.20), transparent 65%),
+        radial-gradient(circle at ${x2}% ${y2}%, rgba(255,130,40,0.16), transparent 65%),
+        radial-gradient(circle at ${x3}% ${y3}%, rgba(120,0,180,0.22), transparent 75%)
+      `;
+      requestAnimationFrame(animate);
+    }
+    window.addEventListener("mousemove", e => {
+      targetX = (e.clientX / innerWidth - 0.5);
+      targetY = (e.clientY / innerHeight - 0.5);
+    });
+    window.addEventListener("deviceorientation", e => {
+      if (e.gamma && e.beta) { targetX = e.gamma/45; targetY = e.beta/45; }
+    });
+    animate();
+
+    // HOW TO POPUP
+    const howToBtn = document.getElementById("howToBtn");
+    const modal = document.createElement("div");
+    modal.className = "modal";
+    modal.innerHTML = `
+  <div class="modal-content">
+    <span class="close">x</span>
+    <h3>🚀 How to Use the SunDAI Vault (PulseChain)</h3>
+
+    <ol>
+      <li><strong>Connect Wallet:</strong> Click top right. Use MetaMask or Rabby. Wallet auto-switches to PulseChain.</li>
+
+      <li><strong>Check Price:</strong> Top shows live PLS/USD price from the on-chain oracle. Updates automatically.  
+      Click <strong>"Wake Oracle"</strong> if needed (30-min cooldown between manual wakes).</li>
+
+      <li><strong>Deposit PLS:</strong> Enter USD value and click <strong>"Deposit PLS"</strong> to lock collateral.</li>
+
+      <li><strong>Mint pSunDAI:</strong> Enter USD amount to create stablecoins.  
+      System enforces <strong>150% minimum ratio</strong> automatically.</li>
+
+      <li><strong>1-Click Auto Mint (155%) — EASIEST:</strong>  
+      Deposit + mint in ONE transaction with a built-in safety buffer.</li>
+
+      <li><strong>Monitor Your Vault:</strong>  
+      Collateral, Debt, and Ratio update live.<br>
+      🟢 Safe (150%+)  
+      🟡 Warning (130–150%)  
+      🔴 Danger (<110% = liquidatable)</li>
+
+      <li><strong>Repay Debt:</strong> Burn pSunDAI anytime. Instant. No cooldown.</li>
+
+      <li><strong>Withdraw PLS:</strong> Withdraw profits if your ratio stays above 150%.</li>
+
+      <li><strong>Built-In Safety Protections:</strong><br>
+        • ⏰ 5-minute cooldown after deposits (anti-attack protection)<br>
+        • 🛟 30-day emergency unlock if vault has zero debt<br>
+        • Minting & repaying are instant — no waiting!
+      </li>
+    </ol>
+
+    <h4 style="margin-top:18px">⚠️ Liquidation Risk</h4>
+    If your ratio drops below <strong>110%</strong>, liquidators can repay your debt and receive your PLS at a discount.
+
+    <br><br><strong>How to stay safe:</strong>
+    <ul style="margin-top:6px">
+      <li>Keep ratio above 150%</li>
+      <li>Add PLS during price drops</li>
+      <li>Repay some pSunDAI to improve ratio</li>
+    </ul>
+
+    <h4 style="margin-top:18px">💡 Pro Tips</h4>
+    <ul>
+      <li>Start with 155% ratio to be extra safe</li>
+      <li>Use <strong>"Mint Max Safe"</strong> & <strong>"Withdraw Max Safe"</strong></li>
+      <li>Repay before withdrawing when exiting</li>
+    </ul>
+
+    <p style="margin-top:16px">
+      <strong>Important:</strong> SunDAI is <strong>immutable, ownerless software</strong>.  
+      No admin keys. No upgrades. No customer support. You control everything.
+    </p>
+  </div>
+`;
+    document.body.appendChild(modal);
+    howToBtn.onclick = () => modal.style.display = "flex";
+    modal.onclick = e => {
+      if (e.target.className === "modal" || e.target.className === "close") modal.style.display = "none";
+    };
+
+    // ═══════════════════════════════════════════════════════════════════
+    // ORACLE MANUAL POKE
+    // Manually refresh oracle price (30-minute cooldown between pokes)
+    // ═══════════════════════════════════════════════════════════════════
+    document.getElementById("pokeBtn").onclick = async () => {
+      const el = document.getElementById("safetyStatus");
+      try {
+        if (!signer) throw new Error("Connect wallet first");
+        el.textContent = "Sending wake-up...";
+        el.style.color = "#ffd700";
+        const tx = await oracle.connect(signer).poke();
+        await tx.wait();
+        el.textContent = "Oracle awakened!";
+        el.style.color = "#00ff9d";
+        setTimeout(checkOracleHealth, 3000);
+      } catch (e) {
+        el.textContent = e.message || "Failed";
+        el.style.color = "#ff3366";
+      }
+    };
+
+    // Single clean load handler: auto-connect
+    window.addEventListener("load", () => {
+      connectWallet(); // your original auto-connect
+
+      // Service Worker for PWA (Progressive Web App) - optional
+      // Uncomment when you have sw.js file deployed
+      /*
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("sw.js")
+          .then(reg => console.log("Service Worker registered", reg.scope))
+          .catch(err => console.warn("SW registration failed:", err));
+      }
+      */
+    });
+  </script>
+</body>
+</html>
