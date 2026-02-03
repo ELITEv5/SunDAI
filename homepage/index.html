@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SunDAI | Navigate the Star Systems</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --sun-gold: #FFB627;
+            --sun-orange: #FF6B35;
+            --sun-red: #FF3E3E;
+            --nebula-purple: #8B5CF6;
+            --nebula-blue: #3B82F6;
+            --deep-space: #000000;
+            --star-white: #F7F7FF;
+        }
+
+        body {
+            font-family: 'Space Mono', monospace;
+            background: var(--deep-space);
+            color: var(--star-white);
+            overflow: hidden;
+            height: 100vh;
+            cursor: crosshair;
+        }
+
+        /* Deep Space Background */
+        .space-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, #0a0a1a 0%, #000000 100%);
+        }
+
+        /* Starfield Background */
+        .starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 4s infinite ease-in-out;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* Nebula Effects */
+        .nebula {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.15;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .nebula-1 {
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, var(--nebula-purple), transparent);
+            top: -200px;
+            left: -200px;
+            animation: nebulaDrift 30s infinite ease-in-out;
+        }
+
+        .nebula-2 {
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, var(--nebula-blue), transparent);
+            bottom: -100px;
+            right: -100px;
+            animation: nebulaDrift 25s infinite ease-in-out reverse;
+        }
+
+        @keyframes nebulaDrift {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(100px, 100px); }
+        }
+
+        /* Logo Header */
+        .header {
+            position: fixed;
+            top: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            animation: fadeIn 2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(-30px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        .logo-image {
+            height: 60px;
+            width: 60px;
+            filter: drop-shadow(0 0 30px rgba(255, 182, 39, 0.8));
+            animation: logoFloat 4s ease-in-out infinite;
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        .logo-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--sun-gold), var(--sun-orange), var(--sun-red));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 3px;
+        }
+
+        /* Star Systems Container */
+        .star-systems {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Individual Star System */
+        .star-system {
+            position: absolute;
+            cursor: pointer;
+            transition: all 0.5s ease;
+        }
+
+        .star-system-1 {
+            top: 30%;
+            left: 25%;
+            animation: orbit1 20s infinite ease-in-out;
+        }
+
+        .star-system-2 {
+            top: 30%;
+            right: 25%;
+            animation: orbit2 25s infinite ease-in-out;
+        }
+
+        .star-system-3 {
+            bottom: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: orbit3 30s infinite ease-in-out;
+        }
+
+        @keyframes orbit1 {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(30px, -20px); }
+        }
+
+        @keyframes orbit2 {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-20px, 30px); }
+        }
+
+        @keyframes orbit3 {
+            0%, 100% { transform: translateX(-50%) translate(0, 0); }
+            50% { transform: translateX(-50%) translate(20px, -30px); }
+        }
+
+        /* Star Orb */
+        .star-orb {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Different colored stars */
+        .star-system-1 .star-orb {
+            background: radial-gradient(circle at 30% 30%, #FFFFFF, #FFFACD, #FFD700);
+            box-shadow: 
+                0 0 40px rgba(255, 255, 255, 0.8),
+                0 0 80px rgba(255, 250, 205, 0.6),
+                0 0 120px rgba(255, 215, 0, 0.4),
+                inset 0 0 40px rgba(255, 255, 255, 0.5);
+            animation: pulse1 3s ease-in-out infinite;
+        }
+
+        .star-system-2 .star-orb {
+            background: radial-gradient(circle at 30% 30%, #FFFFFF, #FFFACD, #FFD700);
+            box-shadow: 
+                0 0 40px rgba(255, 255, 255, 0.8),
+                0 0 80px rgba(255, 250, 205, 0.6),
+                0 0 120px rgba(255, 215, 0, 0.4),
+                inset 0 0 40px rgba(255, 255, 255, 0.5);
+            animation: pulse2 3.5s ease-in-out infinite;
+        }
+
+        .star-system-3 .star-orb {
+            background: radial-gradient(circle at 30% 30%, #FFFFFF, #FFFACD, #FFD700);
+            box-shadow: 
+                0 0 40px rgba(255, 255, 255, 0.8),
+                0 0 80px rgba(255, 250, 205, 0.6),
+                0 0 120px rgba(255, 215, 0, 0.4),
+                inset 0 0 40px rgba(255, 255, 255, 0.5);
+            animation: pulse3 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse1 {
+            0%, 100% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.1); filter: brightness(1.3); }
+        }
+
+        @keyframes pulse2 {
+            0%, 100% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.15); filter: brightness(1.3); }
+        }
+
+        @keyframes pulse3 {
+            0%, 100% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.08); filter: brightness(1.3); }
+        }
+
+        /* Hover effects */
+        .star-system:hover .star-orb {
+            transform: scale(1.3);
+            filter: brightness(1.5);
+        }
+
+        .star-system-1:hover .star-orb {
+            box-shadow: 
+                0 0 60px rgba(255, 255, 255, 1),
+                0 0 120px rgba(255, 250, 205, 0.8),
+                0 0 180px rgba(255, 215, 0, 0.6);
+        }
+
+        .star-system-2:hover .star-orb {
+            box-shadow: 
+                0 0 60px rgba(255, 255, 255, 1),
+                0 0 120px rgba(255, 250, 205, 0.8),
+                0 0 180px rgba(255, 215, 0, 0.6);
+        }
+
+        .star-system-3:hover .star-orb {
+            box-shadow: 
+                0 0 60px rgba(255, 255, 255, 1),
+                0 0 120px rgba(255, 250, 205, 0.8),
+                0 0 180px rgba(255, 215, 0, 0.6);
+        }
+
+        /* Info Panel */
+        .info-panel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(10, 10, 26, 0.95);
+            backdrop-filter: blur(20px);
+            border: 2px solid;
+            border-radius: 20px;
+            padding: 3rem;
+            width: 500px;
+            max-width: 90vw;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 50;
+        }
+
+        .star-system:hover .info-panel {
+            opacity: 1;
+            pointer-events: all;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .star-system-1 .info-panel {
+            border-color: var(--sun-gold);
+            box-shadow: 0 20px 60px rgba(255, 182, 39, 0.3);
+        }
+
+        .star-system-2 .info-panel {
+            border-color: var(--nebula-purple);
+            box-shadow: 0 20px 60px rgba(139, 92, 246, 0.3);
+        }
+
+        .star-system-3 .info-panel {
+            border-color: #EC4899;
+            box-shadow: 0 20px 60px rgba(236, 72, 153, 0.3);
+        }
+
+        .system-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .star-system-1 .system-name {
+            background: linear-gradient(135deg, var(--sun-gold), var(--sun-orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .star-system-2 .system-name {
+            background: linear-gradient(135deg, var(--nebula-purple), var(--nebula-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .star-system-3 .system-name {
+            background: linear-gradient(135deg, #EC4899, #F43F5E);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .system-type {
+            font-size: 0.9rem;
+            color: rgba(247, 247, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 1.5rem;
+        }
+
+        .system-description {
+            color: rgba(247, 247, 255, 0.9);
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+            font-size: 1rem;
+        }
+
+        .system-features {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+
+        .system-features li {
+            padding: 0.5rem 0;
+            color: rgba(247, 247, 255, 0.8);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .system-features li::before {
+            content: '▸';
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .star-system-1 .system-features li::before {
+            color: var(--sun-gold);
+        }
+
+        .star-system-2 .system-features li::before {
+            color: var(--nebula-purple);
+        }
+
+        .star-system-3 .system-features li::before {
+            color: #EC4899;
+        }
+
+        .travel-button {
+            display: block;
+            width: 100%;
+            padding: 1.2rem 2rem;
+            background: linear-gradient(135deg, var(--sun-gold), var(--sun-orange));
+            color: var(--deep-space);
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            box-shadow: 0 10px 30px rgba(255, 182, 39, 0.4);
+        }
+
+        .travel-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(255, 182, 39, 0.6);
+        }
+
+        .travel-button:active {
+            transform: translateY(-1px);
+        }
+
+        .star-system-2 .travel-button {
+            background: linear-gradient(135deg, var(--nebula-purple), var(--nebula-blue));
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+        }
+
+        .star-system-2 .travel-button:hover {
+            box-shadow: 0 15px 40px rgba(139, 92, 246, 0.6);
+        }
+
+        .star-system-3 .travel-button {
+            background: linear-gradient(135deg, #EC4899, #F43F5E);
+            box-shadow: 0 10px 30px rgba(236, 72, 153, 0.4);
+        }
+
+        .star-system-3 .travel-button:hover {
+            box-shadow: 0 15px 40px rgba(236, 72, 153, 0.6);
+        }
+
+        /* Instructions */
+        .instructions {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            color: rgba(247, 247, 255, 0.5);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            z-index: 100;
+            animation: fadeIn 3s ease-out;
+            animation-delay: 1s;
+            opacity: 0;
+            animation-fill-mode: forwards;
+        }
+
+        .instructions-highlight {
+            color: var(--sun-gold);
+            font-weight: 700;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                top: 1rem;
+                gap: 0.5rem;
+            }
+
+            .logo-image {
+                height: 40px;
+                width: 40px;
+            }
+
+            .logo-text {
+                font-size: 1.5rem;
+            }
+
+            .star-system {
+                position: relative !important;
+                top: auto !important;
+                left: auto !important;
+                right: auto !important;
+                bottom: auto !important;
+                transform: none !important;
+                animation: none !important;
+            }
+
+            .star-systems {
+                flex-direction: column;
+                justify-content: center;
+                gap: 3rem;
+                padding: 6rem 1rem 4rem;
+                overflow-y: auto;
+                height: 100%;
+            }
+
+            .star-orb {
+                width: 100px;
+                height: 100px;
+            }
+
+            .info-panel {
+                position: relative;
+                transform: none !important;
+                opacity: 1;
+                pointer-events: all;
+                margin-top: 1rem;
+                padding: 2rem;
+            }
+
+            .star-system:hover .info-panel {
+                transform: none !important;
+            }
+
+            .instructions {
+                display: none;
+            }
+        }
+
+        /* Connection Lines (subtle) */
+        .connection-line {
+            position: fixed;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 182, 39, 0.2), transparent);
+            pointer-events: none;
+            z-index: 5;
+            opacity: 0;
+            animation: lineGlow 4s ease-in-out infinite;
+        }
+
+        @keyframes lineGlow {
+            0%, 100% { opacity: 0.1; }
+            50% { opacity: 0.3; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Deep Space Background -->
+    <div class="space-container"></div>
+
+    <!-- Starfield -->
+    <div class="starfield" id="starfield"></div>
+
+    <!-- Nebula Effects -->
+    <div class="nebula nebula-1"></div>
+    <div class="nebula nebula-2"></div>
+
+    <!-- Logo Header -->
+    <div class="header">
+        <img src="sundailogo.png" alt="SunDAI" class="logo-image">
+        <div class="logo-text">SunDAI</div>
+    </div>
+
+    <!-- Star Systems -->
+    <div class="star-systems">
+        <!-- Minting Vault Star -->
+        <div class="star-system star-system-1">
+            <div class="star-orb"></div>
+            <div class="info-panel">
+                <h2 class="system-name">Minting Vault</h2>
+                <p class="system-type">Core CDP System</p>
+                <p class="system-description">
+                    Lock PLS collateral and mint pSunDAI. The heart of the autonomous stable asset system with self-healing oracle and 4-hour flash crash protection.
+                </p>
+                <ul class="system-features">
+                    <li>Deposit PLS, mint pSunDAI at 150% ratio</li>
+                    <li>One-click auto-mint at safe 155%</li>
+                    <li>2-5% graduated liquidation bonus</li>
+                    <li>Self-healing oracle with confirmation</li>
+                </ul>
+                <a href="https://ipfs.io/ipfs/bafybeiarilukzbmiqj35ml2jqagldmmyb7f7jsi3c3g5ted4arjdvubo4e/index.html" 
+                   class="travel-button" 
+                   target="_blank">
+                    Take Me To This Star System →
+                </a>
+            </div>
+        </div>
+
+        <!-- LP Staking Star -->
+        <div class="star-system star-system-2">
+            <div class="star-orb"></div>
+            <div class="info-panel">
+                <h2 class="system-name">LP Staking</h2>
+                <p class="system-type">Auto-Compound System</p>
+                <p class="system-description">
+                    Stake pSunDAI/PLS LP tokens to earn auto-compounded trading fees. Permissionless harvest, zero external rewards needed.
+                </p>
+                <ul class="system-features">
+                    <li>Auto-compound trading fees (0.3%)</li>
+                    <li>Deposit LP, receive sSunDAI receipt</li>
+                    <li>Withdraw anytime (no lockup)</li>
+                    <li>sSunDAI appreciates vs LP over time</li>
+                </ul>
+                <a href="https://ipfs.io/ipfs/bafybeibpld7ezzrdpsrivzslgn6fltvdrwhxdco45dloos4czyftvpr6ke/index.html" 
+                   class="travel-button" 
+                   target="_blank">
+                    Take Me To This Star System →
+                </a>
+            </div>
+        </div>
+
+        <!-- Destiny Vault Star -->
+        <div class="star-system star-system-3">
+            <div class="star-orb"></div>
+            <div class="info-panel">
+                <h2 class="system-name">Destiny Vault</h2>
+                <p class="system-type">Bootstrap System</p>
+                <p class="system-description">
+                    The black hole that bootstraps pSunDAI. Stake SunDAI or LP, when SunDAI hits $1, everything converts to pSunDAI vault collateral.
+                </p>
+                <ul class="system-features">
+                    <li>Stake SunDAI (1x) or LP (1.5x weight)</li>
+                    <li>Triggers when SunDAI reaches $1</li>
+                    <li>Converts to PLS → Vault collateral</li>
+                    <li>Claim proportional pSunDAI rewards</li>
+                </ul>
+                <a href="https://ipfs.io/ipfs/bafybeia5s47wptey5jlaqlzevz3b2hfgnpfukha2krfq5ibliyodebrkbq/index.html" 
+                   class="travel-button" 
+                   target="_blank">
+                    Take Me To This Star System →
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="instructions">
+        <span class="instructions-highlight">Hover</span> over the stars to explore the systems
+    </div>
+
+    <script>
+        // Generate dense starfield
+        function createStarfield() {
+            const starfield = document.getElementById('starfield');
+            const starCount = 300;
+
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                
+                // Random size (small to tiny)
+                const size = Math.random() * 2 + 0.5;
+                star.style.width = size + 'px';
+                star.style.height = size + 'px';
+                
+                // Random position
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                
+                // Random animation delay and duration
+                star.style.animationDelay = Math.random() * 4 + 's';
+                star.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                
+                starfield.appendChild(star);
+            }
+        }
+
+        // Parallax effect on mouse move
+        document.addEventListener('mousemove', (e) => {
+            const mouseX = e.clientX / window.innerWidth - 0.5;
+            const mouseY = e.clientY / window.innerHeight - 0.5;
+
+            // Move nebulas
+            document.querySelectorAll('.nebula').forEach((nebula, index) => {
+                const speed = (index + 1) * 15;
+                nebula.style.transform = `translate(${mouseX * speed}px, ${mouseY * speed}px)`;
+            });
+
+            // Subtle parallax on stars
+            document.querySelectorAll('.star').forEach((star) => {
+                const speed = Math.random() * 20;
+                const currentLeft = parseFloat(star.style.left);
+                const currentTop = parseFloat(star.style.top);
+                star.style.transform = `translate(${mouseX * speed}px, ${mouseY * speed}px)`;
+            });
+        });
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', () => {
+            createStarfield();
+        });
+
+        // Prevent info panels from closing when clicking inside them
+        document.querySelectorAll('.info-panel').forEach(panel => {
+            panel.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+        });
+    </script>
+</body>
+</html>
