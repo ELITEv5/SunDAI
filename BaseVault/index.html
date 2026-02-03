@@ -752,6 +752,27 @@
       console.log("Amount to mint:", u, "bSunDAI");
       console.log("Mint amount (Wei):", mintAmount.toString());
       
+      // CRITICAL: Check isUXSafe() first
+      const uxSafe = await vault.isUXSafe();
+      console.log("Contract isUXSafe():", uxSafe ? "✓ TRUE" : "✗ FALSE");
+      
+      if (!uxSafe) {
+        // Diagnose why
+        const [oraclePrice, oracleTimestamp] = await oracle.peekPrice();
+        const oracleAge = Math.floor(Date.now() / 1000) - Number(oracleTimestamp);
+        const sysHealth = await vault.systemHealth();
+        const sysHealthNum = Number(sysHealth) / 1;
+        
+        console.log("isUXSafe() failed because:");
+        console.log("  Oracle price:", ethers.utils.formatEther(oraclePrice));
+        console.log("  Oracle age:", oracleAge, "seconds (", Math.floor(oracleAge / 60), "minutes )");
+        console.log("  Oracle stale?", oracleAge > 300 ? "⚠️ YES" : "✓ NO");
+        console.log("  System health:", sysHealthNum.toFixed(2) + "%");
+        console.log("  System health >= 130%?", sysHealthNum >= 130 ? "✓ YES" : "✗ NO");
+        
+        throw new Error(`Contract isUXSafe() returns false. Oracle age: ${Math.floor(oracleAge / 60)}min (stale if >5min). System health: ${sysHealthNum.toFixed(0)}% (needs ≥130%). Try depositing $0.10 first to advance oracle, then mint.`);
+      }
+      
       // Get current vault and system state
       const [vaultInfo, totalColl, totalDebt, systemHealth] = await Promise.all([
         vault.vaultInfo(account),
@@ -775,6 +796,21 @@
       console.log("  Total collateral:", ethers.utils.formatEther(totalColl), "ETH");
       console.log("  Total debt:", ethers.utils.formatEther(totalDebt), "bSunDAI");
       console.log("  System health:", Number(systemHealth) / 1, "%");
+      
+      // Check oracle staleness (critical for isUXSafe())
+      const [oraclePrice, oracleTimestamp] = await oracle.peekPrice();
+      const oracleAge = Math.floor(Date.now() / 1000) - Number(oracleTimestamp);
+      const MAX_ORACLE_STALENESS = 300; // 5 minutes
+      
+      console.log("Oracle status:");
+      console.log("  Oracle price:", ethers.utils.formatEther(oraclePrice));
+      console.log("  Oracle timestamp:", new Date(Number(oracleTimestamp) * 1000).toLocaleString());
+      console.log("  Oracle age:", oracleAge, "seconds");
+      console.log("  Oracle stale?", oracleAge > MAX_ORACLE_STALENESS ? "⚠️ YES (> 5 min)" : "✓ NO");
+      
+      if (oracleAge > MAX_ORACLE_STALENESS) {
+        throw new Error(`Oracle is stale (${Math.floor(oracleAge / 60)} minutes old). The contract's isUXSafe() check will fail. Solution: Use "Deposit & Auto Mint" button instead (it advances oracle) OR wait ${300 - oracleAge} seconds for oracle to update.`);
+      }
       
       // Calculate after mint
       const newYourDebt = yourDebt + u;
@@ -886,6 +922,27 @@
       console.log("ETH price:", ethers.utils.formatEther(price));
       console.log("Expected mint:", expectedMint, "bSunDAI");
       console.log("Expected ratio: 155%");
+      
+      // CRITICAL: Check isUXSafe() first
+      const uxSafe = await vault.isUXSafe();
+      console.log("Contract isUXSafe():", uxSafe ? "✓ TRUE" : "✗ FALSE");
+      
+      if (!uxSafe) {
+        // Diagnose why
+        const [oraclePrice, oracleTimestamp] = await oracle.peekPrice();
+        const oracleAge = Math.floor(Date.now() / 1000) - Number(oracleTimestamp);
+        const sysHealth = await vault.systemHealth();
+        const sysHealthNum = Number(sysHealth) / 1;
+        
+        console.log("isUXSafe() failed because:");
+        console.log("  Oracle price:", ethers.utils.formatEther(oraclePrice));
+        console.log("  Oracle age:", oracleAge, "seconds (", Math.floor(oracleAge / 60), "minutes )");
+        console.log("  Oracle stale?", oracleAge > 300 ? "⚠️ YES" : "✓ NO");
+        console.log("  System health:", sysHealthNum.toFixed(2) + "%");
+        console.log("  System health >= 130%?", sysHealthNum >= 130 ? "✓ YES" : "✗ NO");
+        
+        throw new Error(`Contract isUXSafe() check failed. Oracle age: ${Math.floor(oracleAge / 60)}min ${oracleAge % 60}sec (max 5min). System health: ${sysHealthNum.toFixed(0)}%. The oracle needs to be updated by someone interacting with the contract.`);
+      }
       
       // Check current system state
       const [totalColl, totalDebt, systemHealth] = await Promise.all([
