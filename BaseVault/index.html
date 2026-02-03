@@ -745,7 +745,63 @@
       if (!u || u <= 0) throw new Error("Please enter a valid USD amount to mint");
       
       const mintAmount = usdToBSun(u);
-      console.log("Mint - USD:", u, "bSunDAI:", ethers.utils.formatEther(mintAmount));
+      
+      console.log("═══════════════════════════════════");
+      console.log("MINT DIAGNOSTICS");
+      console.log("═══════════════════════════════════");
+      console.log("Amount to mint:", u, "bSunDAI");
+      console.log("Mint amount (Wei):", mintAmount.toString());
+      
+      // Get current vault and system state
+      const [vaultInfo, totalColl, totalDebt, systemHealth] = await Promise.all([
+        vault.vaultInfo(account),
+        vault.totalCollateral(),
+        vault.totalDebt(),
+        vault.systemHealth()
+      ]);
+      
+      const yourColl = Number(ethers.utils.formatEther(vaultInfo.collateral));
+      const yourDebt = Number(ethers.utils.formatEther(vaultInfo.debt));
+      const yourCollUSD = Number(ethers.utils.formatEther(vaultInfo.collateralUSD));
+      const yourRatio = Number(vaultInfo.ratio);
+      const ethPrice = Number(ethers.utils.formatEther(price));
+      
+      console.log("Your current vault:");
+      console.log("  Collateral:", yourColl, "ETH ($" + yourCollUSD.toFixed(2) + ")");
+      console.log("  Debt:", yourDebt, "bSunDAI");
+      console.log("  Ratio:", yourRatio.toFixed(2) + "%");
+      
+      console.log("Current system:");
+      console.log("  Total collateral:", ethers.utils.formatEther(totalColl), "ETH");
+      console.log("  Total debt:", ethers.utils.formatEther(totalDebt), "bSunDAI");
+      console.log("  System health:", Number(systemHealth) / 1, "%");
+      
+      // Calculate after mint
+      const newYourDebt = yourDebt + u;
+      const newYourRatio = (yourCollUSD / newYourDebt) * 100;
+      
+      const newTotalDebt = totalDebt.add(mintAmount);
+      const newSystemHealth = totalColl.mul(price).mul(100).div(newTotalDebt.mul(ethers.BigNumber.from("1000000000000000000")));
+      
+      console.log("After minting", u, "bSunDAI:");
+      console.log("  Your new debt:", newYourDebt.toFixed(6), "bSunDAI");
+      console.log("  Your new ratio:", newYourRatio.toFixed(2) + "%");
+      console.log("  System new debt:", ethers.utils.formatEther(newTotalDebt), "bSunDAI");
+      console.log("  System new health:", Number(newSystemHealth) / 1, "%");
+      
+      // Check thresholds
+      console.log("Checks:");
+      console.log("  Your ratio >= 150%?", newYourRatio >= 150 ? "✓ PASS" : "✗ FAIL");
+      console.log("  System health >= 150%?", Number(newSystemHealth) / 1 >= 150 ? "✓ PASS" : "✗ FAIL");
+      console.log("═══════════════════════════════════");
+      
+      if (newYourRatio < 150) {
+        throw new Error(`This would drop your vault to ${newYourRatio.toFixed(2)}% (needs 150%+). Try minting less.`);
+      }
+      
+      if (Number(newSystemHealth) / 1 < 150) {
+        throw new Error(`This would drop system health to ${(Number(newSystemHealth) / 1).toFixed(2)}% (needs 150%+). Contract safety check. Try minting less or deposit more collateral first.`);
+      }
       
       const tx = await vault.mint(mintAmount);
       console.log("Mint TX hash:", tx.hash);
