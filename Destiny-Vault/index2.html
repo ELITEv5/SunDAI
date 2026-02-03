@@ -500,10 +500,82 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
         }
+/* ─────────────────────────────
+   ☀️ SunDAI Stellar Cursor Field
+   ───────────────────────────── */
+
+#sundaiCursorToggle {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 9999;
+    background: linear-gradient(135deg, #fff, #ffd700);
+    color: #000;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 999px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    box-shadow: 0 0 10px rgba(255,215,0,0.5);
+}
+
+/* subtle golden plasma mote */
+.sundai-mote {
+    position: fixed;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    pointer-events: none;
+    background: radial-gradient(circle, #ffffff 0%, #ffe066 50%, rgba(255,215,0,0.15) 75%, transparent);
+    box-shadow: 0 0 12px rgba(255,215,0,0.4);
+    animation: moteFade 1.4s ease-out forwards;
+    will-change: transform, opacity;
+}
+
+/* gravitational lens ripple */
+.lens-ripple {
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    background: radial-gradient(circle, rgba(255,255,255,0.6), rgba(255,215,0,0.2), transparent);
+    filter: blur(4px);
+    animation: rippleExpand 800ms ease-out forwards;
+}
+
+/* micro blackhole */
+.blackhole-core {
+    position: fixed;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    pointer-events: none;
+    background: radial-gradient(circle, #000 40%, #111 70%, transparent);
+    box-shadow: 0 0 30px rgba(255,215,0,0.6);
+    animation: collapseCore 600ms ease-out forwards;
+}
+
+@keyframes moteFade {
+    0%   { transform: scale(1) translateY(0); opacity: 0.9; }
+    100% { transform: scale(0.2) translateY(-20px); opacity: 0; }
+}
+
+@keyframes rippleExpand {
+    0%   { width: 10px; height: 10px; opacity: 0.7; }
+    100% { width: 140px; height: 140px; opacity: 0; }
+}
+
+@keyframes collapseCore {
+    0%   { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0); opacity: 0; }
+}
+
     </style>
 </head>
 <body>
     <canvas id="canvas"></canvas>
+    <button id="sundaiCursorToggle">☀️ Energy Field</button>
+
     
     <!-- Wallet Button - Fixed Position -->
     <button class="wallet-btn" id="walletBtn" onclick="handleWalletClick()">Connect Wallet</button>
@@ -1443,6 +1515,60 @@ animateNebula(0);
             alert("CRITICAL ERROR: " + error.message + "\n\nEthers.js library failed to load. Please check your internet connection.");
             console.error(error);
         });
+        /* ─────────────────────────────
+   ☀️ SunDAI Stellar Cursor Logic
+   ───────────────────────────── */
+
+let sundaiOn = false;
+const toggleCursor = document.getElementById("sundaiCursorToggle");
+
+toggleCursor.addEventListener("click", () => {
+    sundaiOn = !sundaiOn;
+    toggleCursor.textContent = sundaiOn ? "☀️ Field Active" : "☀️ Energy Field";
+});
+
+let lastX = 0, lastY = 0;
+
+document.addEventListener("mousemove", e => {
+    if (!sundaiOn) return;
+
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
+    lastX = e.clientX;
+    lastY = e.clientY;
+
+    const mote = document.createElement("div");
+    mote.className = "sundai-mote";
+    mote.style.left = (e.clientX - dx * 0.4) + "px";
+    mote.style.top  = (e.clientY - dy * 0.4) + "px";
+
+    document.body.appendChild(mote);
+    setTimeout(() => mote.remove(), 1400);
+});
+
+/* click blackhole effect */
+document.addEventListener("click", e => {
+    if (!sundaiOn) return;
+
+    const core = document.createElement("div");
+    core.className = "blackhole-core";
+    core.style.left = (e.clientX - 9) + "px";
+    core.style.top  = (e.clientY - 9) + "px";
+
+    const ripple = document.createElement("div");
+    ripple.className = "lens-ripple";
+    ripple.style.left = e.clientX + "px";
+    ripple.style.top  = e.clientY + "px";
+
+    document.body.appendChild(core);
+    document.body.appendChild(ripple);
+
+    setTimeout(() => {
+        core.remove();
+        ripple.remove();
+    }, 800);
+});
+
     </script>
 </body>
 </html>
