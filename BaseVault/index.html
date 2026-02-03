@@ -531,7 +531,9 @@
         let errorMsg = e.message || "Transaction failed";
         
         // Parse common revert reasons
-        if (errorMsg.includes("insufficient collateral")) {
+        if (errorMsg.includes("System not safe")) {
+          errorMsg = "❌ System not safe - Try depositing at least $10-20 worth of ETH. Very small positions may be rejected for system safety.";
+        } else if (errorMsg.includes("insufficient collateral")) {
           errorMsg = "❌ Insufficient collateral - deposit more ETH first";
         } else if (errorMsg.includes("below minimum ratio") || errorMsg.includes("Below minimum")) {
           errorMsg = "❌ This would make your vault unsafe (below 150%)";
@@ -787,13 +789,44 @@
       if (!price || price === 0n) throw new Error("Oracle offline - cannot calculate ETH amount");
       
       const ethValue = usdToETH(usd);
-      console.log("Auto-mint - USD:", usd, "ETH:", ethers.utils.formatEther(ethValue));
+      const expectedMint = usd / 1.55; // At 155% ratio
+      
+      console.log("═══════════════════════════════════");
+      console.log("AUTO-MINT DIAGNOSTICS");
+      console.log("═══════════════════════════════════");
+      console.log("USD depositing:", usd);
+      console.log("ETH to send:", ethers.utils.formatEther(ethValue));
+      console.log("ETH price:", ethers.utils.formatEther(price));
+      console.log("Expected mint:", expectedMint, "bSunDAI");
+      console.log("Expected ratio: 155%");
+      
+      // Check current system state
+      const [totalColl, totalDebt, systemHealth] = await Promise.all([
+        vault.totalCollateral(),
+        vault.totalDebt(),
+        vault.systemHealth()
+      ]);
+      
+      console.log("Current system collateral:", ethers.utils.formatEther(totalColl), "ETH");
+      console.log("Current system debt:", ethers.utils.formatEther(totalDebt), "bSunDAI");
+      console.log("Current system health:", Number(systemHealth) / 1, "%");
+      
+      // Calculate what system health would be after our deposit
+      const newTotalColl = totalColl.add(ethValue);
+      const newTotalDebt = totalDebt.add(ethers.utils.parseEther(expectedMint.toString()));
+      const newSystemHealth = newTotalColl.mul(price).mul(100).div(newTotalDebt.mul(ethers.BigNumber.from("1000000000000000000")));
+      
+      console.log("After deposit:");
+      console.log("  New system collateral:", ethers.utils.formatEther(newTotalColl), "ETH");
+      console.log("  New system debt:", ethers.utils.formatEther(newTotalDebt), "bSunDAI");
+      console.log("  New system health:", Number(newSystemHealth) / 1, "%");
+      console.log("═══════════════════════════════════");
       
       const tx = await vault.depositAndAutoMintETH({ value: ethValue });
-      console.log("Auto-mint TX hash:", tx.hash);
+      console.log("✅ Auto-mint TX hash:", tx.hash);
       
       await tx.wait();
-      console.log("Auto-mint confirmed!");
+      console.log("✅ Auto-mint confirmed!");
       
       return tx;
     });
