@@ -131,6 +131,25 @@
     }
     .tab:hover { background: rgba(255,107,0,0.2); }
     .tab.active { background: rgba(255,107,0,0.3); border-color: #ffd700; }
+    .info-box {
+      background: rgba(0,255,157,0.1);
+      border: 1px solid rgba(0,255,157,0.3);
+      border-radius: 8px;
+      padding: 12px;
+      margin: 15px 0;
+      font-size: 0.9em;
+      line-height: 1.6;
+    }
+    .warning-box {
+      background: rgba(255,204,0,0.1);
+      border: 1px solid rgba(255,204,0,0.3);
+      border-radius: 8px;
+      padding: 12px;
+      margin: 15px 0;
+      font-size: 0.9em;
+      line-height: 1.6;
+      color: #ffcc00;
+    }
     #bg { opacity: 0; animation: fadeIn 2s ease forwards; }
     @keyframes fadeIn { to { opacity: 1; } }
     @media (max-width: 600px) {
@@ -151,6 +170,15 @@
     </a>
     <h1>Liquidation Dashboard<span class="network-badge">BASE</span><span class="version-badge">v6.0.1</span></h1>
     <h2>Real-Time Vault Monitoring</h2>
+    
+    <div class="info-box">
+      <strong>📖 How Liquidations Work (v6.0.1):</strong><br>
+      • Vaults below 110% health can be liquidated<br>
+      • Minimum repay: 20% of debt (or full debt if less)<br>
+      • Dutch auction: Bonus starts at 5%, decreases to 2% over 3 hours<br>
+      • 1-hour cooldown between liquidations of same vault<br>
+      • Two-step process: Approve bSunDAI → Liquidate vault
+    </div>
     
     <div class="status" id="status"></div>
     <div class="error" id="error"></div>
@@ -194,9 +222,20 @@
     // UPDATED ABIs FOR v6.0.1
     const ORACLE_ABI = [{"name":"peekPrice","type":"function","inputs":[],"outputs":[{"name":"price","type":"uint256","internalType":"uint256"},{"name":"timestamp","type":"uint256","internalType":"uint256"}],"stateMutability":"view"}];
     
-    const TOKEN_ABI = [{"name":"approve","type":"function","inputs":[{"name":"spender","type":"address","internalType":"address"},{"name":"value","type":"uint256","internalType":"uint256"}],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"nonpayable"},{"name":"balanceOf","type":"function","inputs":[{"name":"account","type":"address","internalType":"address"}],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"}];
+    const TOKEN_ABI = [
+      {"name":"approve","type":"function","inputs":[{"name":"spender","type":"address","internalType":"address"},{"name":"value","type":"uint256","internalType":"uint256"}],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"nonpayable"},
+      {"name":"balanceOf","type":"function","inputs":[{"name":"account","type":"address","internalType":"address"}],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},
+      {"name":"allowance","type":"function","inputs":[{"name":"owner","type":"address","internalType":"address"},{"name":"spender","type":"address","internalType":"address"}],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"}
+    ];
     
-    const VAULT_ABI = [{"name":"Deposit","type":"event","inputs":[{"name":"user","type":"address","indexed":true,"internalType":"address"},{"name":"amount","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"ratio","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"name":"Mint","type":"event","inputs":[{"name":"user","type":"address","indexed":true,"internalType":"address"},{"name":"amount","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"ratio","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"name":"liquidate","type":"function","inputs":[{"name":"user","type":"address","internalType":"address"},{"name":"repayAmount","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},{"name":"vaultInfo","type":"function","inputs":[{"name":"user","type":"address","internalType":"address"}],"outputs":[{"name":"collateral","type":"uint256","internalType":"uint256"},{"name":"debt","type":"uint256","internalType":"uint256"},{"name":"collateralUSD","type":"uint256","internalType":"uint256"},{"name":"ratio","type":"uint256","internalType":"uint256"},{"name":"mintable","type":"uint256","internalType":"uint256"},{"name":"oracleHealthy","type":"bool","internalType":"bool"},{"name":"price","type":"uint256","internalType":"uint256"},{"name":"systemRatio","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"name":"vaults","type":"function","inputs":[{"name":"","type":"address","internalType":"address"}],"outputs":[{"name":"collateral","type":"uint256","internalType":"uint256"},{"name":"debt","type":"uint256","internalType":"uint256"},{"name":"lastDepositTime","type":"uint256","internalType":"uint256"},{"name":"lastWithdrawTime","type":"uint256","internalType":"uint256"},{"name":"lastLiquidationTime","type":"uint256","internalType":"uint256"},{"name":"lastDebtAccrual","type":"uint256","internalType":"uint256"},{"name":"undercollateralizedSince","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"name":"LIQUIDATION_COOLDOWN","type":"function","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"}];
+    const VAULT_ABI = [
+      {"name":"Deposit","type":"event","inputs":[{"name":"user","type":"address","indexed":true,"internalType":"address"},{"name":"amount","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"ratio","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},
+      {"name":"Mint","type":"event","inputs":[{"name":"user","type":"address","indexed":true,"internalType":"address"},{"name":"amount","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"ratio","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},
+      {"name":"liquidate","type":"function","inputs":[{"name":"user","type":"address","internalType":"address"},{"name":"repayAmount","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},
+      {"name":"vaultInfo","type":"function","inputs":[{"name":"user","type":"address","internalType":"address"}],"outputs":[{"name":"collateral","type":"uint256","internalType":"uint256"},{"name":"debt","type":"uint256","internalType":"uint256"},{"name":"collateralUSD","type":"uint256","internalType":"uint256"},{"name":"ratio","type":"uint256","internalType":"uint256"},{"name":"mintable","type":"uint256","internalType":"uint256"},{"name":"oracleHealthy","type":"bool","internalType":"bool"},{"name":"price","type":"uint256","internalType":"uint256"},{"name":"systemRatio","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},
+      {"name":"vaults","type":"function","inputs":[{"name":"","type":"address","internalType":"address"}],"outputs":[{"name":"collateral","type":"uint256","internalType":"uint256"},{"name":"debt","type":"uint256","internalType":"uint256"},{"name":"lastDepositTime","type":"uint256","internalType":"uint256"},{"name":"lastWithdrawTime","type":"uint256","internalType":"uint256"},{"name":"lastLiquidationTime","type":"uint256","internalType":"uint256"},{"name":"lastDebtAccrual","type":"uint256","internalType":"uint256"},{"name":"undercollateralizedSince","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},
+      {"name":"LIQUIDATION_COOLDOWN","type":"function","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"}
+    ];
     
     let provider, signer, vault, token, oracle, account, price = 0n;
     let currentTab = 'liquidatable';
@@ -306,13 +345,18 @@
       
       try {
         await updatePrice();
+        
+        if (price === 0n) {
+          throw new Error("Oracle offline - cannot calculate liquidation rewards");
+        }
+        
         const vaultOwners = await getAllVaultOwners();
         
         const liquidatable = [];
         const risky = [];
         const healthy = [];
         
-        // Get liquidation cooldown
+        // Get liquidation cooldown (v6.0.1 = 1 hour = 3600 seconds)
         const liquidationCooldown = await vault.LIQUIDATION_COOLDOWN();
         const currentTime = Math.floor(Date.now() / 1000);
         
@@ -321,14 +365,17 @@
             const info = await vault.vaultInfo(owner);
             const vaultDetails = await vault.vaults(owner);
             const ratio = Number(info.ratio);
-            const debt = Number(ethers.utils.formatEther(info.debt));
+            const debtBN = info.debt;
+            const debt = Number(ethers.utils.formatEther(debtBN));
             
-            if (debt === 0) continue; // Skip empty vaults
+            // Skip vaults with zero debt
+            if (debtBN.eq(0)) continue;
             
             const vaultData = {
               owner,
               ratio,
               debt,
+              debtBN, // Keep BigNumber for precise calculations
               collateral: Number(ethers.utils.formatEther(info.collateral)),
               collateralUSD: Number(ethers.utils.formatEther(info.collateralUSD)),
               mintable: Number(ethers.utils.formatEther(info.mintable)),
@@ -355,20 +402,25 @@
               }
               vaultData.bonusBps = bonusBps;
               
-              // Min repay = 20% of debt (or full debt if < 20%)
-              vaultData.minRepay = Math.min(debt * 0.2, debt);
+              // Min repay = 20% of debt (or full debt if debt < 20%)
+              // CRITICAL: Use exact BigNumber calculation to match contract
+              const twentyPercent = debtBN.mul(20).div(100);
+              const minRepayBN = debtBN.lt(twentyPercent) ? debtBN : twentyPercent;
+              vaultData.minRepayBN = minRepayBN;
+              vaultData.minRepay = Number(ethers.utils.formatEther(minRepayBN));
               
-              // Calculate reward
+              // Calculate reward (collateral received)
               const repayUSD = vaultData.minRepay;
               const ethPrice = Number(price) / 1e18;
               const baseCollateral = repayUSD / ethPrice;
               const bonusCollateral = (baseCollateral * bonusBps) / 10000;
               vaultData.reward = baseCollateral + bonusCollateral;
               
-              // Calculate profitability
-              const gasEstimate = 200000n; // Higher estimate for two-step burn
+              // Calculate profitability (accounting for gas)
+              const gasEstimate = 250000n; // Conservative estimate for approve + liquidate
               const feeData = await provider.getFeeData();
-              const gasCostWei = gasEstimate * feeData.gasPrice;
+              const gasPrice = feeData.gasPrice || ethers.utils.parseUnits("0.001", "gwei"); // Fallback
+              const gasCostWei = gasEstimate * gasPrice;
               const gasCostETH = Number(ethers.utils.formatEther(gasCostWei));
               const gasCostUSD = gasCostETH * ethPrice;
               
@@ -383,10 +435,12 @@
             }
             
           } catch (e) {
+            console.error(`Failed to scan vault ${owner}:`, e);
             continue;
           }
         }
         
+        // Sort by profitability
         liquidatable.sort((a, b) => b.profitUSD - a.profitUSD);
         risky.sort((a, b) => a.ratio - b.ratio);
         
@@ -447,10 +501,17 @@
         
         for (const v of data) {
           const cooldownWarning = !v.canLiquidate ? `
-            <div style="background:rgba(255,204,0,0.2);padding:8px;border-radius:6px;margin-top:8px;border:1px solid rgba(255,204,0,0.4);">
-              <span style="color:#ffcc00;font-size:0.85em;">
-                ⏳ Liquidation cooldown: ${Math.ceil(v.cooldownRemaining / 60)} minute(s) remaining
-              </span>
+            <div class="warning-box" style="margin-top:8px;">
+              ⏳ <strong>Liquidation cooldown active</strong><br>
+              ${Math.ceil(v.cooldownRemaining / 60)} minute(s) remaining<br>
+              <span style="font-size:0.85em">Last liquidation less than 1 hour ago</span>
+            </div>
+          ` : '';
+          
+          const profitabilityWarning = !v.isProfitable ? `
+            <div class="warning-box" style="margin-top:8px;">
+              ⚠️ <strong>Gas costs exceed profit</strong><br>
+              Wait for better gas prices or higher bonus
             </div>
           ` : '';
           
@@ -458,8 +519,10 @@
             <div class="card danger">
               <div class="info-grid">
                 <div class="info-row">
-                  <span class="label">Vault:</span>
-                  <span class="address value">${v.owner.slice(0,8)}...${v.owner.slice(-6)}</span>
+                  <span class="label">Vault Owner:</span>
+                  <a href="https://basescan.org/address/${v.owner}" target="_blank" class="address value" style="color:#ffd700;text-decoration:underline">
+                    ${v.owner.slice(0,8)}...${v.owner.slice(-6)}
+                  </a>
                 </div>
                 <div class="info-row">
                   <span class="label">Health Ratio:</span>
@@ -467,34 +530,36 @@
                 </div>
                 <div class="info-row">
                   <span class="label">Total Debt:</span>
-                  <span class="value">${v.debt.toFixed(2)} bSunDAI</span>
+                  <span class="value">${v.debt.toFixed(4)} bSunDAI</span>
                 </div>
                 <div class="info-row">
                   <span class="label">Min Repay (20%):</span>
-                  <span class="value">${v.minRepay.toFixed(2)} bSunDAI</span>
+                  <span class="value warn">${v.minRepay.toFixed(4)} bSunDAI</span>
                 </div>
                 <div class="info-row">
                   <span class="label">Collateral Reward:</span>
-                  <span class="value">${v.reward.toFixed(4)} ETH</span>
+                  <span class="value safe">${v.reward.toFixed(6)} ETH</span>
                 </div>
                 <div class="info-row">
-                  <span class="label">Dutch Auction Bonus:</span>
-                  <span class="value">${(v.bonusBps / 100).toFixed(2)}%</span>
+                  <span class="label">Auction Bonus:</span>
+                  <span class="value">${(v.bonusBps / 100).toFixed(2)}% (${v.bonusBps >= 400 ? 'HIGH' : v.bonusBps >= 300 ? 'MEDIUM' : 'LOW'})</span>
                 </div>
                 <div class="info-row">
-                  <span class="label">Est. Profit:</span>
+                  <span class="label">Est. Net Profit:</span>
                   <span class="value ${v.isProfitable ? 'safe' : 'risk'}">
-                    ${v.isProfitable ? `$${v.profitUSD.toFixed(4)} 💰` : 'Unprofitable (gas too high)'}
+                    ${v.isProfitable ? `+$${v.profitUSD.toFixed(2)} 💰` : `$${v.profitUSD.toFixed(2)} (unprofitable)`}
                   </span>
                 </div>
               </div>
               ${cooldownWarning}
+              ${profitabilityWarning}
               <button 
                 class="btn danger" 
                 style="margin-top:12px;"
                 data-owner="${v.owner}"
-                data-repay="${v.minRepay}"
-                onclick="liquidateVault(this.dataset.owner, this.dataset.repay)"
+                data-repay-float="${v.minRepay}"
+                data-repay-bn="${v.minRepayBN.toString()}"
+                onclick="liquidateVault(this)"
                 ${!v.canLiquidate ? 'disabled' : ''}
               >
                 ${v.canLiquidate ? '🔥 Liquidate Now' : '⏳ Cooldown Active'}
@@ -517,8 +582,10 @@
             <div class="card warning">
               <div class="info-grid">
                 <div class="info-row">
-                  <span class="label">Vault:</span>
-                  <span class="address value">${v.owner.slice(0,8)}...${v.owner.slice(-6)}</span>
+                  <span class="label">Vault Owner:</span>
+                  <a href="https://basescan.org/address/${v.owner}" target="_blank" class="address value" style="color:#ffd700;text-decoration:underline">
+                    ${v.owner.slice(0,8)}...${v.owner.slice(-6)}
+                  </a>
                 </div>
                 <div class="info-row">
                   <span class="label">Health Ratio:</span>
@@ -530,15 +597,15 @@
                 </div>
                 <div class="info-row">
                   <span class="label">Total Debt:</span>
-                  <span class="value">${v.debt.toFixed(2)} bSunDAI</span>
+                  <span class="value">${v.debt.toFixed(4)} bSunDAI</span>
                 </div>
                 <div class="info-row">
                   <span class="label">Collateral:</span>
-                  <span class="value">${v.collateral.toFixed(4)} ETH (~$${v.collateralUSD.toFixed(2)})</span>
+                  <span class="value">${v.collateral.toFixed(6)} ETH (~$${v.collateralUSD.toFixed(2)})</span>
                 </div>
                 <div style="text-align:center;margin-top:8px;padding:8px;background:rgba(255,204,0,0.1);border-radius:6px;">
                   <span style="color:#ffcc00;font-size:0.85em;">
-                    Becomes liquidatable if ETH drops ${bufferPercent.toFixed(1)}% or debt increases
+                    📉 Becomes liquidatable if ETH drops ${bufferPercent.toFixed(1)}% or debt increases
                   </span>
                 </div>
               </div>
@@ -559,8 +626,10 @@
             <div class="card">
               <div class="info-grid">
                 <div class="info-row">
-                  <span class="label">Vault:</span>
-                  <span class="address value">${v.owner.slice(0,8)}...${v.owner.slice(-6)}</span>
+                  <span class="label">Vault Owner:</span>
+                  <a href="https://basescan.org/address/${v.owner}" target="_blank" class="address value" style="color:#ffd700;text-decoration:underline">
+                    ${v.owner.slice(0,8)}...${v.owner.slice(-6)}
+                  </a>
                 </div>
                 <div class="info-row">
                   <span class="label">Health Ratio:</span>
@@ -568,15 +637,15 @@
                 </div>
                 <div class="info-row">
                   <span class="label">Total Debt:</span>
-                  <span class="value">${v.debt.toFixed(2)} bSunDAI</span>
+                  <span class="value">${v.debt.toFixed(4)} bSunDAI</span>
                 </div>
                 <div class="info-row">
                   <span class="label">Collateral:</span>
-                  <span class="value">${v.collateral.toFixed(4)} ETH (~$${v.collateralUSD.toFixed(2)})</span>
+                  <span class="value">${v.collateral.toFixed(6)} ETH (~$${v.collateralUSD.toFixed(2)})</span>
                 </div>
                 <div class="info-row">
                   <span class="label">Can Still Mint:</span>
-                  <span class="value safe">${v.mintable.toFixed(2)} bSunDAI</span>
+                  <span class="value safe">${v.mintable.toFixed(4)} bSunDAI</span>
                 </div>
               </div>
             </div>
@@ -587,49 +656,115 @@
       results.innerHTML = html;
     }
 
-    async function liquidateVault(owner, repayAmountFloat) {
+    async function liquidateVault(btn) {
       try {
-        const btn = event.target;
+        const owner = btn.dataset.owner;
+        const repayFloat = parseFloat(btn.dataset.repayFloat);
+        const repayBN = ethers.BigNumber.from(btn.dataset.repayBn);
+        
         const originalText = btn.textContent;
         btn.disabled = true;
         btn.textContent = "⏳ Checking balance...";
         document.getElementById("error").textContent = "";
         
-        const repayAmount = ethers.utils.parseUnits(repayAmountFloat.toString(), 18);
+        console.log("═══════════════════════════════════════");
+        console.log("LIQUIDATION INITIATED");
+        console.log("═══════════════════════════════════════");
+        console.log("Target vault:", owner);
+        console.log("Repay amount (float):", repayFloat);
+        console.log("Repay amount (BN):", repayBN.toString());
+        console.log("Repay amount (formatted):", ethers.utils.formatEther(repayBN));
         
-        // Check bSunDAI balance
+        // Step 1: Check bSunDAI balance
         const balance = await token.balanceOf(account);
-        if (balance.lt(repayAmount)) {
-          throw new Error(`Insufficient bSunDAI. Need ${repayAmountFloat.toFixed(2)}, have ${ethers.utils.formatEther(balance)}`);
+        console.log("Your bSunDAI balance:", ethers.utils.formatEther(balance));
+        
+        if (balance.lt(repayBN)) {
+          throw new Error(`Insufficient bSunDAI. Need ${ethers.utils.formatEther(repayBN)}, have ${ethers.utils.formatEther(balance)}`);
         }
         
-        console.log("Liquidating vault:", owner);
-        console.log("Repay amount:", repayAmountFloat);
+        // Step 2: Check current allowance
+        const currentAllowance = await token.allowance(account, VAULT);
+        console.log("Current allowance:", ethers.utils.formatEther(currentAllowance));
         
-        btn.textContent = "⏳ Approving...";
+        // Step 3: Approve if needed (CRITICAL: Use exact repayBN, not approximation)
+        if (currentAllowance.lt(repayBN)) {
+          btn.textContent = "⏳ Approving bSunDAI...";
+          console.log("Approving", ethers.utils.formatEther(repayBN), "bSunDAI for vault...");
+          
+          const approveTx = await token.approve(VAULT, repayBN);
+          console.log("Approve TX hash:", approveTx.hash);
+          
+          await approveTx.wait();
+          console.log("✅ Approval confirmed");
+        } else {
+          console.log("✅ Sufficient allowance already exists");
+        }
         
-        // Step 1: Approve bSunDAI spending (v6.0.1 two-step pattern)
-        const approveTx = await token.approve(VAULT, repayAmount);
-        await approveTx.wait();
+        // Step 4: Double-check vault is still liquidatable
+        btn.textContent = "⏳ Verifying vault status...";
+        const info = await vault.vaultInfo(owner);
+        const ratio = Number(info.ratio);
         
-        btn.textContent = "⏳ Liquidating...";
+        if (ratio >= 110) {
+          throw new Error(`Vault recovered! Current ratio: ${ratio.toFixed(2)}% (above 110% threshold)`);
+        }
         
-        // Step 2: Execute liquidation
-        const liqTx = await vault.liquidate(owner, repayAmount);
-        await liqTx.wait();
+        console.log("Vault still liquidatable. Ratio:", ratio.toFixed(2) + "%");
         
-        document.getElementById("status").textContent = "✅ Liquidation successful! 🎉";
-        setTimeout(() => document.getElementById("status").textContent = "", 5000);
+        // Step 5: Execute liquidation with EXACT repayBN
+        btn.textContent = "⏳ Executing liquidation...";
+        console.log("Calling liquidate() with repayAmount:", repayBN.toString());
+        
+        const liqTx = await vault.liquidate(owner, repayBN);
+        console.log("Liquidation TX hash:", liqTx.hash);
+        
+        const receipt = await liqTx.wait();
+        console.log("✅ Liquidation confirmed!");
+        console.log("Gas used:", receipt.gasUsed.toString());
+        console.log("═══════════════════════════════════════");
+        
+        document.getElementById("status").innerHTML = `
+          ✅ Liquidation successful! 🎉<br>
+          <a href="https://basescan.org/tx/${liqTx.hash}" target="_blank" style="color:#00ff9d;text-decoration:underline;font-size:0.9em">
+            View transaction on Basescan
+          </a>
+        `;
+        setTimeout(() => document.getElementById("status").textContent = "", 10000);
         
         // Rescan to update dashboard
-        await scanAll();
+        setTimeout(() => scanAll(), 2000);
         
       } catch (e) {
-        document.getElementById("error").textContent = "Liquidation failed: " + (e.reason || e.message || "Unknown error");
-        setTimeout(() => document.getElementById("error").textContent = "", 8000);
-        console.error("Liquidation error:", e);
-        event.target.disabled = false;
-        event.target.textContent = "🔥 Liquidate Now";
+        console.error("═══════════════════════════════════════");
+        console.error("LIQUIDATION FAILED");
+        console.error("═══════════════════════════════════════");
+        console.error("Error:", e);
+        console.error("Error reason:", e.reason);
+        console.error("Error code:", e.code);
+        console.error("═══════════════════════════════════════");
+        
+        let errorMsg = "Liquidation failed: ";
+        
+        if (e.message.includes("Insufficient bSunDAI")) {
+          errorMsg += e.message;
+        } else if (e.message.includes("Vault recovered")) {
+          errorMsg += e.message;
+        } else if (e.reason) {
+          errorMsg += e.reason;
+        } else if (e.message.includes("user rejected")) {
+          errorMsg += "Transaction cancelled by user";
+        } else if (e.message.includes("insufficient funds")) {
+          errorMsg += "Insufficient ETH for gas fees";
+        } else {
+          errorMsg += e.message || "Unknown error";
+        }
+        
+        document.getElementById("error").textContent = errorMsg;
+        setTimeout(() => document.getElementById("error").textContent = "", 10000);
+        
+        btn.disabled = false;
+        btn.textContent = "🔥 Liquidate Now";
       }
     }
 
@@ -670,6 +805,7 @@
     // Auto-rescan every 2 minutes if data exists
     setInterval(() => {
       if (scanData && document.getElementById("scanBtn").textContent === "🔄 Rescan") {
+        console.log("Auto-rescanning...");
         scanAll();
       }
     }, 120000);
