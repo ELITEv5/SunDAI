@@ -790,17 +790,32 @@
       console.log("  System new health:", Number(newSystemHealth) / 1, "%");
       
       // Check thresholds
+      const MIN_SYSTEM_HEALTH = 130; // Contract uses 130%, not 150%!
+      
+      // Replicate exact Solidity check: v.collateral * price * 100 >= (v.debt + amount) * COLLATERAL_RATIO * 1e18
+      const collateralWei = vaultInfo.collateral;
+      const debtWei = vaultInfo.debt;
+      const mintWei = mintAmount;
+      
+      const leftSide = collateralWei.mul(price).mul(100);
+      const rightSide = debtWei.add(mintWei).mul(150).mul(ethers.BigNumber.from("1000000000000000000"));
+      
+      const vaultCheckPasses = leftSide.gte(rightSide);
+      const systemCheckPasses = Number(newSystemHealth) / 1 >= MIN_SYSTEM_HEALTH;
+      
       console.log("Checks:");
-      console.log("  Your ratio >= 150%?", newYourRatio >= 150 ? "✓ PASS" : "✗ FAIL");
-      console.log("  System health >= 150%?", Number(newSystemHealth) / 1 >= 150 ? "✓ PASS" : "✗ FAIL");
+      console.log("  Vault collateral check:", vaultCheckPasses ? "✓ PASS" : "✗ FAIL");
+      console.log("    Left side (coll*price*100):", leftSide.toString());
+      console.log("    Right side ((debt+mint)*150*1e18):", rightSide.toString());
+      console.log("  System health >= 130%?", systemCheckPasses ? "✓ PASS" : "✗ FAIL");
       console.log("═══════════════════════════════════");
       
-      if (newYourRatio < 150) {
-        throw new Error(`This would drop your vault to ${newYourRatio.toFixed(2)}% (needs 150%+). Try minting less.`);
+      if (!vaultCheckPasses) {
+        throw new Error(`Vault safety check failed. Try minting less (max mintable shown in vault stats).`);
       }
       
-      if (Number(newSystemHealth) / 1 < 150) {
-        throw new Error(`This would drop system health to ${(Number(newSystemHealth) / 1).toFixed(2)}% (needs 150%+). Contract safety check. Try minting less or deposit more collateral first.`);
+      if (!systemCheckPasses) {
+        throw new Error(`System health would be ${(Number(newSystemHealth) / 1).toFixed(2)}% (needs 130%+). Try minting less or wait for system to stabilize.`);
       }
       
       const tx = await vault.mint(mintAmount);
