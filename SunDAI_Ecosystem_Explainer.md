@@ -21,7 +21,7 @@
 
 ## What is SunDAI?
 
-SunDAI is an **Autonomous Stable Asset (ASA)** - a completely self-governing, overcollateralized stablecoin system with **zero admin keys, no governance, and no upgradability**. Once deployed, it runs forever based purely on economic incentives.
+SunDAI is an **Autonomous Stable Asset (ASA)** - a completely self-governing, overcollateralized stable asset system with **zero admin keys, no governance, and no upgradability**. Once deployed, it runs forever based purely on economic incentives.
 
 **pSunDAI** is the PulseChain implementation - a $1-pegged stable asset backed by PLS collateral, minted through an immutable CDP (Collateralized Debt Position) system.
 
