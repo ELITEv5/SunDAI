@@ -897,59 +897,76 @@
     modal.innerHTML = `
   <div class="modal-content">
     <span class="close">x</span>
-    <h3>🚀 How to Use the SunDAI Vault (PulseChain)</h3>
+    <h3>🚀 SunDAI Vault Guide (PulseChain)</h3>
 
+    <h4>🟢 Getting Started</h4>
     <ol>
       <li><strong>Connect Wallet:</strong> Click top right. Use MetaMask or Rabby. Wallet auto-switches to PulseChain.</li>
-
-      <li><strong>Check Price:</strong> Top shows live PLS/USD price from the on-chain oracle. Updates automatically.  
-      Click <strong>"Wake Oracle"</strong> if needed (30-min cooldown between manual wakes).</li>
-
-      <li><strong>Deposit PLS:</strong> Enter USD value and click <strong>"Deposit PLS"</strong> to lock collateral.</li>
-
-      <li><strong>Mint pSunDAI:</strong> Enter USD amount to create stablecoins.  
-      System enforces <strong>150% minimum ratio</strong> automatically.</li>
-
-      <li><strong>1-Click Auto Mint (155%) — EASIEST:</strong>  
-      Deposit + mint in ONE transaction with a built-in safety buffer.</li>
-
-      <li><strong>Monitor Your Vault:</strong>  
-      Collateral, Debt, and Ratio update live.<br>
-      🟢 Safe (150%+)  
-      🟡 Warning (130–150%)  
-      🔴 Danger (<110% = liquidatable)</li>
-
-      <li><strong>Repay Debt:</strong> Burn pSunDAI anytime. Instant. No cooldown.</li>
-
-      <li><strong>Withdraw PLS:</strong> Withdraw profits if your ratio stays above 150%.</li>
-
-      <li><strong>Built-In Safety Protections:</strong><br>
-        • ⏰ 5-minute cooldown after deposits (anti-attack protection)<br>
-        • 🛟 30-day emergency unlock if vault has zero debt<br>
-        • Minting & repaying are instant — no waiting!
-      </li>
+      <li><strong>Check Price:</strong> Top displays live PLS/USD price from the on-chain oracle.  
+      Click <strong>"Wake Oracle"</strong> if needed (30-min cooldown).</li>
     </ol>
 
-    <h4 style="margin-top:18px">⚠️ Liquidation Risk</h4>
-    If your ratio drops below <strong>110%</strong>, liquidators can repay your debt and receive your PLS at a discount.
-
-    <br><br><strong>How to stay safe:</strong>
-    <ul style="margin-top:6px">
-      <li>Keep ratio above 150%</li>
-      <li>Add PLS during price drops</li>
-      <li>Repay some pSunDAI to improve ratio</li>
+    <h4>💰 Easiest Method (Recommended)</h4>
+    <p><strong>1-Click Auto Mint (155%)</strong></p>
+    <ul>
+      <li>Enter USD amount you want to deposit</li>
+      <li>System calculates PLS needed + pSunDAI received</li>
+      <li>One transaction deposits collateral AND mints</li>
+      <li>Vault opens at <strong>155% ratio</strong> (extra safety buffer)</li>
     </ul>
 
-    <h4 style="margin-top:18px">💡 Pro Tips</h4>
+    <h4>⚙️ Manual Controls</h4>
     <ul>
-      <li>Start with 155% ratio to be extra safe</li>
-      <li>Use <strong>"Mint Max Safe"</strong> & <strong>"Withdraw Max Safe"</strong></li>
+      <li><strong>Deposit PLS:</strong> Locks collateral (starts 5-minute withdrawal cooldown)</li>
+      <li><strong>Mint pSunDAI:</strong> Create stablecoins (system enforces 150% minimum)</li>
+      <li><strong>Repay Debt:</strong> Burn pSunDAI anytime — instant</li>
+      <li><strong>Withdraw PLS:</strong> Only allowed if ratio stays above 150%</li>
+    </ul>
+
+    <h4>🎯 Understanding Your Vault</h4>
+    <ul style="line-height:1.6">
+      <li><strong>Collateral:</strong> Your locked PLS</li>
+      <li><strong>Debt:</strong> pSunDAI you’ve minted</li>
+      <li><strong>Ratio:</strong> (Collateral Value ÷ Debt) × 100</li>
+      <li>🟢 <strong>150%+:</strong> Safe</li>
+      <li>🟡 <strong>130–150%:</strong> Warning</li>
+      <li>🔴 <strong>Below 110%:</strong> Can be liquidated</li>
+    </ul>
+
+    <h4>🛡️ Built-In Safety Protections</h4>
+    <ul>
+      <li>⏰ 5-minute cooldown after deposits (anti-attack protection)</li>
+      <li>🛟 30-day emergency unlock if vault has zero debt</li>
+      <li>System blocks actions that would drop you below 150%</li>
+    </ul>
+
+    <h4>⚠️ Liquidation Risk</h4>
+    If your ratio drops below <strong>110%</strong>, liquidators can repay your debt and receive discounted PLS.
+
+    <br><br><strong>How to stay safe:</strong>
+    <ul>
+      <li>Maintain ratio above 150%</li>
+      <li>Add collateral during market drops</li>
+      <li>Repay some debt to improve ratio</li>
+    </ul>
+
+    <h4>💡 Pro Tips</h4>
+    <ul>
+      <li>Start at 155% ratio until comfortable</li>
+      <li>Use <strong>"Mint Max Safe"</strong> and <strong>"Withdraw Max Safe"</strong></li>
       <li>Repay before withdrawing when exiting</li>
     </ul>
 
+    <h4>❓ Common Questions</h4>
+    <ul>
+      <li><strong>Are there fees?</strong> Only gas. No protocol fees.</li>
+      <li><strong>Can contracts change?</strong> No. Immutable.</li>
+      <li><strong>Customer support?</strong> None. Fully autonomous.</li>
+    </ul>
+
     <p style="margin-top:16px">
-      <strong>Important:</strong> SunDAI is <strong>immutable, ownerless software</strong>.  
-      No admin keys. No upgrades. No customer support. You control everything.
+      <strong>Important:</strong> SunDAI is <strong>ownerless, immutable software</strong>.  
+      No admin. No upgrades. No reversals. You are in full control.
     </p>
   </div>
 `;
