@@ -492,19 +492,41 @@
       btn.disabled = true;
       btn.textContent = "Processing...";
       error.textContent = "";
+      status.textContent = "";
+      
       try {
+        console.log("=== Transaction Starting ===");
+        console.log("Button:", btn.id);
+        console.log("Connected account:", account);
+        console.log("Vault contract:", VAULT);
+        console.log("Current ETH price:", price.toString());
+        
         const result = await fn();
+        
+        console.log("=== Transaction Result ===");
+        console.log("Result:", result);
         
         // Show transaction hash if available
         if (result && result.hash) {
           status.innerHTML = `Success! <a href="https://basescan.org/tx/${result.hash}" target="_blank" style="color:#00ff9d;text-decoration:underline">View TX</a>`;
+          console.log("Transaction hash:", result.hash);
         } else {
           status.textContent = "Success!";
         }
         
         setTimeout(() => status.textContent = "", 8000);
+        
+        console.log("=== Reloading Vault Data ===");
         await loadVault();
+        console.log("=== Transaction Complete ===");
+        
       } catch (e) {
+        console.error("=== Transaction Failed ===");
+        console.error("Error object:", e);
+        console.error("Error message:", e.message);
+        console.error("Error code:", e.code);
+        console.error("Error reason:", e.reason);
+        
         // Enhanced error parsing
         let errorMsg = e.message || "Transaction failed";
         
@@ -521,10 +543,15 @@
           errorMsg = "❌ Repay all debt first before emergency unlock";
         } else if (errorMsg.includes("30 days")) {
           errorMsg = "❌ Emergency unlock requires 30 days with zero debt";
+        } else if (errorMsg.includes("insufficient funds")) {
+          errorMsg = "❌ Insufficient ETH for gas fees";
+        } else if (errorMsg.includes("Oracle offline")) {
+          errorMsg = "❌ " + errorMsg;
         }
         
         error.textContent = errorMsg;
         setTimeout(() => error.textContent = "", 10000);
+        
       } finally {
         btn.textContent = orig;
         btn.disabled = false;
@@ -681,16 +708,33 @@
     document.getElementById("deposit").onclick = () => withLoading(document.getElementById("deposit"), async () => {
       const u = parseFloat(document.getElementById("usdIn").value);
       if (!u || u <= 0) throw new Error("Please enter a valid USD amount (e.g., 100)");
-      const tx = await vault.depositETH({ value: usdToETH(u) });
+      if (!price || price === 0n) throw new Error("Oracle offline - cannot calculate ETH amount");
+      
+      const ethValue = usdToETH(u);
+      console.log("Deposit - USD:", u, "ETH:", ethers.utils.formatEther(ethValue));
+      
+      const tx = await vault.depositETH({ value: ethValue });
+      console.log("Deposit TX hash:", tx.hash);
+      
       await tx.wait();
+      console.log("Deposit confirmed!");
+      
       return tx;
     });
     
     document.getElementById("mint").onclick = () => withLoading(document.getElementById("mint"), async () => {
       const u = parseFloat(document.getElementById("usdMint").value);
       if (!u || u <= 0) throw new Error("Please enter a valid USD amount to mint");
-      const tx = await vault.mint(usdToBSun(u));
+      
+      const mintAmount = usdToBSun(u);
+      console.log("Mint - USD:", u, "bSunDAI:", ethers.utils.formatEther(mintAmount));
+      
+      const tx = await vault.mint(mintAmount);
+      console.log("Mint TX hash:", tx.hash);
+      
       await tx.wait();
+      console.log("Mint confirmed!");
+      
       return tx;
     });
     
@@ -740,10 +784,17 @@
     document.getElementById("oneClickBtn").onclick = () => withLoading(document.getElementById("oneClickBtn"), async () => {
       const usd = parseFloat(document.getElementById("usdOneClick").value);
       if (!usd || usd <= 0) throw new Error("Please enter a valid USD amount");
+      if (!price || price === 0n) throw new Error("Oracle offline - cannot calculate ETH amount");
+      
       const ethValue = usdToETH(usd);
+      console.log("Auto-mint - USD:", usd, "ETH:", ethers.utils.formatEther(ethValue));
+      
       const tx = await vault.depositAndAutoMintETH({ value: ethValue });
+      console.log("Auto-mint TX hash:", tx.hash);
+      
       await tx.wait();
-      status.textContent = `✓ Minted ${(usd / 1.55).toFixed(2)} bSunDAI at 155%`;
+      console.log("Auto-mint confirmed!");
+      
       return tx;
     });
 
@@ -984,7 +1035,7 @@
         <ul style="line-height:1.8">
           <li><strong>Q: Can I lose my ETH?</strong><br>A: Only if liquidated (ratio below 110%). Stay above 150% to be safe.</li>
           <li><strong>Q: What if oracle fails?</strong><br>A: Emergency unlock after 30 days with zero debt lets you recover collateral.</li>
-          <li><strong>Q: Are there fees?</strong><br>A: Only blockchain gas fees. No protocol fees, 0.5% APY Stability Fee, no admin.</li>
+          <li><strong>Q: Are there fees?</strong><br>A: Only blockchain gas fees. No protocol fees, no interest, no admin.</li>
           <li><strong>Q: Can contracts be changed?</strong><br>A: NO. Contracts are immutable - no upgrades, no admin keys, fully autonomous.</li>
           <li><strong>Q: What if I need help?</strong><br>A: This guide covers everything. System is ownerless and autonomous by design.</li>
         </ul>
