@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>☀️ SunDAI Destiny Vault - Black Hole Protocol</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>☀️</text></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000000;
+            color: #ffffff;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Cosmic Background */
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        /* Container */
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ffd700;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 40px rgba(255, 215, 0, 0.3);
+        }
+
+        /* Wallet Button - Small in corner when connected */
+        .wallet-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 18px;
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            color: #000;
+            border: 2px solid transparent;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s ease;
+            font-size: 0.85em;
+            z-index: 9999;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+            white-space: nowrap;
+            width: auto;
+        }
+
+        .wallet-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
+        }
+
+        .wallet-btn.connected {
+            background: rgba(0, 0, 0, 0.85);
+            border-color: #00ff00;
+            color: #00ff00;
+            font-size: 0.75em;
+            padding: 6px 12px;
+        }
+
+        .wallet-btn.connected::before {
+            content: '● ';
+            color: #00ff00;
+            animation: connectedPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes connectedPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .wallet-btn.connected:hover {
+            background: rgba(0, 0, 0, 0.95);
+            box-shadow: 0 4px 15px rgba(0, 255, 0, 0.6);
+            transform: translateY(-1px);
+        }
+
+        h1 {
+            font-size: 3em;
+            color: #ffd700;
+            text-shadow: 0 0 20px #ffd700, 0 0 40px #ff8c00;
+            margin-bottom: 10px;
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { text-shadow: 0 0 20px #ffd700, 0 0 40px #ff8c00; }
+            50% { text-shadow: 0 0 30px #ffd700, 0 0 60px #ff8c00, 0 0 80px #ff4500; }
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            color: #ff8c00;
+            margin-bottom: 20px;
+        }
+
+        .warning {
+            background: rgba(255, 69, 0, 0.2);
+            border: 1px solid #ff4500;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        /* Status Card */
+        .status-card {
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #4a90e2;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(74, 144, 226, 0.3);
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .status-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .status-label {
+            color: #888;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .status-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .status-value.warning {
+            color: #ff4500;
+        }
+
+        .status-value.success {
+            color: #00ff00;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            margin: 30px 0;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .progress-bar {
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            border: 2px solid #ffd700;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff8c00, #ffd700, #ff8c00);
+            background-size: 200% 100%;
+            animation: shimmer 3s linear infinite;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #000;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Phase Indicator */
+        .phase-indicator {
+            display: flex;
+            justify-content: space-around;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 15px;
+        }
+
+        .phase {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            flex: 1;
+            margin: 0 5px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .phase.active {
+            background: rgba(255, 215, 0, 0.2);
+            border-color: #ffd700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .phase.complete {
+            background: rgba(0, 255, 0, 0.1);
+            border-color: #00ff00;
+        }
+
+        .phase-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .phase-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        /* Action Cards */
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .action-card {
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #4a90e2;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 0 20px rgba(74, 144, 226, 0.2);
+        }
+
+        .action-card h3 {
+            color: #ffd700;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #aaa;
+            font-size: 0.9em;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1em;
+            font-family: 'Courier New', monospace;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #ffd700;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+
+        /* Buttons */
+        button {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            color: #000;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #4a90e2, #357abd);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(74, 144, 226, 0.4);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 144, 226, 0.6);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff4500, #ff6347);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(255, 69, 0, 0.4);
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 69, 0, 0.6);
+        }
+
+        .btn-critical {
+            background: linear-gradient(135deg, #8b00ff, #ff00ff);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(139, 0, 255, 0.4);
+            animation: criticalPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes criticalPulse {
+            0%, 100% { box-shadow: 0 4px 15px rgba(139, 0, 255, 0.4); }
+            50% { box-shadow: 0 4px 25px rgba(139, 0, 255, 0.8); }
+        }
+
+        .btn-critical:hover:not(:disabled) {
+            transform: scale(1.05);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Connect Wallet */
+        .connect-wallet {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .wallet-address {
+            display: inline-block;
+            padding: 10px 20px;
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00ff00;
+            border-radius: 20px;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: rgba(74, 144, 226, 0.1);
+            border: 1px solid #4a90e2;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        .info-box.warning {
+            background: rgba(255, 69, 0, 0.1);
+            border-color: #ff4500;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #ffd700;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+            
+            .action-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .phase-indicator {
+                flex-direction: column;
+            }
+            
+            .phase {
+                margin: 5px 0;
+            }
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid #ffd700;
+            border-radius: 10px;
+            z-index: 1000;
+            max-width: 400px;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification.success {
+            border-color: #00ff00;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.5);
+        }
+
+        .notification.error {
+            border-color: #ff4500;
+            box-shadow: 0 0 30px rgba(255, 69, 0, 0.5);
+        }
+
+        /* External Link Buttons */
+        a.external-btn {
+            display: inline-block;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            color: #000;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+        }
+
+        a.external-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <!-- Wallet Button - Fixed Position -->
+    <button class="wallet-btn" id="walletBtn" onclick="handleWalletClick()">Connect Wallet</button>
+    
+    <div class="container">
+        <header>
+            <h1>☀️ SunDAI DESTINY VAULT</h1>
+            <div class="subtitle">Black Hole Protocol • Supernova Event • Rebirth Cycle</div>
+            
+            <!-- Buy SunDAI Button -->
+            <div style="margin: 25px 0;">
+                <a href="https://libertyswap.finance/" 
+                   target="_blank" 
+                   class="external-btn">
+                    Buy SunDAI on LibertySwap
+                </a>
+                <div style="margin-top: 12px;">
+                    <button onclick="navigator.clipboard.writeText('0x41C6b24019Bd67CC58fe7bb059D532C12356712B').then(() => alert('Contract address copied!'))" 
+                            style="padding: 8px 20px; background: rgba(255, 215, 0, 0.2); border: 1px solid #ffd700; border-radius: 8px; color: #ffd700; cursor: pointer; font-family: 'Courier New', monospace; font-size: 0.85em; transition: all 0.3s ease;">
+                        Copy SunDAI CA: 0x41C6...712B
+                    </button>
+                </div>
+            </div>
+            
+            <div class="warning">
+                ⚠️ <strong>THE EVENT HORIZON AWAITS</strong> ⚠️<br>
+                When SunDAI touches $1.00, the vault collapses into a black hole.<br>
+                All staked matter is consumed — torn apart and compressed into pure collateral.<br>
+                From this singularity, a new star is born: pSunDAI, the Autonomous Stable Asset emerges from the cosmic fire.<br>
+                Believers receive the new "Sun" proportional to their conviction.<br>
+                <strong>⚫ This is the point of no return. Only commit what you're willing to see destroyed and reborn. ✨</strong>
+            </div>
+        </header>
+
+        <div id="vaultInterface">
+            <!-- Status Overview -->
+            <div class="status-card">
+                <h2 style="color: #ffd700; margin-bottom: 20px;">⚡ Vault Status</h2>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="status-label">SunDAI Price</div>
+                        <div class="status-value" id="currentPrice">$0.00</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">Vault State</div>
+                        <div class="status-value" id="vaultState">UNLOCKED</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">Total SunDAI Staked</div>
+                        <div class="status-value" id="totalSundaiStaked">0</div>
+                        <div style="font-size: 0.75em; color: #888; margin-top: 5px;">
+                            Max Supply: 16,712,160
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">Total PLP Staked</div>
+                        <div class="status-value" id="totalPlpStaked">0</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">Your Share of Vault</div>
+                        <div class="status-value" id="userShare">0%</div>
+                    </div>
+                </div>
+
+                <!-- Progress to $1 -->
+                <div class="progress-container">
+                    <div class="progress-label">
+                        <span>🎯 Progress to Ignition ($1.00)</span>
+                        <span id="progressPercent">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%">
+                            <span id="progressText"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Phase Indicator -->
+                <div class="phase-indicator">
+                    <div class="phase" id="phaseStaking">
+                        <div class="phase-icon">🌑</div>
+                        <div class="phase-name">Staking</div>
+                        <div class="phase-status">Open</div>
+                    </div>
+                    <div class="phase" id="phaseIgnite">
+                        <div class="phase-icon">🔥</div>
+                        <div class="phase-name">Ignition</div>
+                        <div class="phase-status">Pending</div>
+                    </div>
+                    <div class="phase" id="phaseSupernova">
+                        <div class="phase-icon">💥</div>
+                        <div class="phase-name">Supernova</div>
+                        <div class="phase-status">Pending</div>
+                    </div>
+                    <div class="phase" id="phaseRebirth">
+                        <div class="phase-icon">✨</div>
+                        <div class="phase-name">Rebirth</div>
+                        <div class="phase-status">Pending</div>
+                    </div>
+                    <div class="phase" id="phaseClaim">
+                        <div class="phase-icon">☀️</div>
+                        <div class="phase-name">Claim</div>
+                        <div class="phase-status">Pending</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Cards -->
+            <div class="action-grid">
+                <!-- Stake Card -->
+                <div class="action-card" id="stakeCard">
+                    <h3>🌟 Stake Your Conviction</h3>
+                    <div class="input-group">
+                        <label>SunDAI Amount</label>
+                        <input type="text" id="sundaiAmount" placeholder="0.0">
+                        <div style="font-size: 0.8em; color: #888; margin-top: 5px;">
+                            Balance: <span id="sundaiBalance">0</span>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>PLP Amount (1.5x weight)</label>
+                        <input type="text" id="plpAmount" placeholder="0.0">
+                        <div style="font-size: 0.8em; color: #888; margin-top: 5px;">
+                            Balance: <span id="plpBalance">0</span>
+                        </div>
+                    </div>
+                    <button class="btn-primary" onclick="approveAndStake()">Stake Assets</button>
+                    <button class="btn-secondary" onclick="withdraw()">Withdraw</button>
+                    <div class="info-box">
+                        💎 <strong>LP tokens get 1.5x bonus!</strong><br>
+                        Stake 100 PLP = counts as 150 in your share calculation<br><br>
+                        📊 <strong>Your Share % = Your pSunDAI %</strong><br>
+                        If you have 10% of vault → you get 10% of all pSunDAI<br><br>
+                        🔒 <strong>Locked when SunDAI hits $1</strong><br>
+                        After ignition, stakes become permanent collateral
+                    </div>
+                </div>
+
+                <!-- Your Position Card -->
+                <div class="action-card">
+                    <h3>📊 Your Position</h3>
+                    <div class="status-item" style="margin-bottom: 15px;">
+                        <div class="status-label">Staked SunDAI</div>
+                        <div class="status-value" id="userSundai" style="font-size: 1.5em;">0</div>
+                    </div>
+                    <div class="status-item" style="margin-bottom: 15px;">
+                        <div class="status-label">Staked PLP (1.5x bonus)</div>
+                        <div class="status-value" id="userPlp" style="font-size: 1.5em;">0</div>
+                    </div>
+                    <div class="status-item" style="margin-bottom: 15px;">
+                        <div class="status-label">Your Vault Share</div>
+                        <div class="status-value" id="userShareDetail" style="font-size: 1.5em;">0%</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">Est. pSunDAI Reward</div>
+                        <div class="status-value success" id="estimatedPayout" style="font-size: 1.5em;">0</div>
+                    </div>
+                </div>
+
+                <!-- Ritual Actions Card -->
+                <div class="action-card">
+                    <h3>🌌 Ritual Actions</h3>
+                    <button class="btn-critical" id="igniteBtn" onclick="ignite()" disabled>
+                        🔥 IGNITE
+                    </button>
+                    <button class="btn-critical" id="supernovaBtn" onclick="supernova()" disabled>
+                        💥 SUPERNOVA
+                    </button>
+                    <button class="btn-critical" id="rebirthBtn" onclick="rebirth()" disabled>
+                        ✨ REBIRTH
+                    </button>
+                    <button class="btn-primary" id="claimBtn" onclick="claim()" disabled>
+                        ☀️ CLAIM pSunDAI
+                    </button>
+                    <div class="info-box warning">
+                        ⚡ <strong>These functions execute the ritual after SunDAI reaches $1</strong><br><br>
+                        🔥 <strong>Ignite:</strong> Available when vault locks at $1<br>
+                        Destroys all staked assets → converts to PLS<br><br>
+                        💥 <strong>Supernova:</strong> Available after Ignite<br>
+                        Deposits PLS as collateral into pSunDAI vault<br><br>
+                        ✨ <strong>Rebirth:</strong> Available after Supernova<br>
+                        Mints new pSunDAI from deposited collateral<br><br>
+                        ☀️ <strong>Claim:</strong> Available after Rebirth<br>
+                        Receive your proportional share of the new Sun
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer with Contract Addresses -->
+        <footer style="margin-top: 60px; padding: 40px; background: rgba(0, 0, 0, 0.9); border: 2px solid #4a90e2; border-radius: 15px; text-align: center;">
+            <h3 style="color: #ffd700; margin-bottom: 30px; font-size: 1.5em;">Official Contract Addresses</h3>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                <div style="background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div style="color: #888; font-size: 0.9em; margin-bottom: 8px;">SunDAI Token</div>
+                    <div style="font-family: 'Courier New', monospace; font-size: 0.85em; word-break: break-all; color: #ffd700;">
+                        0x41C6b24019Bd67CC58fe7bb059D532C12356712B
+                    </div>
+                </div>
+                
+                <div style="background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div style="color: #888; font-size: 0.9em; margin-bottom: 8px;">pSunDAI Token</div>
+                    <div style="font-family: 'Courier New', monospace; font-size: 0.85em; word-break: break-all; color: #ffd700;">
+                        0x5529c1cb179b2c256501031adCDAfC22D9c6d236
+                    </div>
+                </div>
+                
+                <div style="background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div style="color: #888; font-size: 0.9em; margin-bottom: 8px;">SunDAI/WPLS PLP</div>
+                    <div style="font-family: 'Courier New', monospace; font-size: 0.85em; word-break: break-all; color: #ffd700;">
+                        0xc01e2eDAe9E65950bb5783A6B01DC429Cf3F0eE2
+                    </div>
+                </div>
+                
+                <div style="background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div style="color: #888; font-size: 0.9em; margin-bottom: 8px;">Destiny Vault</div>
+                    <div style="font-family: 'Courier New', monospace; font-size: 0.85em; word-break: break-all; color: #ffd700;">
+                        0x652137bf4a3CA4c7eb70981b4eB821C4Fd3F11c3
+                    </div>
+                </div>
+                
+                <div style="background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div style="color: #888; font-size: 0.9em; margin-bottom: 8px;">pSunDAI Minting Vault</div>
+                    <div style="font-family: 'Courier New', monospace; font-size: 0.85em; word-break: break-all; color: #ffd700;">
+                        0x789472Ef7fa74cB8898Ed38cAa5d18f4D49EcC6d
+                    </div>
+                </div>
+                
+                <div style="background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div style="color: #888; font-size: 0.9em; margin-bottom: 8px;">pSunDAI Oracle</div>
+                    <div style="font-family: 'Courier New', monospace; font-size: 0.85em; word-break: break-all; color: #ffd700;">
+                        0xC19C8201701585D9087F261eaCd3Ee3345251Da3
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 30px; padding: 20px; background: rgba(255, 215, 0, 0.1); border: 1px solid #ffd700; border-radius: 10px;">
+                <div style="font-size: 1.1em; margin-bottom: 15px; color: #ffd700;">Want to mint pSunDAI now?</div>
+                <a href="https://ipfs.io/ipfs/bafybeiarilukzbmiqj35ml2jqagldmmyb7f7jsi3c3g5ted4arjdvubo4e/index.html" 
+                   target="_blank" 
+                   style="display: inline-block; padding: 15px 30px; background: linear-gradient(135deg, #ffd700, #ff8c00); color: #000; text-decoration: none; border-radius: 10px; font-weight: bold; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px;">
+                    Open pSunDAI Minting Vault
+                </a>
+                <div style="margin-top: 15px; font-size: 0.9em; color: #888;">
+                    Mint pSunDAI directly by depositing PLS collateral
+                </div>
+            </div>
+            
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1); color: #888; font-size: 0.9em;">
+                Built with pure self-sovereignty • No governance • No admin keys • Immutable protocol
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Wait for ethers to be available
+        function waitForEthers() {
+            return new Promise((resolve, reject) => {
+                if (window.ethers && window.ethers.providers) {
+                    console.log("Ethers loaded successfully");
+                    resolve();
+                } else {
+                    let attempts = 0;
+                    const checkInterval = setInterval(() => {
+                        attempts++;
+                        if (window.ethers && window.ethers.providers) {
+                            console.log("Ethers loaded after", attempts, "attempts");
+                            clearInterval(checkInterval);
+                            resolve();
+                        } else if (attempts > 50) {
+                            clearInterval(checkInterval);
+                            reject(new Error("Ethers.js failed to load after 5 seconds"));
+                        }
+                    }, 100);
+                }
+            });
+        }
+
+        // Main initialization
+        waitForEthers().then(() => {
+            const ethers = window.ethers;
+            console.log("Ethers available:", !!ethers);
+            console.log("Ethers.providers available:", !!ethers.providers);
+
+            // CONFIG - UPDATE THESE WITH YOUR CONTRACT ADDRESSES
+            const DESTINY_VAULT = '0x652137bf4a3CA4c7eb70981b4eB821C4Fd3F11c3';
+            const SUNDAI_TOKEN = '0x41C6b24019Bd67CC58fe7bb059D532C12356712B';
+            const PLP_TOKEN = '0xc01e2eDAe9E65950bb5783A6B01DC429Cf3F0eE2';
+            const ORACLE = '0xa2Bf4FBc3CF16e37550E7571c3816f9AE6c73A4F';
+
+            let provider, signer, vaultContract, sundaiContract, plpContract, oracleContract;
+            let userAddress;
+            let updateInterval;
+
+            // Load ABIs from JSON files
+            async function loadABIs() {
+                const [v, t, o] = await Promise.all([
+                    fetch("destiny-vault-abi.json").then(r => r.json()),
+                    fetch("token-abi.json").then(r => r.json()),
+                    fetch("sundial-oracle-abi.json").then(r => r.json())
+                ]);
+                return [v, t, o];
+            }
+
+            // Luxury PulseChain nebula background (WebGL)
+const gl = canvas.getContext('webgl', { antialias: true });
+
+function resizeNebula() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+}
+resizeNebula();
+window.addEventListener('resize', resizeNebula);
+
+// ───────── Vertex shader (fullscreen quad) ─────────
+const vsSource = `
+attribute vec2 position;
+void main() {
+    gl_Position = vec4(position, 0.0, 1.0);
+}
+`;
+
+// ───────── Fragment shader (luxury nebula) ─────────
+const fsSource = `
+precision highp float;
+uniform vec2 u_res;
+uniform float u_time;
+
+float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(41.3,289.7))) * 45758.5453);
+}
+
+float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    f = f*f*(3.0-2.0*f);
+    float a = hash(i);
+    float b = hash(i+vec2(1.0,0.0));
+    float c = hash(i+vec2(0.0,1.0));
+    float d = hash(i+vec2(1.0,1.0));
+    return mix(mix(a,b,f.x), mix(c,d,f.x), f.y);
+}
+
+float fbm(vec2 p) {
+    float v = 0.0;
+    float a = 0.5;
+    for(int i=0;i<6;i++){
+        v += a * noise(p);
+        p *= 2.0;
+        a *= 0.5;
+    }
+    return v;
+}
+
+void main() {
+    vec2 uv = gl_FragCoord.xy / u_res;
+    vec2 p = (uv - 0.5) * vec2(u_res.x / u_res.y, 1.0);
+
+    float t = u_time * 0.02;
+
+    float n =
+        fbm(p * 1.6 + vec2(t, -t)) * 0.6 +
+        fbm(p * 4.0 - vec2(t * 0.6, t * 0.3)) * 0.3 +
+        fbm(p * 8.0 + vec2(-t * 0.4, t * 0.8)) * 0.1;
+
+    vec3 space = vec3(0.01, 0.01, 0.04);
+    vec3 purple = vec3(0.28, 0.05, 0.6);
+    vec3 magenta = vec3(0.6, 0.0, 0.4);
+    vec3 cyan = vec3(0.15, 0.55, 0.75);
+
+    vec3 color = mix(space, purple, smoothstep(0.15, 0.55, n));
+    color = mix(color, magenta, smoothstep(0.45, 0.75, n));
+    color = mix(color, cyan, smoothstep(0.75, 0.95, n));
+
+    color += n * 0.18;
+
+    float vignette = smoothstep(0.9, 0.4, length(p));
+    color *= vignette;
+
+    gl_FragColor = vec4(color, 1.0);
+}
+`;
+
+function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    return s;
+}
+
+const program = gl.createProgram();
+gl.attachShader(program, compile(gl.VERTEX_SHADER, vsSource));
+gl.attachShader(program, compile(gl.FRAGMENT_SHADER, fsSource));
+gl.linkProgram(program);
+gl.useProgram(program);
+
+const quad = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]),
+    gl.STATIC_DRAW
+);
+
+const pos = gl.getAttribLocation(program, "position");
+gl.enableVertexAttribArray(pos);
+gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
+
+const uRes = gl.getUniformLocation(program, "u_res");
+const uTime = gl.getUniformLocation(program, "u_time");
+
+function animateNebula(time) {
+    gl.uniform2f(uRes, canvas.width, canvas.height);
+    gl.uniform1f(uTime, time * 0.001);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    requestAnimationFrame(animateNebula);
+}
+
+animateNebula(0);
+
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+
+        // Connect wallet - works with any wallet (MetaMask, Rabby, etc.)
+        async function connectWallet() {
+            try {
+                if (!window.ethereum) {
+                    showNotification('Please install MetaMask or another Web3 wallet!', 'error');
+                    return;
+                }
+
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                signer = provider.getSigner();
+                userAddress = await signer.getAddress();
+
+                // Check network and switch if needed
+                const network = await provider.getNetwork();
+                if (Number(network.chainId) !== 369) {
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: '0x171' }]
+                        });
+                    } catch (e) {
+                        showNotification('Please switch to PulseChain (chainId 369)', 'error');
+                        return;
+                    }
+                }
+
+                // Load ABIs and initialize contracts
+                const [VAULT_ABI, TOKEN_ABI, ORACLE_ABI] = await loadABIs();
+                vaultContract = new ethers.Contract(DESTINY_VAULT, VAULT_ABI, signer);
+                sundaiContract = new ethers.Contract(SUNDAI_TOKEN, TOKEN_ABI, signer);
+                plpContract = new ethers.Contract(PLP_TOKEN, TOKEN_ABI, signer);
+                oracleContract = new ethers.Contract(ORACLE, ORACLE_ABI, provider);
+
+                // Update wallet button
+                const shortAddress = userAddress.slice(0, 6) + '...' + userAddress.slice(-4);
+                document.getElementById('walletBtn').textContent = shortAddress;
+                document.getElementById('walletBtn').classList.add('connected');
+                
+                showNotification(`Connected: ${shortAddress}`, 'success');
+
+                // Start updates
+                await updateAllData();
+                if (updateInterval) clearInterval(updateInterval);
+                updateInterval = setInterval(updateAllData, 10000); // Update every 10s
+
+            } catch (error) {
+                console.error(error);
+                showNotification('Connection failed: ' + error.message, 'error');
+            }
+        }
+
+        // Disconnect wallet
+        function disconnectWallet() {
+            if (updateInterval) clearInterval(updateInterval);
+            provider = null;
+            signer = null;
+            userAddress = null;
+            vaultContract = null;
+            sundaiContract = null;
+            plpContract = null;
+            oracleContract = null;
+
+            document.getElementById('walletBtn').textContent = 'Connect Wallet';
+            document.getElementById('walletBtn').classList.remove('connected');
+            
+            // Reset UI
+            document.getElementById('currentPrice').textContent = 'Connect wallet';
+            document.getElementById('vaultState').textContent = 'DISCONNECTED';
+            document.getElementById('totalSundaiStaked').textContent = '0';
+            document.getElementById('totalPlpStaked').textContent = '0';
+            document.getElementById('userShare').textContent = '0%';
+            document.getElementById('userSundai').textContent = '0';
+            document.getElementById('userPlp').textContent = '0';
+            document.getElementById('userShareDetail').textContent = '0%';
+            document.getElementById('estimatedPayout').textContent = '0';
+            document.getElementById('sundaiBalance').textContent = '0';
+            document.getElementById('plpBalance').textContent = '0';
+            
+            showNotification('Wallet disconnected', 'info');
+        }
+
+        // Handle wallet button click
+        function handleWalletClick() {
+            if (userAddress) {
+                // Already connected - show disconnect option
+                if (confirm('Disconnect wallet?')) {
+                    disconnectWallet();
+                }
+            } else {
+                // Not connected - connect
+                connectWallet();
+            }
+        }
+
+        // Listen for account changes
+        if (window.ethereum) {
+            window.ethereum.on('accountsChanged', (accounts) => {
+                if (accounts.length === 0) {
+                    // User disconnected their wallet
+                    disconnectWallet();
+                } else {
+                    // User switched accounts
+                    showNotification('Account changed - reconnecting...', 'info');
+                    connectWallet();
+                }
+            });
+
+            window.ethereum.on('chainChanged', (chainId) => {
+                // Reload page on chain change
+                window.location.reload();
+            });
+        }
+
+        // Update all data
+        async function updateAllData() {
+            try {
+                await Promise.all([
+                    updatePrice(),
+                    updateVaultStatus(),
+                    updateUserPosition(),
+                    updateBalances()
+                ]);
+                updatePhases();
+                updateButtons();
+            } catch (error) {
+                console.error('Update error:', error);
+            }
+        }
+
+        // Update price and progress
+        async function updatePrice() {
+            try {
+                const price = await oracleContract.getPrice();
+                const priceFormatted = ethers.utils.formatUnits(price, 18);
+                const priceNum = parseFloat(priceFormatted);
+                
+                document.getElementById('currentPrice').textContent = '$' + priceNum.toFixed(4);
+                
+                const progress = Math.min(priceNum * 100, 100);
+                document.getElementById('progressFill').style.width = progress + '%';
+                document.getElementById('progressPercent').textContent = progress.toFixed(1) + '%';
+                document.getElementById('progressText').textContent = progress.toFixed(1) + '%';
+                
+                if (priceNum >= 1.0) {
+                    document.getElementById('currentPrice').classList.add('success');
+                } else if (priceNum >= 0.8) {
+                    document.getElementById('currentPrice').classList.add('warning');
+                }
+            } catch (error) {
+                console.error('Price update error:', error);
+            }
+        }
+
+        // Update vault status
+        async function updateVaultStatus() {
+            try {
+                const [ignited, supernovaTriggered, rebirthTriggered, totalWeight, totalPayout, isLocked] = await Promise.all([
+                    vaultContract.ignited(),
+                    vaultContract.supernovaTriggered(),
+                    vaultContract.rebirthTriggered(),
+                    vaultContract.totalWeight(),
+                    vaultContract.totalPayout(),
+                    vaultContract.isLocked()
+                ]);
+
+                const stateEl = document.getElementById('vaultState');
+                if (rebirthTriggered) {
+                    stateEl.textContent = 'REBIRTH COMPLETE';
+                    stateEl.classList.add('success');
+                } else if (supernovaTriggered) {
+                    stateEl.textContent = 'SUPERNOVA';
+                    stateEl.classList.add('warning');
+                } else if (ignited) {
+                    stateEl.textContent = 'IGNITED';
+                    stateEl.classList.add('warning');
+                } else if (isLocked) {
+                    stateEl.textContent = 'LOCKED';
+                    stateEl.classList.add('warning');
+                } else {
+                    stateEl.textContent = 'UNLOCKED';
+                    stateEl.classList.remove('warning', 'success');
+                }
+                
+                // Get total staked amounts
+                console.log('Fetching token balances...', sundaiContract, plpContract);
+                const [sundaiBalance, plpBalance] = await Promise.all([
+                    sundaiContract.balanceOf(DESTINY_VAULT),
+                    plpContract.balanceOf(DESTINY_VAULT)
+                ]);
+                
+                console.log('SunDAI balance:', sundaiBalance.toString());
+                console.log('PLP balance:', plpBalance.toString());
+                
+                document.getElementById('totalSundaiStaked').textContent = parseFloat(ethers.utils.formatUnits(sundaiBalance, 18)).toFixed(2);
+                document.getElementById('totalPlpStaked').textContent = parseFloat(ethers.utils.formatUnits(plpBalance, 18)).toFixed(2);
+            } catch (error) {
+                console.error('Vault status error:', error);
+                // Show error details
+                if (error.message) console.error('Error message:', error.message);
+            }
+        }
+
+        // Update user position
+        async function updateUserPosition() {
+            try {
+                if (!userAddress || !vaultContract) {
+                    // Not connected - show zeros
+                    document.getElementById('userSundai').textContent = '0';
+                    document.getElementById('userPlp').textContent = '0';
+                    document.getElementById('userShare').textContent = '0%';
+                    document.getElementById('userShareDetail').textContent = '0%';
+                    document.getElementById('estimatedPayout').textContent = '0';
+                    return;
+                }
+
+                const stake = await vaultContract.stakes(userAddress);
+                const totalWeight = await vaultContract.totalWeight();
+                const totalPayout = await vaultContract.totalPayout();
+
+                const sundaiAmt = ethers.utils.formatUnits(stake.sundaiAmt, 18);
+                const plpAmt = ethers.utils.formatUnits(stake.plpAmt, 18);
+                const weight = ethers.utils.formatUnits(stake.weight, 18);
+                const totalWeightNum = parseFloat(ethers.utils.formatUnits(totalWeight, 18));
+
+                document.getElementById('userSundai').textContent = parseFloat(sundaiAmt).toFixed(2);
+                document.getElementById('userPlp').textContent = parseFloat(plpAmt).toFixed(2);
+
+                // Calculate percentage share
+                let sharePercent = 0;
+                if (totalWeightNum > 0 && parseFloat(weight) > 0) {
+                    sharePercent = (parseFloat(weight) / totalWeightNum) * 100;
+                }
+                
+                const shareDisplay = sharePercent < 0.01 && sharePercent > 0 ? '<0.01%' : sharePercent.toFixed(2) + '%';
+                document.getElementById('userShare').textContent = shareDisplay;
+                document.getElementById('userShareDetail').textContent = shareDisplay;
+
+                // Calculate estimated payout
+                if (totalWeight.gt(0) && totalPayout.gt(0)) {
+                    const share = stake.weight.mul(totalPayout).div(totalWeight);
+                    const shareFormatted = ethers.utils.formatUnits(share, 18);
+                    document.getElementById('estimatedPayout').textContent = parseFloat(shareFormatted).toFixed(2);
+                } else {
+                    document.getElementById('estimatedPayout').textContent = '0';
+                }
+            } catch (error) {
+                console.error('User position error:', error);
+            }
+        }
+
+        // Update balances
+        async function updateBalances() {
+            try {
+                if (!userAddress || !sundaiContract || !plpContract) {
+                    // Not connected - show zeros
+                    document.getElementById('sundaiBalance').textContent = '0';
+                    document.getElementById('plpBalance').textContent = '0';
+                    return;
+                }
+
+                const [sundaiBalance, plpBalance] = await Promise.all([
+                    sundaiContract.balanceOf(userAddress),
+                    plpContract.balanceOf(userAddress)
+                ]);
+
+                document.getElementById('sundaiBalance').textContent = 
+                    parseFloat(ethers.utils.formatUnits(sundaiBalance, 18)).toFixed(2);
+                document.getElementById('plpBalance').textContent = 
+                    parseFloat(ethers.utils.formatUnits(plpBalance, 18)).toFixed(2);
+            } catch (error) {
+                console.error('Balance error:', error);
+            }
+        }
+
+        // Update phase indicators
+        async function updatePhases() {
+            try {
+                const ignited = await vaultContract.ignited();
+                if (ignited) {
+                    document.getElementById('phaseStaking').classList.add('complete');
+                    document.getElementById('phaseIgnite').classList.add('active');
+                } else {
+                    document.getElementById('phaseStaking').classList.add('active');
+                }
+
+                const supernovaTriggered = await vaultContract.supernovaTriggered();
+                if (supernovaTriggered) {
+                    document.getElementById('phaseIgnite').classList.remove('active');
+                    document.getElementById('phaseIgnite').classList.add('complete');
+                    document.getElementById('phaseSupernova').classList.add('active');
+                }
+
+                const rebirthTriggered = await vaultContract.rebirthTriggered();
+                if (rebirthTriggered) {
+                    document.getElementById('phaseSupernova').classList.remove('active');
+                    document.getElementById('phaseSupernova').classList.add('complete');
+                    document.getElementById('phaseRebirth').classList.add('active');
+                    document.getElementById('phaseClaim').classList.add('active');
+                }
+            } catch (error) {
+                console.error('Phase update error:', error);
+            }
+        }
+
+        // Update button states
+        async function updateButtons() {
+            try {
+                const [ignited, supernovaTriggered, rebirthTriggered, isLocked] = await Promise.all([
+                    vaultContract.ignited(),
+                    vaultContract.supernovaTriggered(),
+                    vaultContract.rebirthTriggered(),
+                    vaultContract.isLocked()
+                ]);
+
+                const stake = await vaultContract.stakes(userAddress);
+
+                // Stake/Withdraw buttons
+                if (isLocked) {
+                    document.getElementById('stakeCard').style.opacity = '0.5';
+                }
+
+                // Ignite button
+                document.getElementById('igniteBtn').disabled = ignited || !isLocked;
+
+                // Supernova button
+                document.getElementById('supernovaBtn').disabled = !ignited || supernovaTriggered;
+
+                // Rebirth button
+                document.getElementById('rebirthBtn').disabled = !supernovaTriggered || rebirthTriggered;
+
+                // Claim button
+                document.getElementById('claimBtn').disabled = !rebirthTriggered || stake.claimed;
+            } catch (error) {
+                console.error('Button update error:', error);
+            }
+        }
+
+        // Approve and stake
+        async function approveAndStake() {
+            try {
+                const sundaiAmt = document.getElementById('sundaiAmount').value.trim();
+                const plpAmt = document.getElementById('plpAmount').value.trim();
+
+                if ((!sundaiAmt || sundaiAmt === '0') && (!plpAmt || plpAmt === '0')) {
+                    showNotification('Enter an amount to stake', 'error');
+                    return;
+                }
+
+                showNotification('Approving tokens...', 'info');
+
+                // Approve SunDAI
+                if (sundaiAmt && parseFloat(sundaiAmt) > 0) {
+                    const amount = ethers.utils.parseUnits(sundaiAmt, 18);
+                    const allowance = await sundaiContract.allowance(userAddress, DESTINY_VAULT);
+                    if (allowance.lt(amount)) {
+                        const tx = await sundaiContract.approve(DESTINY_VAULT, ethers.constants.MaxUint256);
+                        await tx.wait();
+                        showNotification('SunDAI approved', 'success');
+                    }
+                }
+
+                // Approve PLP
+                if (plpAmt && parseFloat(plpAmt) > 0) {
+                    const amount = ethers.utils.parseUnits(plpAmt, 18);
+                    const allowance = await plpContract.allowance(userAddress, DESTINY_VAULT);
+                    if (allowance.lt(amount)) {
+                        const tx = await plpContract.approve(DESTINY_VAULT, ethers.constants.MaxUint256);
+                        await tx.wait();
+                        showNotification('PLP approved', 'success');
+                    }
+                }
+
+                showNotification('Staking...', 'info');
+
+                const tx = await vaultContract.stake(
+                    (sundaiAmt && parseFloat(sundaiAmt) > 0) ? ethers.utils.parseUnits(sundaiAmt, 18) : 0,
+                    (plpAmt && parseFloat(plpAmt) > 0) ? ethers.utils.parseUnits(plpAmt, 18) : 0
+                );
+                await tx.wait();
+
+                showNotification('✅ Staked successfully!', 'success');
+                document.getElementById('sundaiAmount').value = '';
+                document.getElementById('plpAmount').value = '';
+                await updateAllData();
+            } catch (error) {
+                console.error(error);
+                showNotification('Staking failed: ' + error.message, 'error');
+            }
+        }
+
+        // Withdraw
+        async function withdraw() {
+            try {
+                const sundaiAmt = document.getElementById('sundaiAmount').value.trim();
+                const plpAmt = document.getElementById('plpAmount').value.trim();
+
+                if ((!sundaiAmt || sundaiAmt === '0') && (!plpAmt || plpAmt === '0')) {
+                    showNotification('Enter an amount to withdraw', 'error');
+                    return;
+                }
+
+                showNotification('Withdrawing...', 'info');
+
+                const tx = await vaultContract.withdraw(
+                    (sundaiAmt && parseFloat(sundaiAmt) > 0) ? ethers.utils.parseUnits(sundaiAmt, 18) : 0,
+                    (plpAmt && parseFloat(plpAmt) > 0) ? ethers.utils.parseUnits(plpAmt, 18) : 0
+                );
+                await tx.wait();
+
+                showNotification('✅ Withdrawn successfully!', 'success');
+                document.getElementById('sundaiAmount').value = '';
+                document.getElementById('plpAmount').value = '';
+                await updateAllData();
+            } catch (error) {
+                console.error(error);
+                showNotification('Withdrawal failed: ' + error.message, 'error');
+            }
+        }
+
+        // Ignite
+        async function ignite() {
+            if (!confirm('⚠️ IGNITION IS IRREVERSIBLE\n\nAll staked assets will be destroyed and converted to PLS collateral.\n\nProceed with ignition?')) {
+                return;
+            }
+
+            try {
+                showNotification('🔥 Initiating ignition sequence...', 'info');
+                const tx = await vaultContract.ignite();
+                showNotification('⏳ Ignition transaction sent...', 'info');
+                await tx.wait();
+                showNotification('🔥 IGNITION COMPLETE! The vault has been activated!', 'success');
+                await updateAllData();
+            } catch (error) {
+                console.error(error);
+                showNotification('Ignition failed: ' + error.message, 'error');
+            }
+        }
+
+        // Supernova
+        async function supernova() {
+            try {
+                showNotification('💥 Initiating supernova...', 'info');
+                const tx = await vaultContract.supernova();
+                await tx.wait();
+                showNotification('💥 SUPERNOVA COMPLETE! Collateral deposited!', 'success');
+                await updateAllData();
+            } catch (error) {
+                console.error(error);
+                showNotification('Supernova failed: ' + error.message, 'error');
+            }
+        }
+
+        // Rebirth
+        async function rebirth() {
+            try {
+                showNotification('✨ Initiating rebirth...', 'info');
+                const tx = await vaultContract.rebirth();
+                await tx.wait();
+                showNotification('✨ REBIRTH COMPLETE! pSunDAI minted!', 'success');
+                await updateAllData();
+            } catch (error) {
+                console.error(error);
+                showNotification('Rebirth failed: ' + error.message, 'error');
+            }
+        }
+
+        // Claim
+        async function claim() {
+            try {
+                showNotification('☀️ Claiming your pSunDAI...', 'info');
+                const tx = await vaultContract.claim();
+                await tx.wait();
+                showNotification('☀️ CLAIM SUCCESSFUL! You have received your share of the new Sun!', 'success');
+                await updateAllData();
+            } catch (error) {
+                console.error(error);
+                showNotification('Claim failed: ' + error.message, 'error');
+            }
+        }
+
+        // Make all functions globally accessible from HTML onclick handlers
+        window.connectWallet = connectWallet;
+        window.disconnectWallet = disconnectWallet;
+        window.handleWalletClick = handleWalletClick;
+        window.approveAndStake = approveAndStake;
+        window.withdraw = withdraw;
+        window.ignite = ignite;
+        window.supernova = supernova;
+        window.rebirth = rebirth;
+        window.claim = claim;
+
+        // Auto-connect on load
+        window.addEventListener('load', () => {
+            // Auto-connect if wallet is already connected
+            if (window.ethereum && window.ethereum.selectedAddress) {
+                connectWallet();
+            }
+        });
+
+        }).catch(error => {
+            alert("CRITICAL ERROR: " + error.message + "\n\nEthers.js library failed to load. Please check your internet connection.");
+            console.error(error);
+        });
+    </script>
+</body>
+</html>
