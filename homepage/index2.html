@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SunDAI | Autonomous Stable Asset Protocol</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-gold: #FFB627;
+            --deep-space: #0a0a0f;
+            --card-bg: rgba(20, 20, 30, 0.85);
+            --border-subtle: rgba(255, 182, 39, 0.15);
+            --text-primary: #FFFFFF;
+            --text-secondary: rgba(255, 255, 255, 0.65);
+            --text-tertiary: rgba(255, 255, 255, 0.45);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--deep-space);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            min-height: 100vh;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Subtle gradient background */
+        .background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at top, rgba(20, 20, 40, 0.8) 0%, var(--deep-space) 60%);
+            z-index: 0;
+        }
+
+        /* Minimal starfield - just subtle dots */
+        .starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .star {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            width: 1px;
+            height: 1px;
+        }
+
+        /* Header - clean and minimal */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 2rem 3rem;
+            backdrop-filter: blur(20px);
+            background: rgba(10, 10, 15, 0.8);
+            border-bottom: 1px solid var(--border-subtle);
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-image {
+            height: 40px;
+            width: 40px;
+            opacity: 0.95;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+
+        .tagline {
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+        }
+
+        /* Main container */
+        .container {
+            position: relative;
+            z-index: 10;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 8rem 3rem 4rem;
+            min-height: 100vh;
+        }
+
+        /* Title section */
+        .intro {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .intro-title {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 700;
+            margin-bottom: 1rem;
+            letter-spacing: -1px;
+            color: var(--text-primary);
+        }
+
+        .intro-subtitle {
+            font-size: clamp(1rem, 2vw, 1.25rem);
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto;
+            font-weight: 400;
+        }
+
+        /* Protocol cards grid */
+        .protocols-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        /* Protocol card */
+        .protocol-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 2.5rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .protocol-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary-gold), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .protocol-card:hover {
+            border-color: rgba(255, 182, 39, 0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .protocol-card:hover::before {
+            opacity: 1;
+        }
+
+        /* Protocol indicator - subtle glowing dot */
+        .protocol-indicator {
+            width: 8px;
+            height: 8px;
+            background: var(--primary-gold);
+            border-radius: 50%;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 0 12px var(--primary-gold);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .protocol-card:nth-child(2) .protocol-indicator {
+            animation-delay: 1s;
+        }
+
+        .protocol-card:nth-child(3) .protocol-indicator {
+            animation-delay: 2s;
+        }
+
+        /* Protocol content */
+        .protocol-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .protocol-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
+            color: var(--text-primary);
+        }
+
+        .protocol-type {
+            font-size: 0.75rem;
+            color: var(--primary-gold);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+        }
+
+        .protocol-description {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        .protocol-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .stat {
+            text-align: left;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.25rem;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Button */
+        .protocol-button {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            background: rgba(255, 182, 39, 0.1);
+            border: 1px solid var(--primary-gold);
+            color: var(--primary-gold);
+            text-decoration: none;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .protocol-button:hover {
+            background: var(--primary-gold);
+            color: var(--deep-space);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 182, 39, 0.3);
+        }
+
+        .protocol-button:active {
+            transform: translateY(0);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 3rem 2rem 2rem;
+            color: var(--text-tertiary);
+            font-size: 0.85rem;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s ease;
+            font-size: 0.85rem;
+        }
+
+        .footer-link:hover {
+            color: var(--primary-gold);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 1.5rem 1.5rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: flex-start;
+            }
+
+            .container {
+                padding: 6rem 1.5rem 3rem;
+            }
+
+            .protocols-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .protocol-card {
+                padding: 2rem;
+            }
+
+            .protocol-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Fade in animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .protocol-card {
+            animation: fadeIn 0.6s ease-out forwards;
+            opacity: 0;
+        }
+
+        .protocol-card:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .protocol-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .protocol-card:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <!-- Background -->
+    <div class="background"></div>
+
+    <!-- Minimal starfield -->
+    <div class="starfield" id="starfield"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <img src="sundailogo.png" alt="SunDAI" class="logo-image">
+                <div>
+                    <div class="logo-text">SunDAI</div>
+                    <div class="tagline">Autonomous Stable Asset</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="container">
+        <!-- Intro -->
+        <section class="intro">
+            <h1 class="intro-title">Immutable DeFi Infrastructure</h1>
+            <p class="intro-subtitle">
+                Overcollateralized stable assets on PulseChain. Zero governance, zero admin keys, pure economic incentives. Running autonomously forever.
+            </p>
+        </section>
+
+        <!-- Protocols Grid -->
+        <div class="protocols-grid">
+            <!-- Minting Vault -->
+            <article class="protocol-card">
+                <div class="protocol-indicator"></div>
+                <div class="protocol-header">
+                    <h2 class="protocol-name">Minting Vault</h2>
+                    <p class="protocol-type">Core CDP System</p>
+                </div>
+                <p class="protocol-description">
+                    Lock PLS collateral to mint pSunDAI. Self-healing oracle with 4-hour confirmation protects against flash crashes. Permissionless liquidations maintain system health.
+                </p>
+                <div class="protocol-stats">
+                    <div class="stat">
+                        <div class="stat-label">Min Collateral</div>
+                        <div class="stat-value">150%</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Stability Fee</div>
+                        <div class="stat-value">0.5% APY</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Liq Threshold</div>
+                        <div class="stat-value">110%</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Auto-Mint</div>
+                        <div class="stat-value">155%</div>
+                    </div>
+                </div>
+                <a href="https://ipfs.io/ipfs/bafybeiarilukzbmiqj35ml2jqagldmmyb7f7jsi3c3g5ted4arjdvubo4e/index.html" 
+                   class="protocol-button" 
+                   target="_blank">
+                    Access Vault →
+                </a>
+            </article>
+
+            <!-- LP Staking -->
+            <article class="protocol-card">
+                <div class="protocol-indicator"></div>
+                <div class="protocol-header">
+                    <h2 class="protocol-name">LP Staking</h2>
+                    <p class="protocol-type">Auto-Compound Vault</p>
+                </div>
+                <p class="protocol-description">
+                    Stake pSunDAI/PLS LP tokens to earn auto-compounded trading fees. Permissionless harvest mechanism socializes gas costs. No external rewards needed.
+                </p>
+                <div class="protocol-stats">
+                    <div class="stat">
+                        <div class="stat-label">Trading Fee</div>
+                        <div class="stat-value">0.3%</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Harvest Size</div>
+                        <div class="stat-value">1% Batch</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Lockup</div>
+                        <div class="stat-value">None</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Yield Type</div>
+                        <div class="stat-value">Organic</div>
+                    </div>
+                </div>
+                <a href="https://ipfs.io/ipfs/bafybeibpld7ezzrdpsrivzslgn6fltvdrwhxdco45dloos4czyftvpr6ke/index.html" 
+                   class="protocol-button" 
+                   target="_blank">
+                    Access Staking →
+                </a>
+            </article>
+
+            <!-- Destiny Vault -->
+            <article class="protocol-card">
+                <div class="protocol-indicator"></div>
+                <div class="protocol-header">
+                    <h2 class="protocol-name">Destiny Vault</h2>
+                    <p class="protocol-type">Bootstrap Mechanism</p>
+                </div>
+                <p class="protocol-description">
+                    Bootstrap pSunDAI by staking SunDAI or LP. When SunDAI reaches $1, all assets convert to vault collateral. Claim proportional pSunDAI based on your weight.
+                </p>
+                <div class="protocol-stats">
+                    <div class="stat">
+                        <div class="stat-label">SunDAI Weight</div>
+                        <div class="stat-value">1.0x</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">LP Weight</div>
+                        <div class="stat-value">1.5x</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Trigger Price</div>
+                        <div class="stat-value">$1.00</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Safety Ratio</div>
+                        <div class="stat-value">90%</div>
+                    </div>
+                </div>
+                <a href="https://ipfs.io/ipfs/bafybeia5s47wptey5jlaqlzevz3b2hfgnpfukha2krfq5ibliyodebrkbq/index.html" 
+                   class="protocol-button" 
+                   target="_blank">
+                    Access Destiny →
+                </a>
+            </article>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-links">
+                <a href="https://www.sundaitoken.com" class="footer-link" target="_blank">Documentation</a>
+                <a href="https://twitter.com/ELITE_Team6" class="footer-link" target="_blank">Twitter</a>
+                <a href="https://github.com/ELITE-TEAM6" class="footer-link" target="_blank">GitHub</a>
+            </div>
+            <p>Built by ELITE TEAM6 • Immutable • Autonomous • Forever</p>
+        </footer>
+    </main>
+
+    <script>
+        // Generate minimal starfield - just subtle dots
+        function createStarfield() {
+            const starfield = document.getElementById('starfield');
+            const starCount = 100;
+
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                starfield.appendChild(star);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', createStarfield);
+    </script>
+</body>
+</html>
