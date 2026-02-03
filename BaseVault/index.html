@@ -135,7 +135,7 @@
       border: 2px solid #ff6b00;
       border-radius: 16px;
       padding: 24px 20px;
-      max-width: 420px;
+      max-width: 520px;
       width: 95%;
       max-height: 85vh;
       overflow-y: auto;
@@ -144,7 +144,30 @@
       position: relative;
       box-shadow: 0 10px 40px rgba(255,107,0,0.4);
     }
-    .modal-content h3 { color: #ffd700; margin-top: 0; }
+    .modal-content h3 { color: #ffd700; margin-top: 0; text-align: center; font-size: 1.5em; }
+    .modal-content h4 { color: #ffa500; margin-top: 20px; margin-bottom: 10px; font-size: 1.1em; }
+    .modal-content ol { padding-left: 20px; line-height: 1.8; }
+    .modal-content ol li { margin-bottom: 12px; color: #ffebd1; }
+    .modal-content ol li strong { color: #ffd700; }
+    .modal-content .note { 
+      background: rgba(0,255,157,0.1); 
+      border: 1px solid rgba(0,255,157,0.3);
+      border-radius: 8px;
+      padding: 12px;
+      margin: 15px 0;
+      font-size: 0.9em;
+      line-height: 1.6;
+    }
+    .modal-content .warning-box { 
+      background: rgba(255,51,102,0.1); 
+      border: 1px solid rgba(255,51,102,0.3);
+      border-radius: 8px;
+      padding: 12px;
+      margin: 15px 0;
+      font-size: 0.9em;
+      line-height: 1.6;
+      color: #ff6b6b;
+    }
     .close { 
       color: #ff3366; 
       float: right; 
@@ -201,13 +224,7 @@
     
     <!-- HOW TO BUTTON -->
     <div class="card" style="margin-bottom:12px">
-      <button class="btn" id="howToBtn" style="background:linear-gradient(135deg, #f59e0b, #fbbf24);color:#000;font-weight:800;box-shadow:0 4px 15px rgba(245,158,11,0.4)">How to Use bSunDAI</button>
-    </div>
-    
-    <!-- LIQUIDATIONS DASHBOARD LINK -->
-    <div class="card" style="margin-bottom:12px">
-      <button class="btn" onclick="window.location.href='liquidations.html?v=6.0.1&t=' + Date.now()" style="background:linear-gradient(135deg, #ff3366, #ff6b00);color:#fff;font-weight:800;box-shadow:0 4px 15px rgba(255,51,102,0.4)">🔥 Liquidation Dashboard</button>
-      <div class="helper-text" style="margin-top:6px">Find and liquidate underwater vaults (for liquidators)</div>
+      <button class="btn" id="howToBtn" style="background:linear-gradient(135deg, #f59e0b, #fbbf24);color:#000;font-weight:800;box-shadow:0 4px 15px rgba(245,158,11,0.4)">📖 Complete User Guide</button>
     </div>
     
     <div class="card">
@@ -268,6 +285,12 @@
       <button class="btn" id="risk" disabled style="background:linear-gradient(135deg, #dc2626, #f97316);color:#fff;box-shadow:0 4px 15px rgba(220,38,38,0.4)">Check Liquidation Risk</button>
       <div id="riskText" style="margin-top:10px;text-align:center;font-weight:700"></div>
       <div class="helper-text">Check if vault is in danger (below 110% ratio)</div>
+    </div>
+    
+    <!-- LIQUIDATIONS DASHBOARD LINK (moved here) -->
+    <div class="card" style="margin-bottom:12px">
+      <button class="btn" onclick="window.location.href='liquidations.html?v=6.0.1&t=' + Date.now()" style="background:linear-gradient(135deg, #ff3366, #ff6b00);color:#fff;font-weight:800;box-shadow:0 4px 15px rgba(255,51,102,0.4)">🔥 Liquidation Dashboard</button>
+      <div class="helper-text" style="margin-top:6px">Find and liquidate underwater vaults (for liquidators)</div>
     </div>
     
     <div class="card">
@@ -398,6 +421,7 @@
 
     async function loadGlobalStats() {
       try {
+        if (!account) return; // Safety check: don't load if wallet not connected
         const [totalColl, totalDebt, health] = await Promise.all([
           vault.totalCollateral(),
           vault.totalDebt(),
@@ -432,10 +456,24 @@
         const [p, timestamp] = await oracle.peekPrice();
         price = p;
         document.getElementById("price").textContent = "$" + (Number(p)/1e18).toFixed(2) + " per ETH";
+        
+        // Re-enable buttons on successful price load
+        if (price > 0n && account) {
+          document.querySelectorAll(".btn").forEach(b => {
+            if (b.id !== 'howToBtn') b.disabled = false;
+          });
+        }
       } catch (e) {
         console.error("Price update failed:", e);
-        document.getElementById("price").textContent = "Oracle offline";
-        price = 0n;
+        document.getElementById("price").textContent = "⚠️ Oracle offline - retrying in 60s";
+        
+        // Only disable critical operations if no price ever loaded
+        if (price === 0n) {
+          ['deposit', 'mint', 'oneClickBtn', 'mintMaxSafe'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) btn.disabled = true;
+          });
+        }
       }
     }
 
@@ -455,13 +493,38 @@
       btn.textContent = "Processing...";
       error.textContent = "";
       try {
-        await fn();
-        status.textContent = "Success!";
-        setTimeout(() => status.textContent = "", 4000);
+        const result = await fn();
+        
+        // Show transaction hash if available
+        if (result && result.hash) {
+          status.innerHTML = `Success! <a href="https://basescan.org/tx/${result.hash}" target="_blank" style="color:#00ff9d;text-decoration:underline">View TX</a>`;
+        } else {
+          status.textContent = "Success!";
+        }
+        
+        setTimeout(() => status.textContent = "", 8000);
         await loadVault();
       } catch (e) {
-        error.textContent = e.message || "Transaction failed";
-        setTimeout(() => error.textContent = "", 8000);
+        // Enhanced error parsing
+        let errorMsg = e.message || "Transaction failed";
+        
+        // Parse common revert reasons
+        if (errorMsg.includes("insufficient collateral")) {
+          errorMsg = "❌ Insufficient collateral - deposit more ETH first";
+        } else if (errorMsg.includes("below minimum ratio") || errorMsg.includes("Below minimum")) {
+          errorMsg = "❌ This would make your vault unsafe (below 150%)";
+        } else if (errorMsg.includes("user rejected") || errorMsg.includes("User denied")) {
+          errorMsg = "Transaction cancelled by user";
+        } else if (errorMsg.includes("Cannot withdraw yet")) {
+          errorMsg = "❌ 5-minute cooldown active - wait before withdrawing";
+        } else if (errorMsg.includes("Vault must be empty")) {
+          errorMsg = "❌ Repay all debt first before emergency unlock";
+        } else if (errorMsg.includes("30 days")) {
+          errorMsg = "❌ Emergency unlock requires 30 days with zero debt";
+        }
+        
+        error.textContent = errorMsg;
+        setTimeout(() => error.textContent = "", 10000);
       } finally {
         btn.textContent = orig;
         btn.disabled = false;
@@ -617,90 +680,112 @@
     // BUTTON HANDLERS
     document.getElementById("deposit").onclick = () => withLoading(document.getElementById("deposit"), async () => {
       const u = parseFloat(document.getElementById("usdIn").value);
-      if (!u || u <= 0) throw new Error("Enter amount");
-      await (await vault.depositETH({ value: usdToETH(u) })).wait();
+      if (!u || u <= 0) throw new Error("Please enter a valid USD amount (e.g., 100)");
+      const tx = await vault.depositETH({ value: usdToETH(u) });
+      await tx.wait();
+      return tx;
     });
     
     document.getElementById("mint").onclick = () => withLoading(document.getElementById("mint"), async () => {
       const u = parseFloat(document.getElementById("usdMint").value);
-      if (!u || u <= 0) throw new Error("Enter amount");
-      await (await vault.mint(usdToBSun(u))).wait();
+      if (!u || u <= 0) throw new Error("Please enter a valid USD amount to mint");
+      const tx = await vault.mint(usdToBSun(u));
+      await tx.wait();
+      return tx;
     });
     
     document.getElementById("repay").onclick = () => withLoading(document.getElementById("repay"), async () => {
       const u = parseFloat(document.getElementById("usdRepay").value);
-      if (!u || u <= 0) throw new Error("Enter amount");
+      if (!u || u <= 0) throw new Error("Please enter a valid repay amount");
       await (await token.approve(VAULT, usdToBSun(u))).wait();
-      await (await vault.repay(usdToBSun(u))).wait();
+      const tx = await vault.repay(usdToBSun(u));
+      await tx.wait();
+      return tx;
     });
     
     document.getElementById("withdraw").onclick = () => withLoading(document.getElementById("withdraw"), async () => {
       const u = parseFloat(document.getElementById("usdOut").value);
-      if (!u || u <= 0) throw new Error("Enter amount");
-      await (await vault.withdrawETH(usdToETH(u))).wait();
+      if (!u || u <= 0) throw new Error("Please enter a valid USD amount to withdraw");
+      const tx = await vault.withdrawETH(usdToETH(u));
+      await tx.wait();
+      return tx;
     });
     
     document.getElementById("repayAuto").onclick = () => withLoading(document.getElementById("repayAuto"), async () => {
       const u = parseFloat(document.getElementById("usdRepayAuto").value);
-      if (!u || u <= 0) throw new Error("Enter amount");
+      if (!u || u <= 0) throw new Error("Please enter a valid repay amount");
       await (await token.approve(VAULT, usdToBSun(u))).wait();
-      await (await vault.repayAndAutoWithdraw(usdToBSun(u))).wait();
+      const tx = await vault.repayAndAutoWithdraw(usdToBSun(u));
+      await tx.wait();
+      return tx;
     });
     
     document.getElementById("risk").onclick = () => withLoading(document.getElementById("risk"), async () => {
       const [can, ratio] = await vault.isLiquidatable(account);
       document.getElementById("riskText").innerHTML = can
-        ? '<span class="risk">LIQUIDATION RISK</span>'
-        : '<span class="safe">You are safe</span>';
+        ? '<span class="risk">⚠️ LIQUIDATION RISK - Repay debt or add collateral!</span>'
+        : '<span class="safe">✓ You are safe (above 110%)</span>';
     });
     
     document.getElementById("repayToSafe").onclick = () => withLoading(document.getElementById("repayToSafe"), async () => {
       const needed = await vault.repayToHealth(account);
-      if (needed.eq(0)) throw new Error("Already safe");
+      if (needed.eq(0)) throw new Error("Already safe at 150%+");
       await (await token.approve(VAULT, needed)).wait();
-      await (await vault.repay(needed)).wait();
+      const tx = await vault.repay(needed);
+      await tx.wait();
       status.textContent = `Repaid ${ethers.utils.formatEther(needed)} bSunDAI - now at 150%`;
+      return tx;
     });
     
     document.getElementById("oneClickBtn").onclick = () => withLoading(document.getElementById("oneClickBtn"), async () => {
       const usd = parseFloat(document.getElementById("usdOneClick").value);
-      if (!usd || usd <= 0) throw new Error("Enter amount");
+      if (!usd || usd <= 0) throw new Error("Please enter a valid USD amount");
       const ethValue = usdToETH(usd);
-      await (await vault.depositAndAutoMintETH({ value: ethValue })).wait();
-      status.textContent = `Minted ${(usd / 1.55).toFixed(2)} bSunDAI at 155%`;
+      const tx = await vault.depositAndAutoMintETH({ value: ethValue });
+      await tx.wait();
+      status.textContent = `✓ Minted ${(usd / 1.55).toFixed(2)} bSunDAI at 155%`;
+      return tx;
     });
 
     document.getElementById("mintMaxSafe").onclick = () => withLoading(document.getElementById("mintMaxSafe"), async () => {
       const info = await vault.vaultInfo(account);
-      if (info.mintable.eq(0)) throw new Error("Need collateral first");
-      await (await vault.mint(info.mintable)).wait();
-      status.textContent = `Minted ${Number(ethers.utils.formatEther(info.mintable)).toFixed(2)} bSunDAI`;
+      if (info.mintable.eq(0)) throw new Error("Need collateral first - deposit ETH to begin");
+      const tx = await vault.mint(info.mintable);
+      await tx.wait();
+      status.textContent = `✓ Minted ${Number(ethers.utils.formatEther(info.mintable)).toFixed(2)} bSunDAI`;
+      return tx;
     });
 
     document.getElementById("withdrawMaxSafe").onclick = () => withLoading(document.getElementById("withdrawMaxSafe"), async () => {
       const info = await vault.vaultInfo(account);
       
       if (info.debt.eq(0)) {
-        if (info.collateral.eq(0)) throw new Error("No collateral");
-        await (await vault.withdrawETH(info.collateral)).wait();
-        status.textContent = `Withdrew all ${Number(ethers.utils.formatEther(info.collateral)).toFixed(4)} ETH`;
+        if (info.collateral.eq(0)) throw new Error("No collateral to withdraw");
+        const tx = await vault.withdrawETH(info.collateral);
+        await tx.wait();
+        status.textContent = `✓ Withdrew all ${Number(ethers.utils.formatEther(info.collateral)).toFixed(4)} ETH`;
+        return tx;
       } else {
         const p = info.price.gt(0) ? info.price : (await oracle.peekPrice())[0];
-        if (p.eq(0)) throw new Error("Oracle offline");
+        if (p.eq(0)) throw new Error("Oracle offline - cannot calculate safe withdrawal");
         
         const requiredCollateral = info.debt.mul(150).mul(DECIMALS).div(p.mul(100));
         const withdrawable = info.collateral.gt(requiredCollateral) ? info.collateral.sub(requiredCollateral) : ethers.BigNumber.from(0);
         
-        if (withdrawable.lte(0)) throw new Error("Already at minimum");
+        if (withdrawable.lte(0)) throw new Error("Already at minimum safe collateral (150%)");
         
-        await (await vault.withdrawETH(withdrawable)).wait();
-        status.textContent = `Withdrew ${Number(ethers.utils.formatEther(withdrawable)).toFixed(4)} ETH safely`;
+        const tx = await vault.withdrawETH(withdrawable);
+        await tx.wait();
+        status.textContent = `✓ Withdrew ${Number(ethers.utils.formatEther(withdrawable)).toFixed(4)} ETH safely`;
+        return tx;
       }
     });
 
     document.getElementById("emergencyUnlock").onclick = () => withLoading(document.getElementById("emergencyUnlock"), async () => {
-      await (await vault.emergencyUnlock()).wait();
-      status.textContent = "Emergency unlock successful!";
+      const tx = await vault.emergencyUnlock();
+      await tx.wait();
+      status.textContent = "✓ Emergency unlock successful - collateral recovered!";
+      return tx;
     });
 
     walletBtn.onclick = connectWallet;
@@ -734,30 +819,178 @@
     });
     animate();
 
-    // HOW TO MODAL
+    // COMPREHENSIVE HOW-TO MODAL
     const howToBtn = document.getElementById("howToBtn");
     const modal = document.createElement("div");
     modal.className = "modal";
     modal.innerHTML = `
       <div class="modal-content">
         <span class="close">×</span>
-        <h3>How to Use bSunDAI on Base v6.0.1</h3>
+        <h3>📖 Complete bSunDAI User Guide</h3>
+        
+        <h4>🚀 Getting Started</h4>
         <ol>
-          <li><strong>Connect Wallet:</strong> MetaMask on Base network</li>
-          <li><strong>Oracle:</strong> Aave price feed with 4-hour confirmation</li>
-          <li><strong>Deposit ETH:</strong> Lock collateral for your vault</li>
-          <li><strong>Mint bSunDAI:</strong> Create stablecoins at 150%</li>
-          <li><strong>Auto-Mint:</strong> One-click at 155% (extra safety)</li>
-          <li><strong>Stay Safe:</strong> Keep ratio above 150%</li>
-          <li><strong>Withdraw:</strong> 5-min cooldown after deposits</li>
-          <li><strong>Emergency:</strong> 30-day unlock with zero debt</li>
+          <li><strong>Install MetaMask:</strong> Download from metamask.io if you don't have it yet</li>
+          <li><strong>Get ETH on Base:</strong> Bridge ETH to Base network using bridge.base.org or buy directly on Base</li>
+          <li><strong>Connect Wallet:</strong> Click "Connect Wallet" button (top right). MetaMask will automatically switch to Base network</li>
+          <li><strong>Check Price:</strong> Current ETH/USD price displays at top (updates every 60 seconds from Aave oracle)</li>
         </ol>
-        <div style="margin-top:15px;padding:10px;background:rgba(0,255,157,0.1);border-radius:8px;border:1px solid rgba(0,255,157,0.2)">
-          <strong>v6.0.1 Features:</strong><br>
-          • Trust-minimized token design<br>
-          • PulseChain-grade oracle security<br>
-          • Dutch auction liquidations<br>
-          • Institutional regulatory clarity
+        
+        <h4>💰 Creating Your First Vault (Easiest Method)</h4>
+        <ol>
+          <li><strong>One-Click Auto Mint (Recommended):</strong>
+            <ul style="margin-top:8px">
+              <li>Enter USD amount you want to deposit (e.g., $1000)</li>
+              <li>See preview showing ETH amount and bSunDAI you'll receive</li>
+              <li>Click "1-Click Auto Mint (155%)" - deposits ETH and mints bSunDAI in one transaction</li>
+              <li>Your vault will be at safe 155% ratio (5% extra safety buffer)</li>
+            </ul>
+          </li>
+        </ol>
+        
+        <h4>⚙️ Manual Vault Management</h4>
+        <ol>
+          <li><strong>Deposit ETH:</strong>
+            <ul style="margin-top:8px">
+              <li>Enter USD value you want to deposit</li>
+              <li>ETH amount calculates automatically</li>
+              <li>Click "Deposit ETH" to lock collateral in your vault</li>
+              <li>⏰ Starts 5-minute withdrawal cooldown (security feature)</li>
+            </ul>
+          </li>
+          
+          <li><strong>Mint bSunDAI:</strong>
+            <ul style="margin-top:8px">
+              <li>Enter USD amount of bSunDAI you want to create</li>
+              <li>Click "Mint bSunDAI" to generate stablecoins against your collateral</li>
+              <li>Must maintain minimum 150% ratio (system enforces this)</li>
+              <li>Tip: Use "Mint Max Safe" to mint maximum while staying at exactly 150%</li>
+            </ul>
+          </li>
+          
+          <li><strong>Repay Debt:</strong>
+            <ul style="margin-top:8px">
+              <li>Enter bSunDAI amount to burn/repay</li>
+              <li>Click "Repay Debt" - this burns your bSunDAI tokens</li>
+              <li>✅ No cooldown - repay anytime instantly</li>
+              <li>Tip: Use "Repay to Safe (150%)" to auto-calculate exact amount needed</li>
+            </ul>
+          </li>
+          
+          <li><strong>Withdraw ETH:</strong>
+            <ul style="margin-top:8px">
+              <li>Enter USD value you want to withdraw</li>
+              <li>ETH amount calculates automatically</li>
+              <li>Must wait 5 minutes after last deposit (security protection)</li>
+              <li>Must keep ratio above 150% after withdrawal</li>
+              <li>Tip: Use "Withdraw Max Safe" to take profits while staying at 150%</li>
+            </ul>
+          </li>
+        </ol>
+        
+        <h4>🎯 Understanding Your Vault Stats</h4>
+        <ul style="list-style:none;padding-left:0;line-height:1.8">
+          <li><strong>Collateral:</strong> Total ETH you've deposited</li>
+          <li><strong>Debt:</strong> Total bSunDAI you've minted (what you owe)</li>
+          <li><strong>Ratio:</strong> (Collateral Value ÷ Debt) × 100
+            <ul style="margin-top:6px">
+              <li>🟢 <strong>150%+:</strong> SAFE - You're fully protected</li>
+              <li>🟡 <strong>130-150%:</strong> WARNING - Consider adding collateral</li>
+              <li>🔴 <strong>Below 110%:</strong> DANGER - Can be liquidated!</li>
+            </ul>
+          </li>
+          <li><strong>Can Mint:</strong> Maximum bSunDAI you can mint while staying at 150%</li>
+        </ul>
+        
+        <h4>🛡️ Safety Features</h4>
+        <div class="note">
+          <strong>150% Minimum Ratio:</strong><br>
+          System won't let you mint or withdraw if it would drop you below 150%. This protects you from accidental liquidation.
+        </div>
+        
+        <div class="note">
+          <strong>5-Minute Cooldown:</strong><br>
+          After depositing, you must wait 5 minutes before withdrawing. This prevents flash loan attacks and protects the system.
+        </div>
+        
+        <div class="note">
+          <strong>30-Day Emergency Unlock:</strong><br>
+          If your vault has zero debt for 30+ days, you can emergency unlock to recover collateral (safety mechanism if oracle fails).
+        </div>
+        
+        <h4>⚠️ Liquidation Risk</h4>
+        <div class="warning-box">
+          <strong>When Can You Be Liquidated?</strong><br>
+          If your ratio drops below 110%, liquidators can repay your debt in exchange for your collateral at a discount. This happens automatically if ETH price drops significantly.
+          
+          <br><br><strong>How to Avoid Liquidation:</strong>
+          <ul style="margin-top:8px">
+            <li>Keep ratio above 150% (system default)</li>
+            <li>Add more ETH collateral during market drops</li>
+            <li>Repay some debt to improve ratio</li>
+            <li>Use "Check Liquidation Risk" button regularly</li>
+            <li>Use "Repay to Safe (150%)" if you drop below</li>
+          </ul>
+        </div>
+        
+        <h4>🔥 For Liquidators</h4>
+        <ol>
+          <li>Click "Liquidation Dashboard" button</li>
+          <li>See all vaults below 110% ratio</li>
+          <li>Liquidate underwater vaults to earn rewards</li>
+          <li>System uses Dutch auction (reward decreases over time)</li>
+        </ol>
+        
+        <h4>💡 Pro Tips</h4>
+        <ul style="line-height:1.8">
+          <li><strong>Start Conservative:</strong> Use 155% ratio first, get comfortable</li>
+          <li><strong>Monitor Prices:</strong> Watch ETH price - if dropping, add collateral</li>
+          <li><strong>Use Smart Buttons:</strong> "Mint Max Safe" and "Withdraw Max Safe" do math for you</li>
+          <li><strong>Repay First:</strong> When exiting, repay debt before withdrawing (or use "Repay & Withdraw Excess")</li>
+          <li><strong>Check Global Stats:</strong> See total system health and your share</li>
+          <li><strong>No Customer Service:</strong> This is ownerless software - system is fully autonomous</li>
+        </ul>
+        
+        <h4>🎯 Oracle Information (v6.0)</h4>
+        <div class="note">
+          <strong>Aave Price Feed:</strong><br>
+          • Professional-grade Chainlink oracle<br>
+          • 4-hour confirmation period for price changes<br>
+          • Stepping mechanism prevents manipulation<br>
+          • TWAP (time-weighted average) protection<br>
+          • Battle-tested on Base mainnet
+        </div>
+        
+        <h4>📊 Example Walkthrough</h4>
+        <div style="background:rgba(255,140,0,0.1);padding:12px;border-radius:8px;margin-top:10px">
+          <strong>Scenario:</strong> Deposit $3000 worth of ETH<br><br>
+          
+          <strong>Step 1:</strong> Enter "3000" in "1-Click Auto Mint"<br>
+          → Preview shows: "≈ 1.25 ETH → 1935.48 bSunDAI (at 155%)"<br><br>
+          
+          <strong>Step 2:</strong> Click "1-Click Auto Mint"<br>
+          → MetaMask asks for approval<br>
+          → One transaction deposits and mints<br><br>
+          
+          <strong>Step 3:</strong> Your vault now shows:<br>
+          → Collateral: 1.25 ETH<br>
+          → Debt: 1935.48 bSunDAI<br>
+          → Ratio: 155% (safe!)<br><br>
+          
+          <strong>Result:</strong> You have 1935.48 bSunDAI to use while your ETH is locked safely at 155% ratio
+        </div>
+        
+        <h4>❓ Common Questions</h4>
+        <ul style="line-height:1.8">
+          <li><strong>Q: Can I lose my ETH?</strong><br>A: Only if liquidated (ratio below 110%). Stay above 150% to be safe.</li>
+          <li><strong>Q: What if oracle fails?</strong><br>A: Emergency unlock after 30 days with zero debt lets you recover collateral.</li>
+          <li><strong>Q: Are there fees?</strong><br>A: Only blockchain gas fees. No protocol fees, no interest, no admin.</li>
+          <li><strong>Q: Can contracts be changed?</strong><br>A: NO. Contracts are immutable - no upgrades, no admin keys, fully autonomous.</li>
+          <li><strong>Q: What if I need help?</strong><br>A: This guide covers everything. System is ownerless and autonomous by design.</li>
+        </ul>
+        
+        <div class="note" style="margin-top:20px">
+          <strong>🌟 Remember:</strong> bSunDAI is ownerless, immutable software. There is no company, no support team, no way to reverse transactions. You are in complete control. Read this guide carefully and start small!
         </div>
       </div>
     `;
