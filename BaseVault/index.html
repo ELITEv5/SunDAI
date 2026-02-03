@@ -431,12 +431,20 @@
         const debtNum = Number(ethers.utils.formatEther(totalDebt));
         const healthNum = Number(health) / 1;
         
-        document.getElementById("totalColl").textContent = collNum.toFixed(2) + " ETH";
-        document.getElementById("totalDebt").textContent = debtNum.toFixed(0) + " bSunDAI";
+        // Better formatting for small numbers (6 decimals)
+        document.getElementById("totalColl").textContent = collNum.toFixed(6) + " ETH";
+        document.getElementById("totalDebt").textContent = debtNum.toFixed(6) + " bSunDAI";
         
         const healthEl = document.getElementById("sysHealth");
-        healthEl.textContent = healthNum.toFixed(1) + "%";
-        healthEl.className = "value " + (healthNum < 130 ? "risk" : healthNum < 150 ? "warn" : "safe");
+        
+        // Handle infinite/undefined health when debt is zero
+        if (debtNum === 0 || !isFinite(healthNum) || healthNum > 1e10) {
+          healthEl.textContent = "Infinite (no debt)";
+          healthEl.className = "value safe";
+        } else {
+          healthEl.textContent = healthNum.toFixed(1) + "%";
+          healthEl.className = "value " + (healthNum < 130 ? "risk" : healthNum < 150 ? "warn" : "safe");
+        }
         
         const yourColl = Number(ethers.utils.formatEther((await vault.vaultInfo(account)).collateral));
         if (yourColl > 0 && collNum > 0) {
@@ -447,7 +455,7 @@
         }
         document.getElementById("globalStats").style.display = "block";
       } catch (e) {
-        console.log("Global stats failed");
+        console.log("Global stats failed:", e);
       }
     }
 
@@ -532,7 +540,10 @@
         
         // Parse common revert reasons
         if (errorMsg.includes("System not safe")) {
-          errorMsg = "❌ System not safe - Try depositing at least $10-20 worth of ETH. Very small positions may be rejected for system safety.";
+          errorMsg = "❌ System not safe - System health check failed. This can happen with very small deposits on an empty system due to rounding. Try $2-5+ for first deposit, or use manual deposit+mint.";
+        } else if (errorMsg.includes("System health would be")) {
+          // Already has good error message from our pre-check
+          errorMsg = "❌ " + errorMsg;
         } else if (errorMsg.includes("insufficient collateral")) {
           errorMsg = "❌ Insufficient collateral - deposit more ETH first";
         } else if (errorMsg.includes("below minimum ratio") || errorMsg.includes("Below minimum")) {
@@ -567,11 +578,16 @@
         const ratioClass = ratio < 150 ? "risk" : ratio < 170 ? "warn" : "safe";
         const ratioDisplay = ratio > 1e6 ? "Infinite" : ratio.toFixed(2) + "%";
         
+        // Use 6 decimals for better precision with small amounts
+        const collateralETH = Number(ethers.utils.formatEther(i.collateral));
+        const debtAmount = Number(ethers.utils.formatEther(i.debt));
+        const mintableAmount = Number(ethers.utils.formatEther(i.mintable));
+        
         stats.innerHTML = `
-          <div class="stat"><div class="label">Collateral</div><div class="value">${Number(ethers.utils.formatEther(i.collateral)).toFixed(4)} ETH</div></div>
-          <div class="stat"><div class="label">Debt</div><div class="value">${Number(ethers.utils.formatEther(i.debt)).toFixed(2)} bSunDAI</div></div>
+          <div class="stat"><div class="label">Collateral</div><div class="value">${collateralETH.toFixed(6)} ETH</div></div>
+          <div class="stat"><div class="label">Debt</div><div class="value">${debtAmount.toFixed(6)} bSunDAI</div></div>
           <div class="stat"><div class="label">Ratio</div><div class="value ${ratioClass}">${ratioDisplay}</div></div>
-          <div class="stat"><div class="label">Can Mint</div><div class="value">${Number(ethers.utils.formatEther(i.mintable)).toFixed(2)} bSunDAI</div></div>
+          <div class="stat"><div class="label">Can Mint</div><div class="value">${mintableAmount.toFixed(6)} bSunDAI</div></div>
         `;
 
         // Repay to Safe preview
@@ -820,6 +836,18 @@
       console.log("  New system collateral:", ethers.utils.formatEther(newTotalColl), "ETH");
       console.log("  New system debt:", ethers.utils.formatEther(newTotalDebt), "bSunDAI");
       console.log("  New system health:", Number(newSystemHealth) / 1, "%");
+      
+      // Check if we're bootstrapping the system (first deposit)
+      const isBootstrap = totalColl.eq(0) && totalDebt.eq(0);
+      console.log("Bootstrap mode (first deposit):", isBootstrap);
+      
+      if (isBootstrap && Number(newSystemHealth) / 1 < 155) {
+        console.log("⚠️ WARNING: System health calculation shows", Number(newSystemHealth) / 1, "% due to rounding");
+        console.log("This is a contract limitation when bootstrapping from zero");
+        console.log("Recommended: Try depositing $2-3 or use manual deposit+mint instead");
+        throw new Error(`System health would be ${(Number(newSystemHealth) / 1).toFixed(2)}% (needs 155%+). Contract rounding issue with very small first deposits. Try $2-3+ or use manual deposit then mint.`);
+      }
+      
       console.log("═══════════════════════════════════");
       
       const tx = await vault.depositAndAutoMintETH({ value: ethValue });
