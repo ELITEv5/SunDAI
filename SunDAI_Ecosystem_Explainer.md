@@ -768,12 +768,12 @@ PLS drops 27%:
 
 | Contract | Address | Status |
 |----------|---------|--------|
-| pSunDAI Token | `[TBD]` | ✅ Live |
-| pSunDAI Vault v5.6 | `[TBD]` | ✅ Live |
-| Oracle v5.1 | `[TBD]` | ✅ Live |
-| sSunDAI v1.0 | `[TBD]` | ✅ Live |
-| Destiny Vault | `[TBD]` | ✅ Active |
-| SunDial Oracle | `[TBD]` | ✅ Active |
+| pSunDAI Token | `0x5529c1cb179b2c256501031adCDAfC22D9c6d236` | ✅ Live |
+| pSunDAI Vault v5.6 | `0x789472Ef7fa74cB8898Ed38cAa5d18f4D49EcC6d` | ✅ Live |
+| Oracle v5.1 | `0xC19C8201701585D9087F261eaCd3Ee3345251Da3` | ✅ Live |
+| sSunDAI v1.0 | `0xfC74373B28e4bC6C26459Fd940366C4Cf57e7cf3` | ✅ Live |
+| Destiny Vault | `0x652137bf4a3CA4c7eb70981b4eB821C4Fd3F11c3` | ✅ Active |
+| SunDial Oracle | `0xa2Bf4FBc3CF16e37550E7571c3816f9AE6c73A4F` | ✅ Active |
 | SunDAI Base Token | `[TBD]` | ✅ Live |
 
 ### Verified Source Code
