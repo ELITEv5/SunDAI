@@ -424,15 +424,16 @@
           const ratio = Number(info.ratio);
           
           let category, color, message;
-          if (ratioBN.lt(ethers.BigNumber.from("11000"))) {
+          // Contract returns ratio as PERCENTAGE (160 = 160%), not basis points!
+          if (ratioBN.lt(ethers.BigNumber.from("110"))) { // <110%
             category = "LIQUIDATABLE";
             color = "#ff3366";
             message = "⚠️ Your vault CAN be liquidated!";
-          } else if (ratioBN.lt(ethers.BigNumber.from("15000"))) {
+          } else if (ratioBN.lt(ethers.BigNumber.from("150"))) { // <150%
             category = "RISKY";
             color = "#ffcc00";
             message = "⚠️ Your vault is at risk (below 150%)";
-          } else {
+          } else { // >=150%
             category = "HEALTHY";
             color = "#00ff9d";
             message = "✅ Your vault is healthy!";
@@ -556,8 +557,9 @@
               undercollateralizedSince: Number(vaultDetails.undercollateralizedSince)
             };
             
-            // FIXED: Use BigNumber for classification (prevents 109.99% rounding to 110%)
-            if (ratioBN.lt(ethers.BigNumber.from("11000"))) { // <110% (ratio is in basis points * 100)
+            // FIXED: Use BigNumber for classification
+            // Contract returns ratio as PERCENTAGE (e.g. 160 = 160%), not basis points!
+            if (ratioBN.lt(ethers.BigNumber.from("110"))) { // <110% = liquidatable
               console.log(`  → LIQUIDATABLE (${ratio.toFixed(2)}%)`);
               // Check liquidation cooldown
               const cooldownRemaining = Number(liquidationCooldown) - (currentTime - vaultData.lastLiquidationTime);
@@ -610,7 +612,7 @@
               vaultData.isProfitable = vaultData.profitUSD > 0;
               
               liquidatable.push(vaultData);
-            } else if (ratioBN.lt(ethers.BigNumber.from("15000"))) { // <150% = risky
+            } else if (ratioBN.lt(ethers.BigNumber.from("150"))) { // <150% = risky
               console.log(`  → RISKY (${ratio.toFixed(2)}%)`);
               risky.push(vaultData);
             } else { // >=150% = healthy
