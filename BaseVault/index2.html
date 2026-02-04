@@ -256,7 +256,7 @@
     <div class="card">
       <button class="btn" id="mintMaxSafe" disabled>Mint Max Safe (Stay 150%)</button>
       <div class="preview" id="mintMaxPreview"></div>
-      <div class="helper-text">Mint maximum while keeping vault at 150%</div>
+      <div class="helper-text">Mint maximum bSunDAI while keeping vault at safe 150%</div>
     </div>
     
     <div class="card">
@@ -642,7 +642,8 @@
         const mintMaxBtn = document.getElementById("mintMaxSafe");
         
         if (i.mintable.gt(0)) {
-          const mintableNum = Number(ethers.utils.formatEther(i.mintable));
+          // Apply 2% safety buffer to account for interest accrual and price movements
+          const mintableNum = Number(ethers.utils.formatEther(i.mintable)) * 0.98;
           mintMaxPreviewEl.textContent = `Will mint ${mintableNum.toFixed(2)} bSunDAI (vault stays at 150%)`;
           mintMaxPreviewEl.style.color = "#00ff9d";
           mintMaxBtn.disabled = false;
@@ -682,8 +683,8 @@
             withdrawMaxPreviewEl.style.color = "#00ff9d";
             withdrawMaxBtn.disabled = false;
           } else if (i.debt.gt(0) && i.collateral.gt(0) && i.price.gt(0)) {
-            // FIXED: Use same formula as button handler
-            const requiredCollateral = i.debt.mul(minRatio).mul(DECIMALS).div(i.price.mul(100));
+            // Use 1% buffer - keep slightly more collateral than required for 150%
+            const requiredCollateral = i.debt.mul(minRatio).mul(DECIMALS).mul(101).div(i.price.mul(100).mul(100));
             const withdrawable = i.collateral.gt(requiredCollateral) ? i.collateral.sub(requiredCollateral) : ethers.BigNumber.from(0);
             
             if (withdrawable.gt(0)) {
@@ -780,6 +781,14 @@
       if (!u || u <= 0) throw new Error("Please enter a valid USD amount to mint");
       
       const mintAmount = usdToBSun(u);
+      
+      // Validate against mintable amount
+      const info = await vault.vaultInfo(account);
+      if (mintAmount.gt(info.mintable)) {
+        const maxSafe = Number(ethers.utils.formatEther(info.mintable));
+        throw new Error(`Cannot safely mint ${u.toFixed(2)} bSunDAI. Maximum safe amount: ${maxSafe.toFixed(2)} bSunDAI (use "Mint Max Safe" button for automatic calculation)`);
+      }
+      
       const tx = await vault.mint(mintAmount);
       await tx.wait();
       return tx;
@@ -797,7 +806,29 @@
     document.getElementById("withdraw").onclick = () => withLoading(document.getElementById("withdraw"), async () => {
       const u = parseFloat(document.getElementById("usdOut").value);
       if (!u || u <= 0) throw new Error("Please enter a valid USD amount to withdraw");
-      const tx = await vault.withdrawETH(usdToETH(u));
+      
+      const withdrawAmount = usdToETH(u);
+      const info = await vault.vaultInfo(account);
+      
+      // Safety check if user has debt
+      if (info.debt.gt(0)) {
+        const remainingColl = info.collateral.sub(withdrawAmount);
+        
+        if (remainingColl.lte(0)) {
+          throw new Error("Cannot withdraw all collateral while you have debt. Repay debt first or use 'Withdraw Max Safe' button.");
+        }
+        
+        // Check if withdrawal would drop below 150%
+        const requiredColl = info.debt.mul(minRatio).mul(DECIMALS).div(info.price.mul(100));
+        
+        if (remainingColl.lt(requiredColl)) {
+          const maxWithdrawable = info.collateral.sub(requiredColl);
+          const maxWithdrawUSD = Number(ethers.utils.formatEther(maxWithdrawable)) * (Number(info.price) / 1e18);
+          throw new Error(`Unsafe withdrawal - would drop below 150% ratio. Maximum safe amount: $${maxWithdrawUSD.toFixed(2)} (${Number(ethers.utils.formatEther(maxWithdrawable)).toFixed(4)} ETH). Use "Withdraw Max Safe" button for automatic calculation.`);
+        }
+      }
+      
+      const tx = await vault.withdrawETH(withdrawAmount);
       await tx.wait();
       return tx;
     });
@@ -842,9 +873,13 @@
     document.getElementById("mintMaxSafe").onclick = () => withLoading(document.getElementById("mintMaxSafe"), async () => {
       const info = await vault.vaultInfo(account);
       if (info.mintable.eq(0)) throw new Error("Need collateral first - deposit ETH to begin");
-      const tx = await vault.mint(info.mintable);
+      
+      // Apply 2% safety buffer to account for interest accrual and price movements
+      const safeMintable = info.mintable.mul(98).div(100);
+      
+      const tx = await vault.mint(safeMintable);
       await tx.wait();
-      status.textContent = `✓ Minted ${Number(ethers.utils.formatEther(info.mintable)).toFixed(2)} bSunDAI`;
+      status.textContent = `✓ Minted ${Number(ethers.utils.formatEther(safeMintable)).toFixed(2)} bSunDAI`;
       return tx;
     });
 
@@ -861,8 +896,8 @@
         const p = info.price.gt(0) ? info.price : (await oracle.peekPrice())[0];
         if (p.eq(0)) throw new Error("Oracle offline - cannot calculate safe withdrawal");
         
-        // FIXED: Use minRatio constant (150)
-        const requiredCollateral = info.debt.mul(minRatio).mul(DECIMALS).div(p.mul(100));
+        // Use 1% buffer - keep slightly more collateral than required
+        const requiredCollateral = info.debt.mul(minRatio).mul(DECIMALS).mul(101).div(p.mul(100).mul(100));
         const withdrawable = info.collateral.gt(requiredCollateral) ? info.collateral.sub(requiredCollateral) : ethers.BigNumber.from(0);
         
         if (withdrawable.lte(0)) throw new Error("Already at minimum safe collateral (150%)");
