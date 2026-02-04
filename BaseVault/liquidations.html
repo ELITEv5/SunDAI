@@ -190,6 +190,10 @@
       🔍 Scan for Liquidation Opportunities
     </button>
     
+    <button class="btn" style="background:linear-gradient(135deg, #8b5cf6, #a78bfa);margin-bottom:20px;" onclick="quickCheckMyVault()">
+      🔎 Quick Check: Just My Vault
+    </button>
+    
     <div class="tabs" id="tabs" style="display:none;">
       <div class="tab active" onclick="showTab('liquidatable')">
         <div style="font-size:0.8em;color:#ffbd70;">Liquidatable</div>
@@ -222,9 +226,9 @@
     const ORACLE = "0x343848Bef6B4852EFC77936C2f18A39079031cC1";
     const BASE_CHAIN_ID = 8453;
     
-    // Contract deployment block - CRITICAL: Only scan from here to save RPC calls
-    // Check exact block at: https://basescan.org/address/0x53D9aF99890d14Ad4942801016C965A546dB98C2
-    const DEPLOYMENT_BLOCK = 22500000; // Conservative estimate (~2-3 weeks ago)
+    // Contract deployment block - Set to 0 to scan all blocks (will find deployment automatically)
+    // TODO: Update this after finding actual deployment block from first scan
+    const DEPLOYMENT_BLOCK = 0;
     
     // ORACLE ABI - ADDED MAX_PRICE_AGE FOR FRESHNESS CHECK
     const ORACLE_ABI = [
@@ -330,15 +334,19 @@
       const STEP = 50000; // Base has fast blocks
       let events = [];
 
+      console.log(`Scanning from block ${startBlock} to ${latest} (${Math.ceil((latest - startBlock) / STEP)} chunks)`);
+
       for (let from = startBlock; from <= latest; from += STEP) {
         const to = Math.min(from + STEP - 1, latest);
         try {
           const batch = await vault.queryFilter(filter, from, to);
           events.push(...batch);
-          console.log(`Scanned blocks ${from}-${to}: ${batch.length} events`);
+          if (batch.length > 0) {
+            console.log(`Scanned blocks ${from}-${to}: ${batch.length} events ✅`);
+          }
         } catch (e) {
-          console.error(`Failed to scan blocks ${from}-${to}:`, e);
-          // Continue with other blocks
+          console.error(`Failed to scan blocks ${from}-${to}:`, e.message || e);
+          // Continue with other blocks even if this one fails
         }
       }
       return events;
@@ -372,6 +380,83 @@
       } catch (e) {
         console.error("Error scanning for vaults:", e);
         return [];
+      }
+    }
+
+    async function quickCheckMyVault() {
+      if (!account || !vault) {
+        document.getElementById("error").textContent = "Please connect wallet first";
+        return;
+      }
+      
+      const results = document.getElementById("results");
+      results.innerHTML = '<div class="loading">Checking your vault...</div>';
+      
+      try {
+        await updatePrice();
+        
+        if (price === 0n) {
+          throw new Error("Oracle offline - cannot check vault");
+        }
+        
+        const info = await vault.vaultInfo(account);
+        const debtBN = info.debt;
+        const debt = Number(ethers.utils.formatEther(debtBN));
+        
+        console.log(`Your vault: debt=${debt.toFixed(4)}, ratio=${Number(info.ratio).toFixed(2)}%`);
+        
+        if (debtBN.eq(0)) {
+          results.innerHTML = `
+            <div class="card warning">
+              <h3 style="color:#ffcc00;text-align:center;">Your Vault Has No Debt</h3>
+              <div style="text-align:center;padding:20px;">
+                <p>Collateral: ${Number(ethers.utils.formatEther(info.collateral)).toFixed(6)} ETH</p>
+                <p>Debt: 0 bSunDAI</p>
+                <p style="margin-top:20px;color:#ffbd70;">
+                  💡 Vaults without debt don't appear in liquidation dashboard.<br>
+                  Mint some bSunDAI in the main vault interface to test!
+                </p>
+              </div>
+            </div>
+          `;
+        } else {
+          const ratioBN = info.ratio;
+          const ratio = Number(info.ratio);
+          
+          let category, color, message;
+          if (ratioBN.lt(ethers.BigNumber.from("11000"))) {
+            category = "LIQUIDATABLE";
+            color = "#ff3366";
+            message = "⚠️ Your vault CAN be liquidated!";
+          } else if (ratioBN.lt(ethers.BigNumber.from("15000"))) {
+            category = "RISKY";
+            color = "#ffcc00";
+            message = "⚠️ Your vault is at risk (below 150%)";
+          } else {
+            category = "HEALTHY";
+            color = "#00ff9d";
+            message = "✅ Your vault is healthy!";
+          }
+          
+          results.innerHTML = `
+            <div class="card" style="border-color:${color};">
+              <h3 style="color:${color};text-align:center;">${message}</h3>
+              <div style="text-align:center;padding:20px;">
+                <p><strong>Category:</strong> ${category}</p>
+                <p><strong>Health Ratio:</strong> ${ratio.toFixed(2)}%</p>
+                <p><strong>Collateral:</strong> ${Number(ethers.utils.formatEther(info.collateral)).toFixed(6)} ETH</p>
+                <p><strong>Debt:</strong> ${debt.toFixed(6)} bSunDAI</p>
+                <p style="margin-top:20px;color:#ffbd70;">
+                  ✅ Your vault exists and would show in full scan under "${category}"
+                </p>
+              </div>
+            </div>
+          `;
+        }
+        
+      } catch (e) {
+        results.innerHTML = `<div class="error">Error checking vault: ${e.message}</div>`;
+        console.error(e);
       }
     }
 
