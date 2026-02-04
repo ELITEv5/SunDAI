@@ -323,10 +323,15 @@
         const depositFilter = vault.filters.Deposit();
         const mintFilter = vault.filters.Mint();
         
+        console.log("🔍 Attempting to scan for Deposit and Mint events...");
+        
         const [depositEvents, mintEvents] = await Promise.all([
           vault.queryFilter(depositFilter, 0, 'latest'),
           vault.queryFilter(mintFilter, 0, 'latest')
         ]);
+        
+        console.log(`✅ Found ${depositEvents.length} Deposit events`);
+        console.log(`✅ Found ${mintEvents.length} Mint events`);
         
         const allAddresses = [
           ...depositEvents.map(e => e.args.user),
@@ -334,10 +339,16 @@
         ];
         
         const uniqueAddresses = [...new Set(allAddresses)];
+        console.log(`✅ Found ${uniqueAddresses.length} unique vault owners`);
         return uniqueAddresses;
         
       } catch (e) {
-        console.error("Error scanning for vaults:", e);
+        console.error("❌ Error scanning for vaults:", e);
+        console.error("Error message:", e.message);
+        console.error("Error code:", e.code);
+        
+        // If event scanning fails completely, return empty array
+        // scanAll will still check connected wallet
         return [];
       }
     }
@@ -381,6 +392,16 @@
         
         const vaultOwners = await getAllVaultOwners();
         
+        // FALLBACK: If event scanning failed, check connected wallet
+        const ownersToCheck = vaultOwners.length > 0 ? vaultOwners : [account];
+        
+        if (vaultOwners.length === 0) {
+          console.log("⚠️ Event scanning returned no vaults - checking connected wallet as fallback");
+          document.getElementById("error").textContent = "⚠️ Event scanning unavailable - showing your wallet only";
+        }
+        
+        console.log(`📊 Checking ${ownersToCheck.length} vault owner(s)...`);
+        
         const liquidatable = [];
         const risky = [];
         const healthy = [];
@@ -389,7 +410,7 @@
         const liquidationCooldown = await vault.LIQUIDATION_COOLDOWN();
         const currentTime = Math.floor(Date.now() / 1000);
         
-        for (const owner of vaultOwners) {
+        for (const owner of ownersToCheck) {
           try {
             const info = await vault.vaultInfo(owner);
             const vaultDetails = await vault.vaults(owner);
@@ -491,7 +512,9 @@
         
         displayCurrentTab();
         
-        document.getElementById("status").textContent = `✅ Scan complete! Found ${vaultOwners.length} total vaults`;
+        const totalVaults = liquidatable.length + risky.length + healthy.length;
+        const modeText = vaultOwners.length > 0 ? `Found ${vaultOwners.length} vault owners` : "Connected wallet only";
+        document.getElementById("status").textContent = `✅ Scan complete! ${modeText} - ${totalVaults} with debt`;
         setTimeout(() => document.getElementById("status").textContent = "", 5000);
         
       } catch (e) {
