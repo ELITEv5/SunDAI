@@ -177,10 +177,7 @@
       • Minimum repay: 20% of debt (or full debt if less)<br>
       • Dutch auction: Bonus starts at 5%, decreases to 2% over 3 hours<br>
       • 1-hour cooldown between liquidations of same vault<br>
-      • Two-step process: Approve bSunDAI → Liquidate vault<br>
-      <span style="font-size:0.85em;color:#ffbd70;margin-top:6px;display:block;">
-        * Profit estimates depend on gas prices, price movement, and execution timing
-      </span>
+      • Two-step process: Approve bSunDAI → Liquidate vault
     </div>
     
     <div class="status" id="status"></div>
@@ -188,10 +185,6 @@
     
     <button class="btn scan" id="scanBtn" onclick="scanAll()">
       🔍 Scan for Liquidation Opportunities
-    </button>
-    
-    <button class="btn" style="background:linear-gradient(135deg, #8b5cf6, #a78bfa);margin-bottom:20px;" onclick="quickCheckMyVault()">
-      🔎 Quick Check: Just My Vault
     </button>
     
     <div class="tabs" id="tabs" style="display:none;">
@@ -220,17 +213,15 @@
     const ethers = window.ethers;
     if (!ethers || !ethers.Contract) alert("Ethers.js failed to load");
     
+    // BASE MAINNET CONTRACTS (v6.0.1 - FINAL DEPLOYMENT)
     // BASE MAINNET CONTRACTS (v6.0.2 - UPDATED ADDRESSES)
     const VAULT = "0x53D9aF99890d14Ad4942801016C965A546dB98C2";
     const TOKEN = "0xFfF5D0F0970a5f86C36F2ef3Cad45F4eEB81a6e5";
     const ORACLE = "0x343848Bef6B4852EFC77936C2f18A39079031cC1";
     const BASE_CHAIN_ID = 8453;
+    const BASE_CHAIN_ID = 8453;
     
-    // Contract deployment block - Set to 0 to scan all blocks (will find deployment automatically)
-    // TODO: Update this after finding actual deployment block from first scan
-    const DEPLOYMENT_BLOCK = 0;
-    
-    // ORACLE ABI - ADDED MAX_PRICE_AGE FOR FRESHNESS CHECK
+    // UPDATED ABIs FOR v6.0.2
     const ORACLE_ABI = [
       {"name":"peekPrice","type":"function","inputs":[],"outputs":[{"name":"price","type":"uint256","internalType":"uint256"},{"name":"timestamp","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},
       {"name":"MAX_PRICE_AGE","type":"function","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"}
@@ -254,7 +245,7 @@
     let provider, signer, vault, token, oracle, account, price = 0n;
     let currentTab = 'liquidatable';
     let scanData = null;
-    let isScanning = false; // MUTEX: Prevent overlapping scans
+    let isScanning = false; // HARDENING: Mutex to prevent overlapping scans
 
     async function connectWallet() {
       try {
@@ -308,7 +299,7 @@
       try {
         const [p, timestamp] = await oracle.peekPrice();
         
-        // Check oracle freshness but don't block - just log warning
+        // HARDENING: Check oracle freshness
         const now = Math.floor(Date.now() / 1000);
         const age = now - Number(timestamp);
         
@@ -333,52 +324,18 @@
         const depositFilter = vault.filters.Deposit();
         const mintFilter = vault.filters.Mint();
         
-        console.log("🔍 Scanning for Deposit and Mint events...");
+        const [depositEvents, mintEvents] = await Promise.all([
+          vault.queryFilter(depositFilter, 0, 'latest'),
+          vault.queryFilter(mintFilter, 0, 'latest')
+        ]);
         
-        // Try simple approach first (like PulseChain)
-        try {
-          const [depositEvents, mintEvents] = await Promise.all([
-            vault.queryFilter(depositFilter, 0, 'latest'),
-            vault.queryFilter(mintFilter, 0, 'latest')
-          ]);
-          
-          console.log(`Found ${depositEvents.length} Deposit events`);
-          console.log(`Found ${mintEvents.length} Mint events`);
-          
-          const allAddresses = [
-            ...depositEvents.map(e => e.args.user),
-            ...mintEvents.map(e => e.args.user)
-          ];
-          
-          const uniqueAddresses = [...new Set(allAddresses)];
-          console.log(`Found ${uniqueAddresses.length} unique vault owners:`, uniqueAddresses.slice(0, 5));
-          return uniqueAddresses;
-          
-        } catch (simpleError) {
-          console.warn("Simple scan failed, trying deployment block scan:", simpleError.message);
-          
-          // Fallback: Try scanning from deployment block
-          if (DEPLOYMENT_BLOCK > 0) {
-            const [depositEvents, mintEvents] = await Promise.all([
-              vault.queryFilter(depositFilter, DEPLOYMENT_BLOCK, 'latest'),
-              vault.queryFilter(mintFilter, DEPLOYMENT_BLOCK, 'latest')
-            ]);
-            
-            console.log(`Found ${depositEvents.length} Deposit events`);
-            console.log(`Found ${mintEvents.length} Mint events`);
-            
-            const allAddresses = [
-              ...depositEvents.map(e => e.args.user),
-              ...mintEvents.map(e => e.args.user)
-            ];
-            
-            const uniqueAddresses = [...new Set(allAddresses)];
-            console.log(`Found ${uniqueAddresses.length} unique vault owners`);
-            return uniqueAddresses;
-          }
-          
-          throw simpleError; // Re-throw if no deployment block set
-        }
+        const allAddresses = [
+          ...depositEvents.map(e => e.args.user),
+          ...mintEvents.map(e => e.args.user)
+        ];
+        
+        const uniqueAddresses = [...new Set(allAddresses)];
+        return uniqueAddresses;
         
       } catch (e) {
         console.error("Error scanning for vaults:", e);
@@ -386,86 +343,8 @@
       }
     }
 
-    async function quickCheckMyVault() {
-      if (!account || !vault) {
-        document.getElementById("error").textContent = "Please connect wallet first";
-        return;
-      }
-      
-      const results = document.getElementById("results");
-      results.innerHTML = '<div class="loading">Checking your vault...</div>';
-      
-      try {
-        await updatePrice();
-        
-        if (price === 0n) {
-          throw new Error("Oracle offline - cannot check vault");
-        }
-        
-        const info = await vault.vaultInfo(account);
-        const debtBN = info.debt;
-        const debt = Number(ethers.utils.formatEther(debtBN));
-        
-        console.log(`Your vault: debt=${debt.toFixed(4)}, ratio=${Number(info.ratio).toFixed(2)}%`);
-        
-        if (debtBN.eq(0)) {
-          results.innerHTML = `
-            <div class="card warning">
-              <h3 style="color:#ffcc00;text-align:center;">Your Vault Has No Debt</h3>
-              <div style="text-align:center;padding:20px;">
-                <p>Collateral: ${Number(ethers.utils.formatEther(info.collateral)).toFixed(6)} ETH</p>
-                <p>Debt: 0 bSunDAI</p>
-                <p style="margin-top:20px;color:#ffbd70;">
-                  💡 Vaults without debt don't appear in liquidation dashboard.<br>
-                  Mint some bSunDAI in the main vault interface to test!
-                </p>
-              </div>
-            </div>
-          `;
-        } else {
-          const ratioBN = info.ratio;
-          const ratio = Number(info.ratio);
-          
-          let category, color, message;
-          // Contract returns ratio as PERCENTAGE (160 = 160%), not basis points!
-          if (ratioBN.lt(ethers.BigNumber.from("110"))) { // <110%
-            category = "LIQUIDATABLE";
-            color = "#ff3366";
-            message = "⚠️ Your vault CAN be liquidated!";
-          } else if (ratioBN.lt(ethers.BigNumber.from("150"))) { // <150%
-            category = "RISKY";
-            color = "#ffcc00";
-            message = "⚠️ Your vault is at risk (below 150%)";
-          } else { // >=150%
-            category = "HEALTHY";
-            color = "#00ff9d";
-            message = "✅ Your vault is healthy!";
-          }
-          
-          results.innerHTML = `
-            <div class="card" style="border-color:${color};">
-              <h3 style="color:${color};text-align:center;">${message}</h3>
-              <div style="text-align:center;padding:20px;">
-                <p><strong>Category:</strong> ${category}</p>
-                <p><strong>Health Ratio:</strong> ${ratio.toFixed(2)}%</p>
-                <p><strong>Collateral:</strong> ${Number(ethers.utils.formatEther(info.collateral)).toFixed(6)} ETH</p>
-                <p><strong>Debt:</strong> ${debt.toFixed(6)} bSunDAI</p>
-                <p style="margin-top:20px;color:#ffbd70;">
-                  ✅ Your vault exists and would show in full scan under "${category}"
-                </p>
-              </div>
-            </div>
-          `;
-        }
-        
-      } catch (e) {
-        results.innerHTML = `<div class="error">Error checking vault: ${e.message}</div>`;
-        console.error(e);
-      }
-    }
-
     async function scanAll() {
-      // MUTEX: Prevent overlapping scans
+      // HARDENING: Prevent overlapping scans
       if (isScanning) {
         console.log("Scan already in progress");
         document.getElementById("error").textContent = "⏳ Scan already in progress...";
@@ -479,6 +358,7 @@
       }
       
       isScanning = true;
+      
       const btn = document.getElementById("scanBtn");
       const results = document.getElementById("results");
       
@@ -488,182 +368,120 @@
       
       results.innerHTML = `
         <div class="loading">
-          🔍 Checking for vaults...<br>
-          <div style="font-size:0.8em;margin-top:10px;">Note: Event scanning disabled due to RPC limitations.<br>Showing your connected wallet's vault only.</div>
+          🔍 Scanning all vaults...<br>
+          <div style="font-size:0.8em;margin-top:10px;">This may take 30-60 seconds</div>
         </div>
       `;
       
       try {
-        let oracleStale = false;
-        let oracleAge = 0;
-        
         await updatePrice();
         
-        // Check if oracle is stale but don't block scan
         if (price === 0n) {
           throw new Error("Oracle offline - cannot calculate liquidation rewards");
         }
         
-        try {
-          const [_, timestamp] = await oracle.peekPrice();
-          const now = Math.floor(Date.now() / 1000);
-          oracleAge = Math.floor((now - Number(timestamp)) / 60); // Age in minutes
-          const MAX_ORACLE_AGE = Number(await oracle.MAX_PRICE_AGE());
-          oracleStale = (now - Number(timestamp)) > MAX_ORACLE_AGE;
-        } catch (e) {
-          console.log("Could not check oracle age:", e);
-        }
-        
-        if (oracleStale) {
-          // Show warning but allow scan to continue
-          document.getElementById("error").textContent = `⚠️ WARNING: Oracle is ${oracleAge} min old - profit calculations may be inaccurate!`;
-        }
-        
-        // Try to get ALL vaults first
         const vaultOwners = await getAllVaultOwners();
-        
-        // If no vaults found via events, just check connected wallet
-        const ownersToCheck = vaultOwners.length > 0 ? vaultOwners : [account];
-        
-        if (vaultOwners.length === 0) {
-          console.log("⚠️ No vaults found via event scanning, checking connected wallet only");
-          results.innerHTML = `
-            <div class="loading">
-              ⚠️ Event scanning unavailable (RPC limitation)<br>
-              <div style="font-size:0.8em;margin-top:10px;">Checking your connected wallet only...</div>
-            </div>
-          `;
-        }
         
         const liquidatable = [];
         const risky = [];
         const healthy = [];
         
-        // Get liquidation cooldown
+        // Get liquidation cooldown (v6.0.1 = 1 hour = 3600 seconds)
         const liquidationCooldown = await vault.LIQUIDATION_COOLDOWN();
         const currentTime = Math.floor(Date.now() / 1000);
         
-        console.log(`📊 Scanning ${ownersToCheck.length} vault owner(s)...`);
-        
-        for (const owner of ownersToCheck) {
-        
-        try {
-          const info = await vault.vaultInfo(owner);
-          const vaultDetails = await vault.vaults(owner);
-          const ratioBN = info.ratio;
-          const ratio = Number(info.ratio);
-          const debtBN = info.debt;
-          const debt = Number(ethers.utils.formatEther(debtBN));
-          
-          console.log(`Checking ${owner.slice(0,8)}: debt=${debt.toFixed(4)}, ratio=${ratio.toFixed(2)}%`);
-          
-          // Skip if no debt
-          if (debtBN.eq(0)) {
-            console.log(`  → Skipped (no debt)`);
-            throw new Error("Your vault has no debt. Mint some bSunDAI to appear in liquidation dashboard.");
-          }
-          
-          const vaultData = {
-            owner,
-            ratio,
-            debt,
-            debtBN,
-            collateral: Number(ethers.utils.formatEther(info.collateral)),
-            collateralUSD: Number(ethers.utils.formatEther(info.collateralUSD)),
-            mintable: Number(ethers.utils.formatEther(info.mintable)),
-            lastLiquidationTime: Number(vaultDetails.lastLiquidationTime),
-            undercollateralizedSince: Number(vaultDetails.undercollateralizedSince)
-          };
-          
-          // Classify vault
-          if (ratioBN.lt(ethers.BigNumber.from("110"))) { // <110%
-            console.log(`  → LIQUIDATABLE (${ratio.toFixed(2)}%)`);
+        for (const owner of vaultOwners) {
+          try {
+            const info = await vault.vaultInfo(owner);
+            const vaultDetails = await vault.vaults(owner);
+            const ratioBN = info.ratio; // HARDENING: Keep as BigNumber for precision
+            const ratio = Number(info.ratio); // For display only
+            const debtBN = info.debt;
+            const debt = Number(ethers.utils.formatEther(debtBN));
             
-            const cooldownRemaining = Number(liquidationCooldown) - (currentTime - vaultData.lastLiquidationTime);
-            vaultData.canLiquidate = cooldownRemaining <= 0;
-            vaultData.cooldownRemaining = Math.max(0, cooldownRemaining);
+            // Skip vaults with zero debt
+            if (debtBN.eq(0)) continue;
             
-            // Calculate Dutch auction bonus
-            let bonusBps = 200;
-            if (vaultData.undercollateralizedSince > 0) {
-              const auctionTime = currentTime - vaultData.undercollateralizedSince;
-              const maxAuctionTime = 3 * 3600;
+            const vaultData = {
+              owner,
+              ratio,
+              debt,
+              debtBN, // Keep BigNumber for precise calculations
+              collateral: Number(ethers.utils.formatEther(info.collateral)),
+              collateralUSD: Number(ethers.utils.formatEther(info.collateralUSD)),
+              mintable: Number(ethers.utils.formatEther(info.mintable)),
+              lastLiquidationTime: Number(vaultDetails.lastLiquidationTime),
+              undercollateralizedSince: Number(vaultDetails.undercollateralizedSince)
+            };
+            
+            // HARDENING: Use BigNumber comparison for precision (prevents 109.99% → 110% rounding)
+            if (ratioBN.lt(ethers.BigNumber.from("110"))) {
+              // Check liquidation cooldown
+              const cooldownRemaining = Number(liquidationCooldown) - (currentTime - vaultData.lastLiquidationTime);
+              vaultData.canLiquidate = cooldownRemaining <= 0;
+              vaultData.cooldownRemaining = Math.max(0, cooldownRemaining);
               
-              if (auctionTime < maxAuctionTime) {
-                bonusBps = 500 - Math.floor((300 * auctionTime) / maxAuctionTime);
+              // Calculate Dutch auction bonus (5% → 2% over 3 hours)
+              let bonusBps = 200; // Min 2%
+              if (vaultData.undercollateralizedSince > 0) {
+                const auctionTime = currentTime - vaultData.undercollateralizedSince;
+                const maxAuctionTime = 3 * 3600; // 3 hours
+                
+                if (auctionTime < maxAuctionTime) {
+                  // Linear decrease from 5% to 2%
+                  bonusBps = 500 - Math.floor((300 * auctionTime) / maxAuctionTime);
+                }
               }
+              vaultData.bonusBps = bonusBps;
+              
+              // Min repay = 20% of debt (or full debt if debt < 20%)
+              // CRITICAL: Use exact BigNumber calculation to match contract
+              const twentyPercent = debtBN.mul(20).div(100);
+              const minRepayBN = debtBN.lt(twentyPercent) ? debtBN : twentyPercent;
+              vaultData.minRepayBN = minRepayBN;
+              vaultData.minRepay = Number(ethers.utils.formatEther(minRepayBN));
+              
+              // Calculate reward (collateral received)
+              const repayUSD = vaultData.minRepay;
+              const ethPrice = Number(price) / 1e18;
+              const baseCollateral = repayUSD / ethPrice;
+              const bonusCollateral = (baseCollateral * bonusBps) / 10000;
+              vaultData.reward = baseCollateral + bonusCollateral;
+              
+              // HARDENING: Dynamic gas estimation for accurate profitability
+              let gasEstimate;
+              try {
+                gasEstimate = await vault.estimateGas.liquidate(owner, minRepayBN);
+                gasEstimate = gasEstimate.mul(110).div(100); // Add 10% buffer
+              } catch (e) {
+                gasEstimate = ethers.BigNumber.from(250000); // Conservative fallback
+              }
+              
+              const feeData = await provider.getFeeData();
+              const gasPrice = feeData.gasPrice || ethers.utils.parseUnits("0.001", "gwei");
+              const gasCostWei = gasEstimate.mul(gasPrice);
+              const gasCostETH = Number(ethers.utils.formatEther(gasCostWei));
+              const gasCostUSD = gasCostETH * ethPrice;
+              
+              vaultData.profitUSD = (vaultData.reward * ethPrice) - repayUSD - gasCostUSD;
+              vaultData.isProfitable = vaultData.profitUSD > 0;
+              
+              liquidatable.push(vaultData);
+            } else if (ratioBN.lt(ethers.BigNumber.from("150"))) {
+              risky.push(vaultData);
+            } else {
+              healthy.push(vaultData);
             }
-            vaultData.bonusBps = bonusBps;
             
-            // Min repay = 20% of debt
-            const twentyPercent = debtBN.mul(20).div(100);
-            const minRepayBN = debtBN.lt(twentyPercent) ? debtBN : twentyPercent;
-            vaultData.minRepayBN = minRepayBN;
-            vaultData.minRepay = Number(ethers.utils.formatEther(minRepayBN));
-            
-            // Calculate reward
-            const repayUSD = vaultData.minRepay;
-            const ethPrice = Number(price) / 1e18;
-            const baseCollateral = repayUSD / ethPrice;
-            const bonusCollateral = (baseCollateral * bonusBps) / 10000;
-            vaultData.reward = baseCollateral + bonusCollateral;
-            
-            // Dynamic gas estimation
-            let gasEstimate;
-            try {
-              gasEstimate = await vault.estimateGas.liquidate(owner, minRepayBN);
-              gasEstimate = gasEstimate.mul(110).div(100);
-            } catch (e) {
-              gasEstimate = ethers.BigNumber.from(250000);
-            }
-            
-            const feeData = await provider.getFeeData();
-            const gasPrice = feeData.gasPrice || ethers.utils.parseUnits("0.001", "gwei");
-            const gasCostWei = gasEstimate.mul(gasPrice);
-            const gasCostETH = Number(ethers.utils.formatEther(gasCostWei));
-            const gasCostUSD = gasCostETH * ethPrice;
-            
-            vaultData.profitUSD = (vaultData.reward * ethPrice) - repayUSD - gasCostUSD;
-            vaultData.isProfitable = vaultData.profitUSD > 0;
-            
-            liquidatable.push(vaultData);
-          } else if (ratioBN.lt(ethers.BigNumber.from("150"))) { // <150%
-            console.log(`  → RISKY (${ratio.toFixed(2)}%)`);
-            risky.push(vaultData);
-          } else { // >=150%
-            console.log(`  → HEALTHY (${ratio.toFixed(2)}%)`);
-            healthy.push(vaultData);
+          } catch (e) {
+            console.error(`Failed to scan vault ${owner}:`, e);
+            continue;
           }
-          
-        } catch (e) {
-          if (e.message && e.message.includes("no debt")) {
-            throw e; // Re-throw to show user-friendly message
-          }
-          console.error(`Failed to check vault ${owner}:`, e);
-          throw new Error("Failed to check your vault: " + (e.message || "Unknown error"));
         }
         
-        scanData = { liquidatable, risky, healthy };
-        
-        document.getElementById("liqCount").textContent = liquidatable.length;
-        document.getElementById("riskyCount").textContent = risky.length;
-        document.getElementById("healthyCount").textContent = healthy.length;
-        document.getElementById("tabs").style.display = "flex";
-        
-        displayCurrentTab();
-        
-        document.getElementById("status").textContent = `✅ Check complete! Showing your vault.`;
-        setTimeout(() => document.getElementById("status").textContent = "", 5000);
-        
-      } catch (e) {
-        document.getElementById("error").textContent = "Scan failed: " + (e.message || "Unknown error");
-        console.error(e);
-      } finally {
-        isScanning = false;
-        btn.disabled = false;
-        btn.textContent = "🔄 Rescan";
-      }
-    }
+        // Sort by profitability
+        liquidatable.sort((a, b) => b.profitUSD - a.profitUSD);
+        risky.sort((a, b) => a.ratio - b.ratio);
         
         scanData = { liquidatable, risky, healthy };
         
@@ -674,16 +492,14 @@
         
         displayCurrentTab();
         
-        const totalVaults = liquidatable.length + risky.length + healthy.length;
-        const modeText = vaultOwners.length > 0 ? `Found ${vaultOwners.length} vault owners` : "Connected wallet only";
-        document.getElementById("status").textContent = `✅ Scan complete! ${modeText} - ${totalVaults} vault(s) with debt.`;
+        document.getElementById("status").textContent = `✅ Scan complete! Found ${vaultOwners.length} total vaults`;
         setTimeout(() => document.getElementById("status").textContent = "", 5000);
         
       } catch (e) {
         document.getElementById("error").textContent = "Scan failed: " + (e.message || "Unknown error");
         console.error(e);
       } finally {
-        isScanning = false; // Always release mutex
+        isScanning = false; // HARDENING: Always release mutex
         btn.disabled = false;
         btn.textContent = "🔄 Rescan";
       }
@@ -892,9 +708,10 @@
         document.getElementById("error").textContent = "";
         
         console.log("═══════════════════════════════════════");
-        console.log("LIQUIDATION INITIATED (v6.0.2)");
+        console.log("LIQUIDATION INITIATED");
         console.log("═══════════════════════════════════════");
         console.log("Target vault:", owner);
+        console.log("Repay amount (float):", repayFloat);
         console.log("Repay amount (BN):", repayBN.toString());
         console.log("Repay amount (formatted):", ethers.utils.formatEther(repayBN));
         
@@ -910,7 +727,7 @@
         const currentAllowance = await token.allowance(account, VAULT);
         console.log("Current allowance:", ethers.utils.formatEther(currentAllowance));
         
-        // Step 3: Approve if needed
+        // Step 3: Approve if needed (CRITICAL: Use exact repayBN, not approximation)
         if (currentAllowance.lt(repayBN)) {
           btn.textContent = "⏳ Approving bSunDAI...";
           console.log("Approving", ethers.utils.formatEther(repayBN), "bSunDAI for vault...");
@@ -927,16 +744,15 @@
         // Step 4: Double-check vault is still liquidatable
         btn.textContent = "⏳ Verifying vault status...";
         const info = await vault.vaultInfo(owner);
-        const ratioBN = info.ratio;
+        const ratio = Number(info.ratio);
         
-        if (ratioBN.gte(ethers.BigNumber.from("11000"))) {
-          const ratio = Number(info.ratio);
+        if (ratio >= 110) {
           throw new Error(`Vault recovered! Current ratio: ${ratio.toFixed(2)}% (above 110% threshold)`);
         }
         
-        console.log("Vault still liquidatable. Ratio:", Number(info.ratio).toFixed(2) + "%");
+        console.log("Vault still liquidatable. Ratio:", ratio.toFixed(2) + "%");
         
-        // Step 5: Execute liquidation
+        // Step 5: Execute liquidation with EXACT repayBN
         btn.textContent = "⏳ Executing liquidation...";
         console.log("Calling liquidate() with repayAmount:", repayBN.toString());
         
@@ -964,6 +780,8 @@
         console.error("LIQUIDATION FAILED");
         console.error("═══════════════════════════════════════");
         console.error("Error:", e);
+        console.error("Error reason:", e.reason);
+        console.error("Error code:", e.code);
         console.error("═══════════════════════════════════════");
         
         let errorMsg = "Liquidation failed: ";
@@ -992,7 +810,7 @@
 
     document.getElementById("walletBtn").onclick = connectWallet;
 
-    // Nebula Background
+    // Nebula Background (same as main vault)
     const bg = document.getElementById("bg");
     let t = 0, mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
     function animate() {
@@ -1024,9 +842,9 @@
     // Auto-connect on load
     window.addEventListener("load", connectWallet);
     
-    // Auto-rescan every 2 minutes if data exists (with mutex protection)
+    // Auto-rescan every 2 minutes if data exists
     setInterval(() => {
-      if (scanData && !isScanning) {
+      if (scanData && document.getElementById("scanBtn").textContent === "🔄 Rescan") {
         console.log("Auto-rescanning...");
         scanAll();
       }
