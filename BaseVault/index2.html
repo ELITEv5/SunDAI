@@ -224,7 +224,7 @@
     
     <!-- ORACLE WAKE BUTTON -->
     <div class="card" id="oracleWakeCard">
-      <button class="btn" id="oracleWakeBtn" disabled style="background:linear-gradient(135deg, #8b5cf6, #a78bfa);color:#fff;box-shadow:0 4px 15px rgba(139,92,246,0.4)">Wake Oracle (If Stale)</button>
+      <button class="btn" id="oracleWakeBtn" disabled style="background:linear-gradient(135deg, #8b5cf6, #a78bfa);color:#fff;box-shadow:0 4px 15px rgba(139,92,246,0.4)">Wake Oracle (If Transactions Fail)</button>
       <div class="info-text" style="margin-top:6px" id="oracleStatus">Oracle status: Connect wallet to check...</div>
     </div>
     
@@ -460,13 +460,13 @@
         
         if (isStale) {
           wakeBtn.disabled = false;
-          statusEl.textContent = `⚠️ Oracle is ${Math.floor(oracleAge / 60)} min old (stale if >${Math.floor(Number(MAX_ORACLE_STALENESS) / 60)} min). Click to refresh!`;
+          statusEl.textContent = `Oracle hasn't updated in ${Math.floor(oracleAge / 60)} minutes. Click if transactions fail (usually auto-updates on deposit/mint).`;
           statusEl.style.background = "rgba(255,204,0,0.1)";
           statusEl.style.borderColor = "rgba(255,204,0,0.3)";
           statusEl.style.color = "#ffcc00";
         } else {
           wakeBtn.disabled = true;
-          statusEl.textContent = `✓ Oracle is fresh (${Math.floor(oracleAge / 60)} min old, updates every ${Math.floor(Number(MAX_ORACLE_STALENESS) / 60)} min)`;
+          statusEl.textContent = `Oracle is fresh (updated ${Math.floor(oracleAge / 60)} min ago). Auto-updates on vault interactions.`;
           statusEl.style.background = "rgba(0,255,157,0.1)";
           statusEl.style.borderColor = "rgba(0,255,157,0.3)";
           statusEl.style.color = "#00ff9d";
