@@ -328,27 +328,39 @@
       }
     }
 
-    // PAGINATED EVENT SCANNING - Critical for scale
-    async function scanEvents(filter, startBlock = 0) {
+    // SMART EVENT SCANNING - Scans backwards from current block
+    async function scanEventsBackwards(filter, maxBlocks = 500000) {
       const latest = await provider.getBlockNumber();
-      const STEP = 50000; // Base has fast blocks
+      const STEP = 10000; // Small chunks to avoid RPC timeouts
       let events = [];
+      let scannedBlocks = 0;
 
-      console.log(`Scanning from block ${startBlock} to ${latest} (${Math.ceil((latest - startBlock) / STEP)} chunks)`);
+      console.log(`🔍 Smart scan: Starting from block ${latest}, going back max ${maxBlocks} blocks`);
 
-      for (let from = startBlock; from <= latest; from += STEP) {
-        const to = Math.min(from + STEP - 1, latest);
+      // Scan backwards from current block
+      for (let to = latest; to > latest - maxBlocks && to >= 0; to -= STEP) {
+        const from = Math.max(to - STEP + 1, Math.max(0, latest - maxBlocks));
+        
         try {
           const batch = await vault.queryFilter(filter, from, to);
           events.push(...batch);
+          scannedBlocks += (to - from + 1);
+          
           if (batch.length > 0) {
-            console.log(`Scanned blocks ${from}-${to}: ${batch.length} events ✅`);
+            console.log(`✅ Blocks ${from}-${to}: Found ${batch.length} events`);
           }
         } catch (e) {
-          console.error(`Failed to scan blocks ${from}-${to}:`, e.message || e);
-          // Continue with other blocks even if this one fails
+          console.error(`❌ Blocks ${from}-${to}: ${e.message || 'RPC error'}`);
+        }
+        
+        // If we found events, we can continue backwards or stop here
+        if (events.length >= 50) {
+          console.log(`Found ${events.length} events, stopping scan`);
+          break;
         }
       }
+      
+      console.log(`Scanned ${scannedBlocks.toLocaleString()} blocks, found ${events.length} events`);
       return events;
     }
 
@@ -357,12 +369,12 @@
         const depositFilter = vault.filters.Deposit();
         const mintFilter = vault.filters.Mint();
         
-        console.log(`🔍 Scanning for Deposit and Mint events from block ${DEPLOYMENT_BLOCK}...`);
+        console.log(`🔍 Scanning for Deposit and Mint events (smart backwards scan)...`);
         
-        // Use paginated scanning from deployment block
+        // Use smart backwards scanning (scans last 500k blocks)
         const [depositEvents, mintEvents] = await Promise.all([
-          scanEvents(depositFilter, DEPLOYMENT_BLOCK),
-          scanEvents(mintFilter, DEPLOYMENT_BLOCK)
+          scanEventsBackwards(depositFilter, 500000),
+          scanEventsBackwards(mintFilter, 500000)
         ]);
         
         console.log(`Found ${depositEvents.length} Deposit events`);
