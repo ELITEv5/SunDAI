@@ -222,6 +222,10 @@
     const ORACLE = "0x343848Bef6B4852EFC77936C2f18A39079031cC1";
     const BASE_CHAIN_ID = 8453;
     
+    // Contract deployment block - CRITICAL: Only scan from here to save RPC calls
+    // Check exact block at: https://basescan.org/address/0x53D9aF99890d14Ad4942801016C965A546dB98C2
+    const DEPLOYMENT_BLOCK = 22500000; // Conservative estimate (~2-3 weeks ago)
+    
     // ORACLE ABI - ADDED MAX_PRICE_AGE FOR FRESHNESS CHECK
     const ORACLE_ABI = [
       {"name":"peekPrice","type":"function","inputs":[],"outputs":[{"name":"price","type":"uint256","internalType":"uint256"},{"name":"timestamp","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},
@@ -345,11 +349,16 @@
         const depositFilter = vault.filters.Deposit();
         const mintFilter = vault.filters.Mint();
         
-        // Use paginated scanning
+        console.log(`🔍 Scanning for Deposit and Mint events from block ${DEPLOYMENT_BLOCK}...`);
+        
+        // Use paginated scanning from deployment block
         const [depositEvents, mintEvents] = await Promise.all([
-          scanEvents(depositFilter),
-          scanEvents(mintFilter)
+          scanEvents(depositFilter, DEPLOYMENT_BLOCK),
+          scanEvents(mintFilter, DEPLOYMENT_BLOCK)
         ]);
+        
+        console.log(`Found ${depositEvents.length} Deposit events`);
+        console.log(`Found ${mintEvents.length} Mint events`);
         
         const allAddresses = [
           ...depositEvents.map(e => e.args.user),
@@ -357,7 +366,7 @@
         ];
         
         const uniqueAddresses = [...new Set(allAddresses)];
-        console.log(`Found ${uniqueAddresses.length} unique vault owners`);
+        console.log(`Found ${uniqueAddresses.length} unique vault owners:`, uniqueAddresses.slice(0, 5));
         return uniqueAddresses;
         
       } catch (e) {
@@ -431,6 +440,8 @@
         const liquidationCooldown = await vault.LIQUIDATION_COOLDOWN();
         const currentTime = Math.floor(Date.now() / 1000);
         
+        console.log(`📊 Scanning ${vaultOwners.length} unique vault owners...`);
+        
         for (const owner of vaultOwners) {
           try {
             const info = await vault.vaultInfo(owner);
@@ -440,8 +451,13 @@
             const debtBN = info.debt;
             const debt = Number(ethers.utils.formatEther(debtBN));
             
+            console.log(`Checking ${owner.slice(0,8)}: debt=${debt.toFixed(4)}, ratio=${ratio.toFixed(2)}%`);
+            
             // Skip vaults with zero debt
-            if (debtBN.eq(0)) continue;
+            if (debtBN.eq(0)) {
+              console.log(`  → Skipped (no debt)`);
+              continue;
+            }
             
             const vaultData = {
               owner,
@@ -457,6 +473,7 @@
             
             // FIXED: Use BigNumber for classification (prevents 109.99% rounding to 110%)
             if (ratioBN.lt(ethers.BigNumber.from("11000"))) { // <110% (ratio is in basis points * 100)
+              console.log(`  → LIQUIDATABLE (${ratio.toFixed(2)}%)`);
               // Check liquidation cooldown
               const cooldownRemaining = Number(liquidationCooldown) - (currentTime - vaultData.lastLiquidationTime);
               vaultData.canLiquidate = cooldownRemaining <= 0;
@@ -509,8 +526,10 @@
               
               liquidatable.push(vaultData);
             } else if (ratioBN.lt(ethers.BigNumber.from("15000"))) { // <150% = risky
+              console.log(`  → RISKY (${ratio.toFixed(2)}%)`);
               risky.push(vaultData);
             } else { // >=150% = healthy
+              console.log(`  → HEALTHY (${ratio.toFixed(2)}%)`);
               healthy.push(vaultData);
             }
             
