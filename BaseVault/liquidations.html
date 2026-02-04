@@ -161,22 +161,22 @@
 <body>
   <div id="bg"></div>
   
-  <div class="back-btn" onclick="window.location.href='index.html?v=6.0.2&t=' + Date.now()">← Back to Vault</div>
+  <div class="back-btn" onclick="window.location.href='index.html?v=6.1.0&t=' + Date.now()">← Back to Vault</div>
   <div class="wallet" id="walletBtn"><span id="walletText">Connect Wallet</span></div>
   
   <div class="container">
     <a href="https://www.sundaitoken.com" target="_blank" style="text-decoration:none">
       <img src="sundailogo.png" class="logo" alt="SunDAI Logo" onerror="this.style.display='none'" />
     </a>
-    <h1>Liquidation Dashboard<span class="network-badge">BASE</span><span class="version-badge">v6.0.2</span></h1>
+    <h1>Liquidation Dashboard<span class="network-badge">BASE</span><span class="version-badge">v6.1.0</span></h1>
     <h2>Real-Time Vault Monitoring</h2>
     
     <div class="info-box">
-      <strong>📖 How Liquidations Work (v6.0.2):</strong><br>
+      <strong>📖 How Liquidations Work (v6.1.0):</strong><br>
       • Vaults below 110% health can be liquidated<br>
       • Minimum repay: 20% of debt (or full debt if less)<br>
       • Dutch auction: Bonus starts at 5%, decreases to 2% over 3 hours<br>
-      • 1-hour cooldown between liquidations of same vault<br>
+      • 10-minute cooldown between liquidations of same vault<br>
       • Two-step process: Approve bSunDAI → Liquidate vault
     </div>
     
@@ -213,14 +213,13 @@
     const ethers = window.ethers;
     if (!ethers || !ethers.Contract) alert("Ethers.js failed to load");
     
-    // BASE MAINNET CONTRACTS (v6.0.1 - FINAL DEPLOYMENT)
-    // BASE MAINNET CONTRACTS (v6.0.2 - UPDATED ADDRESSES)
-    const VAULT = "0xAC51c80fd592ca404ef1c87f9aDc57541246D211";
+    // BASE MAINNET CONTRACTS (v6.1.0)
+    const VAULT = "0xAC51c80fd592ca404ef1c87f9aDc57541246D211"; // UPDATE THIS WITH YOUR v6.1.0 ADDRESS
     const TOKEN = "0x6e64FeaFC041f66C8e3143cC4CbB99056abBF124";
     const ORACLE = "0x9702d59075322d1C27d5A5D99b86cd8f53d5b8b1";
     const BASE_CHAIN_ID = 8453;
     
-    // UPDATED ABIs FOR v6.0.2
+    // UPDATED ABIs FOR v6.1.0
     const ORACLE_ABI = [
       {"name":"peekPrice","type":"function","inputs":[],"outputs":[{"name":"price","type":"uint256","internalType":"uint256"},{"name":"timestamp","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},
       {"name":"MAX_PRICE_AGE","type":"function","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"}
@@ -233,8 +232,11 @@
     ];
     
     const VAULT_ABI = [
-      {"name":"Deposit","type":"event","inputs":[{"name":"user","type":"address","indexed":true,"internalType":"address"},{"name":"amount","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"ratio","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},
-      {"name":"Mint","type":"event","inputs":[{"name":"user","type":"address","indexed":true,"internalType":"address"},{"name":"amount","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"ratio","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},
+      // v6.1.0 NEW: Vault enumeration functions
+      {"name":"getVaultOwnersCount","type":"function","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},
+      {"name":"getVaultOwnersPaginated","type":"function","inputs":[{"name":"start","type":"uint256","internalType":"uint256"},{"name":"count","type":"uint256","internalType":"uint256"}],"outputs":[{"name":"","type":"address[]","internalType":"address[]"}],"stateMutability":"view"},
+      
+      // Existing functions
       {"name":"liquidate","type":"function","inputs":[{"name":"user","type":"address","internalType":"address"},{"name":"repayAmount","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},
       {"name":"vaultInfo","type":"function","inputs":[{"name":"user","type":"address","internalType":"address"}],"outputs":[{"name":"collateral","type":"uint256","internalType":"uint256"},{"name":"debt","type":"uint256","internalType":"uint256"},{"name":"collateralUSD","type":"uint256","internalType":"uint256"},{"name":"ratio","type":"uint256","internalType":"uint256"},{"name":"mintable","type":"uint256","internalType":"uint256"},{"name":"oracleHealthy","type":"bool","internalType":"bool"},{"name":"price","type":"uint256","internalType":"uint256"},{"name":"systemRatio","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},
       {"name":"vaults","type":"function","inputs":[{"name":"","type":"address","internalType":"address"}],"outputs":[{"name":"collateral","type":"uint256","internalType":"uint256"},{"name":"debt","type":"uint256","internalType":"uint256"},{"name":"lastDepositTime","type":"uint256","internalType":"uint256"},{"name":"lastWithdrawTime","type":"uint256","internalType":"uint256"},{"name":"lastLiquidationTime","type":"uint256","internalType":"uint256"},{"name":"lastDebtAccrual","type":"uint256","internalType":"uint256"},{"name":"undercollateralizedSince","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},
@@ -244,7 +246,7 @@
     let provider, signer, vault, token, oracle, account, price = 0n;
     let currentTab = 'liquidatable';
     let scanData = null;
-    let isScanning = false; // HARDENING: Mutex to prevent overlapping scans
+    let isScanning = false;
 
     async function connectWallet() {
       try {
@@ -298,7 +300,6 @@
       try {
         const [p, timestamp] = await oracle.peekPrice();
         
-        // HARDENING: Check oracle freshness
         const now = Math.floor(Date.now() / 1000);
         const age = now - Number(timestamp);
         
@@ -320,41 +321,43 @@
 
     async function getAllVaultOwners() {
       try {
-        const depositFilter = vault.filters.Deposit();
-        const mintFilter = vault.filters.Mint();
+        // v6.1.0: Use on-chain enumeration
+        console.log("📊 Using on-chain vault enumeration (v6.1.0)");
         
-        console.log("🔍 Attempting to scan for Deposit and Mint events...");
+        const count = await vault.getVaultOwnersCount();
+        console.log(`✅ Found ${count} registered vault owners`);
         
-        const [depositEvents, mintEvents] = await Promise.all([
-          vault.queryFilter(depositFilter, 0, 'latest'),
-          vault.queryFilter(mintFilter, 0, 'latest')
-        ]);
+        if (count == 0) {
+          console.log('⚠️ No vaults registered yet');
+          return [];
+        }
         
-        console.log(`✅ Found ${depositEvents.length} Deposit events`);
-        console.log(`✅ Found ${mintEvents.length} Mint events`);
+        // Batch fetch in chunks of 100
+        const BATCH_SIZE = 100;
+        let allOwners = [];
         
-        const allAddresses = [
-          ...depositEvents.map(e => e.args.user),
-          ...mintEvents.map(e => e.args.user)
-        ];
+        for (let i = 0; i < count; i += BATCH_SIZE) {
+          const batch = await vault.getVaultOwnersPaginated(i, BATCH_SIZE);
+          allOwners.push(...batch);
+          console.log(`✅ Loaded batch ${Math.floor(i/BATCH_SIZE) + 1}: ${batch.length} addresses`);
+        }
         
-        const uniqueAddresses = [...new Set(allAddresses)];
-        console.log(`✅ Found ${uniqueAddresses.length} unique vault owners`);
-        return uniqueAddresses;
+        // Deduplicate (shouldn't be needed but safety first)
+        const uniqueOwners = [...new Set(allOwners)];
+        console.log(`✅ Total unique vault owners: ${uniqueOwners.length}`);
+        
+        return uniqueOwners;
         
       } catch (e) {
-        console.error("❌ Error scanning for vaults:", e);
-        console.error("Error message:", e.message);
-        console.error("Error code:", e.code);
+        console.error('❌ Error fetching vault owners:', e);
         
-        // If event scanning fails completely, return empty array
-        // scanAll will still check connected wallet
-        return [];
+        // Fallback: check connected wallet only
+        console.log('⚠️ Falling back to connected wallet only');
+        return userAddress ? [userAddress] : [];
       }
     }
 
     async function scanAll() {
-      // HARDENING: Prevent overlapping scans
       if (isScanning) {
         console.log("Scan already in progress");
         document.getElementById("error").textContent = "⏳ Scan already in progress...";
@@ -392,12 +395,12 @@
         
         const vaultOwners = await getAllVaultOwners();
         
-        // FALLBACK: If event scanning failed, check connected wallet
+        // Fallback: If enumeration returns nothing, check connected wallet
         const ownersToCheck = vaultOwners.length > 0 ? vaultOwners : [account];
         
         if (vaultOwners.length === 0) {
-          console.log("⚠️ Event scanning returned no vaults - checking connected wallet as fallback");
-          document.getElementById("error").textContent = "⚠️ Event scanning unavailable - showing your wallet only";
+          console.log("⚠️ No vaults found via enumeration - checking connected wallet as fallback");
+          document.getElementById("error").textContent = "⚠️ Showing your wallet only";
         }
         
         console.log(`📊 Checking ${ownersToCheck.length} vault owner(s)...`);
@@ -406,7 +409,6 @@
         const risky = [];
         const healthy = [];
         
-        // Get liquidation cooldown (v6.0.1 = 1 hour = 3600 seconds)
         const liquidationCooldown = await vault.LIQUIDATION_COOLDOWN();
         const currentTime = Math.floor(Date.now() / 1000);
         
@@ -414,8 +416,8 @@
           try {
             const info = await vault.vaultInfo(owner);
             const vaultDetails = await vault.vaults(owner);
-            const ratioBN = info.ratio; // HARDENING: Keep as BigNumber for precision
-            const ratio = Number(info.ratio); // For display only
+            const ratioBN = info.ratio;
+            const ratio = Number(info.ratio);
             const debtBN = info.debt;
             const debt = Number(ethers.utils.formatEther(debtBN));
             
@@ -426,7 +428,7 @@
               owner,
               ratio,
               debt,
-              debtBN, // Keep BigNumber for precise calculations
+              debtBN,
               collateral: Number(ethers.utils.formatEther(info.collateral)),
               collateralUSD: Number(ethers.utils.formatEther(info.collateralUSD)),
               mintable: Number(ethers.utils.formatEther(info.mintable)),
@@ -434,47 +436,44 @@
               undercollateralizedSince: Number(vaultDetails.undercollateralizedSince)
             };
             
-            // HARDENING: Use BigNumber comparison for precision (prevents 109.99% → 110% rounding)
             if (ratioBN.lt(ethers.BigNumber.from("110"))) {
               // Check liquidation cooldown
               const cooldownRemaining = Number(liquidationCooldown) - (currentTime - vaultData.lastLiquidationTime);
               vaultData.canLiquidate = cooldownRemaining <= 0;
               vaultData.cooldownRemaining = Math.max(0, cooldownRemaining);
               
-              // Calculate Dutch auction bonus (5% → 2% over 3 hours)
-              let bonusBps = 200; // Min 2%
+              // Calculate Dutch auction bonus
+              let bonusBps = 200;
               if (vaultData.undercollateralizedSince > 0) {
                 const auctionTime = currentTime - vaultData.undercollateralizedSince;
-                const maxAuctionTime = 3 * 3600; // 3 hours
+                const maxAuctionTime = 3 * 3600;
                 
                 if (auctionTime < maxAuctionTime) {
-                  // Linear decrease from 5% to 2%
                   bonusBps = 500 - Math.floor((300 * auctionTime) / maxAuctionTime);
                 }
               }
               vaultData.bonusBps = bonusBps;
               
-              // Min repay = 20% of debt (or full debt if debt < 20%)
-              // CRITICAL: Use exact BigNumber calculation to match contract
+              // Min repay = 20% of debt
               const twentyPercent = debtBN.mul(20).div(100);
               const minRepayBN = debtBN.lt(twentyPercent) ? debtBN : twentyPercent;
               vaultData.minRepayBN = minRepayBN;
               vaultData.minRepay = Number(ethers.utils.formatEther(minRepayBN));
               
-              // Calculate reward (collateral received)
+              // Calculate reward
               const repayUSD = vaultData.minRepay;
               const ethPrice = Number(price) / 1e18;
               const baseCollateral = repayUSD / ethPrice;
               const bonusCollateral = (baseCollateral * bonusBps) / 10000;
               vaultData.reward = baseCollateral + bonusCollateral;
               
-              // HARDENING: Dynamic gas estimation for accurate profitability
+              // Gas estimation
               let gasEstimate;
               try {
                 gasEstimate = await vault.estimateGas.liquidate(owner, minRepayBN);
-                gasEstimate = gasEstimate.mul(110).div(100); // Add 10% buffer
+                gasEstimate = gasEstimate.mul(110).div(100);
               } catch (e) {
-                gasEstimate = ethers.BigNumber.from(250000); // Conservative fallback
+                gasEstimate = ethers.BigNumber.from(250000);
               }
               
               const feeData = await provider.getFeeData();
@@ -499,7 +498,6 @@
           }
         }
         
-        // Sort by profitability
         liquidatable.sort((a, b) => b.profitUSD - a.profitUSD);
         risky.sort((a, b) => a.ratio - b.ratio);
         
@@ -521,7 +519,7 @@
         document.getElementById("error").textContent = "Scan failed: " + (e.message || "Unknown error");
         console.error(e);
       } finally {
-        isScanning = false; // HARDENING: Always release mutex
+        isScanning = false;
         btn.disabled = false;
         btn.textContent = "🔄 Rescan";
       }
@@ -566,7 +564,7 @@
             <div class="warning-box" style="margin-top:8px;">
               ⏳ <strong>Liquidation cooldown active</strong><br>
               ${Math.ceil(v.cooldownRemaining / 60)} minute(s) remaining<br>
-              <span style="font-size:0.85em">Last liquidation less than 1 hour ago</span>
+              <span style="font-size:0.85em">Last liquidation less than 10 minutes ago</span>
             </div>
           ` : '';
           
@@ -737,7 +735,7 @@
         console.log("Repay amount (BN):", repayBN.toString());
         console.log("Repay amount (formatted):", ethers.utils.formatEther(repayBN));
         
-        // Step 1: Check bSunDAI balance
+        // Step 1: Check balance
         const balance = await token.balanceOf(account);
         console.log("Your bSunDAI balance:", ethers.utils.formatEther(balance));
         
@@ -745,11 +743,11 @@
           throw new Error(`Insufficient bSunDAI. Need ${ethers.utils.formatEther(repayBN)}, have ${ethers.utils.formatEther(balance)}`);
         }
         
-        // Step 2: Check current allowance
+        // Step 2: Check allowance
         const currentAllowance = await token.allowance(account, VAULT);
         console.log("Current allowance:", ethers.utils.formatEther(currentAllowance));
         
-        // Step 3: Approve if needed (CRITICAL: Use exact repayBN, not approximation)
+        // Step 3: Approve if needed
         if (currentAllowance.lt(repayBN)) {
           btn.textContent = "⏳ Approving bSunDAI...";
           console.log("Approving", ethers.utils.formatEther(repayBN), "bSunDAI for vault...");
@@ -763,7 +761,7 @@
           console.log("✅ Sufficient allowance already exists");
         }
         
-        // Step 4: Double-check vault is still liquidatable
+        // Step 4: Verify vault status
         btn.textContent = "⏳ Verifying vault status...";
         const info = await vault.vaultInfo(owner);
         const ratio = Number(info.ratio);
@@ -774,7 +772,7 @@
         
         console.log("Vault still liquidatable. Ratio:", ratio.toFixed(2) + "%");
         
-        // Step 5: Execute liquidation with EXACT repayBN
+        // Step 5: Execute liquidation
         btn.textContent = "⏳ Executing liquidation...";
         console.log("Calling liquidate() with repayAmount:", repayBN.toString());
         
@@ -794,7 +792,6 @@
         `;
         setTimeout(() => document.getElementById("status").textContent = "", 10000);
         
-        // Rescan to update dashboard
         setTimeout(() => scanAll(), 2000);
         
       } catch (e) {
@@ -832,7 +829,7 @@
 
     document.getElementById("walletBtn").onclick = connectWallet;
 
-    // Nebula Background (same as main vault)
+    // Nebula Background
     const bg = document.getElementById("bg");
     let t = 0, mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
     function animate() {
@@ -861,10 +858,8 @@
     });
     animate();
 
-    // Auto-connect on load
     window.addEventListener("load", connectWallet);
     
-    // Auto-rescan every 2 minutes if data exists
     setInterval(() => {
       if (scanData && document.getElementById("scanBtn").textContent === "🔄 Rescan") {
         console.log("Auto-rescanning...");
