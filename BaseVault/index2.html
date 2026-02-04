@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>SunDAI – Golden Sun Vault on Base</title>
+  <link rel="icon" href="sundailogo.png" type="image/png" />
+  <meta name="description" content="Autonomous 150% ETH-Collateralized Stable Asset on Base L2." />
+  <meta name="theme-color" content="#FF6B00" />
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      background: #0a001f;
+      color: #ffebd1;
+      font-family: Segoe UI, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      overflow-y: auto;
+    }
+    canvas { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+    .wallet {
+      position: fixed; top: 20px; right: 20px; background: #111; padding: 10px 22px;
+      border: 2px solid #ff8c00; border-radius: 10px; color: #fff; font-weight: 700;
+      cursor: pointer; z-index: 9999; transition: all 0.2s ease; pointer-events: auto;
+    }
+    .wallet:hover { background: #222; box-shadow: 0 0 15px rgba(255, 140, 0, 0.4); }
+    .wallet.connected { border-color: #fbbf24; color: #fbbf24; box-shadow: 0 0 20px rgba(251, 191, 36, 0.5); }
+    .container {
+      background: rgba(10, 0, 30, 0.8); backdrop-filter: blur(20px);
+      border: 2px solid #ff8c00; border-radius: 20px;
+      box-shadow: 0 0 40px rgba(255, 140, 0, 0.3); padding: 30px 25px;
+      max-width: 480px; width: 90%; margin: 80px 0; position: relative; z-index: 10;
+    }
+    .logo { display: block; max-width: 240px; margin: 0 auto 10px;
+      animation: pulseGlow 4s ease-in-out infinite; transform-origin: center; }
+    @keyframes pulseGlow {
+      0% { filter: drop-shadow(0 0 10px rgba(180, 120, 255, 0.5)); }
+      50% { filter: drop-shadow(0 0 35px rgba(255, 180, 255, 0.85)); }
+      100% { filter: drop-shadow(0 0 10px rgba(180, 120, 255, 0.5)); }
+    }
+    h1 { text-align: center; font-size: 2em; background: linear-gradient(90deg, #ff8c00, #ffa500, #fbbf24, #fde047);
+      -webkit-background-clip: text; color: transparent; margin-bottom: 8px; }
+    h2 { text-align: center; color: #ffebd1; font-size: 1.1em; margin-top: 0; }
+    .network-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #0052FF, #0040CC);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.7em;
+      font-weight: 700;
+      margin-left: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 0 15px rgba(0, 82, 255, 0.5);
+    }
+    .version-badge {
+      display: block;
+      text-align: center;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.75em;
+      font-weight: 700;
+      margin: 10px auto;
+      max-width: 200px;
+      letter-spacing: 0.5px;
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+    }
+    .price { text-align: center; color: #ffd700; font-weight: 800; font-size: 1.2em; margin-bottom: 10px; }
+    .card { background: rgba(255, 140, 0, 0.08); border: 1px solid rgba(255, 140, 0, 0.3);
+      border-radius: 14px; padding: 16px; margin-bottom: 12px; transition: box-shadow .2s ease; }
+    .card:hover { box-shadow: 0 0 12px rgba(255, 165, 0, 0.2); }
+    input, .btn { width: 100%; display: block; box-sizing: border-box; font-size: 1em;
+      font-weight: 700; text-align: center; border-radius: 10px; padding: 14px; transition: all 0.2s ease; }
+    input { background: #110022; border: 2px solid rgba(255, 140, 0, 0.4); color: #fff; }
+    input:focus { border-color: #fbbf24; outline: none; box-shadow: 0 0 10px rgba(251, 191, 36, 0.3); }
+    .btn { background: linear-gradient(135deg, #ff8c00, #ffa500); border: 2px solid transparent; color: #000; cursor: pointer; 
+      box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3); }
+    .btn:hover:not(:disabled) { background: linear-gradient(135deg, #ffa500, #ffd700); 
+      transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5); }
+    .btn:disabled { background: #2a2a2a; color: #666; cursor: not-allowed; border-color: transparent; box-shadow: none; }
+    .card input + .btn { margin-top: 8px; }
+    .preview { color: #ffbd70; text-align: center; font-size: 0.9em; margin-top: 4px; }
+    .helper-text { color: #999; text-align: center; font-size: 0.8em; margin-top: 6px; font-style: italic; }
+    .warning-text { color: #ffcc00; text-align: center; font-size: 0.85em; margin-top: 6px; padding: 6px; 
+      background: rgba(255,204,0,0.1); border-radius: 6px; border: 1px solid rgba(255,204,0,0.2); }
+    .info-text { color: #00ff9d; text-align: center; font-size: 0.85em; margin-top: 6px; padding: 6px;
+      background: rgba(0,255,157,0.1); border-radius: 6px; border: 1px solid rgba(0,255,157,0.2); }
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center; font-size: 0.9em; }
+    .stat { background: rgba(255, 107, 0, 0.12); padding: 10px; border-radius: 10px; }
+    .label { color: #ffbd70; }
+    .value { color: #ffd700; font-weight: 700; }
+    .status, .error { text-align: center; font-weight: bold; margin-top: 10px; transition: opacity .4s ease; }
+    .status { color: #00ff9d; }
+    .error { color: #ff3366; }
+    .value.safe { color: #00ff9d; text-shadow: 0 0 8px rgba(0,255,157,0.5); }
+    .value.warn { color: #ffcc00; text-shadow: 0 0 8px rgba(255,204,0,0.5); }
+    .value.risk { color: #ff3366; text-shadow: 0 0 8px rgba(255,51,102,0.5); }
+    .footer { text-align: center; margin: 40px 0 20px; padding: 20px 10px; font-size: 0.85em;
+      color: #ffbd70; border-top: 1px solid rgba(255, 215, 0, 0.15); width: 100%; max-width: 800px; z-index: 5; }
+    .footer h3 { margin-bottom: 10px; color: #ffd700; letter-spacing: 0.5px; font-size: 1.1em; }
+    .contracts { display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
+      text-align: left; line-height: 1.6; word-wrap: break-word; overflow-wrap: anywhere;
+      padding: 0 10px; max-width: 100%; box-sizing: border-box; }
+    .contracts a { color: #ffebd1; text-decoration: none; font-family: monospace;
+      word-break: break-all; display: inline-block; max-width: 100%; overflow-wrap: anywhere;
+      transition: color 0.2s ease; }
+    .contracts a:hover { color: #ffd700; }
+    .contracts .label { color: #ff6b00; font-weight: 700; display: block; margin-bottom: 2px; }
+    @media (max-width: 480px) { .contracts { font-size: 0.75em; gap: 8px; } .contracts a { font-size: 0.75em; } }
+    #bg { opacity: 0; animation: fadeIn 2s ease forwards; }
+    @keyframes fadeIn { to { opacity: 1; } }
+    .modal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 10000;
+      display: none;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 20px 10px;
+      box-sizing: border-box;
+    }
+    .modal-content {
+      background: #110022;
+      border: 2px solid #ff6b00;
+      border-radius: 16px;
+      padding: 24px 20px;
+      max-width: 520px;
+      width: 95%;
+      max-height: 85vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      margin: 0 auto;
+      position: relative;
+      box-shadow: 0 10px 40px rgba(255,107,0,0.4);
+    }
+    .modal-content h3 { color: #ffd700; margin-top: 0; text-align: center; font-size: 1.5em; }
+    .modal-content h4 { color: #ffa500; margin-top: 20px; margin-bottom: 10px; font-size: 1.1em; }
+    .modal-content ol { padding-left: 20px; line-height: 1.8; }
+    .modal-content ol li { margin-bottom: 12px; color: #ffebd1; }
+    .modal-content ol li strong { color: #ffd700; }
+    .modal-content .note { 
+      background: rgba(0,255,157,0.1); 
+      border: 1px solid rgba(0,255,157,0.3);
+      border-radius: 8px;
+      padding: 12px;
+      margin: 15px 0;
+      font-size: 0.9em;
+      line-height: 1.6;
+    }
+    .modal-content .warning-box { 
+      background: rgba(255,51,102,0.1); 
+      border: 1px solid rgba(255,51,102,0.3);
+      border-radius: 8px;
+      padding: 12px;
+      margin: 15px 0;
+      font-size: 0.9em;
+      line-height: 1.6;
+      color: #ff6b6b;
+    }
+    .close { 
+      color: #ff3366; 
+      float: right; 
+      font-size: 2em; 
+      cursor: pointer; 
+      line-height: 0.8;
+      margin-top: -10px;
+    }
+    @media (max-width: 480px) {
+      .modal-content { 
+        border-radius: 20px; 
+        padding: 20px 16px; 
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="bg"></div>
+  <div class="wallet" id="walletBtn"><span id="walletText">Connect Wallet</span></div>
+  <div class="container">
+    <a href="https://www.sundaitoken.com" target="_blank" style="text-decoration:none">
+      <img src="sundailogo.png" class="logo" alt="SunDAI Logo" onerror="this.style.display='none'" />
+    </a>
+    <h1>SunDAI on<span class="network-badge">BASE</span></h1>
+    <h2>Autonomous Stable Asset</h2>
+    <div class="version-badge">v6.0.2</div>
+    <div class="price" id="price">Loading price...</div>
+    <div class="status" id="status"></div>
+    <div class="error" id="error"></div>
+    <div class="card"><div class="stats" id="stats">Connect wallet to begin</div></div>
+    
+    <!-- GLOBAL SYSTEM STATS -->
+    <div class="card" id="globalStats" style="margin-top:12px;display:none">
+      <div style="text-align:center;font-size:0.9em;color:#ffbd70;margin-bottom:8px">Global bSunDAI System (Base)</div>
+      <div class="stats">
+        <div class="stat">
+          <div class="label">Total Collateral</div>
+          <div class="value" id="totalColl">—</div>
+        </div>
+        <div class="stat">
+          <div class="label">Total Minted</div>
+          <div class="value" id="totalDebt">—</div>
+        </div>
+        <div class="stat">
+          <div class="label">System Health</div>
+          <div class="value" id="sysHealth">—</div>
+        </div>
+        <div class="stat">
+          <div class="label">Your Share</div>
+          <div class="value" id="yourShare">—</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ORACLE WAKE BUTTON -->
+    <div class="card" id="oracleWakeCard" style="display:none">
+      <button class="btn" id="oracleWakeBtn" style="background:linear-gradient(135deg, #8b5cf6, #a78bfa);color:#fff;box-shadow:0 4px 15px rgba(139,92,246,0.4)">⏰ Wake Oracle (If Stale)</button>
+      <div class="info-text" style="margin-top:6px" id="oracleStatus">Oracle status: Checking...</div>
+    </div>
+    
+    <!-- HOW TO BUTTON -->
+    <div class="card" style="margin-bottom:12px">
+      <button class="btn" id="howToBtn" style="background:linear-gradient(135deg, #f59e0b, #fbbf24);color:#000;font-weight:800;box-shadow:0 4px 15px rgba(245,158,11,0.4)">📖 Complete User Guide</button>
+    </div>
+    
+    <div class="card">
+      <input id="usdOneClick" type="number" step="0.01" placeholder="Deposit & Auto Mint (USD)" />
+      <div class="preview" id="ethOneClick"></div>
+      <button class="btn" id="oneClickBtn" disabled>1-Click Auto Mint (155%)</button>
+      <div class="helper-text">Easiest: Deposit ETH and mint bSunDAI in one transaction at 155%</div>
+    </div>
+    
+    <div class="card">
+      <input id="usdIn" type="number" step="0.01" placeholder="Deposit USD value" />
+      <div class="preview" id="ethOut"></div>
+      <button class="btn" id="deposit" disabled>Deposit ETH</button>
+      <div class="helper-text">Add collateral to your vault (improves ratio, allows minting)</div>
+    </div>
+    
+    <div class="card">
+      <input id="usdMint" type="number" step="0.01" placeholder="Mint USD amount" />
+      <button class="btn" id="mint" disabled>Mint bSunDAI</button>
+      <div class="helper-text">Create bSunDAI against your existing collateral</div>
+    </div>
+    
+    <div class="card">
+      <button class="btn" id="mintMaxSafe" disabled>Mint Max Safe (Stay 150%)</button>
+      <div class="preview" id="mintMaxPreview"></div>
+      <div class="helper-text">Mint maximum while keeping vault at 150%</div>
+    </div>
+    
+    <div class="card">
+      <input id="usdRepay" type="number" step="0.01" placeholder="Repay bSunDAI amount" />
+      <button class="btn" id="repay" disabled>Repay Debt</button>
+      <div class="helper-text">Burn bSunDAI to reduce debt (instant, no cooldown)</div>
+    </div>
+    
+    <div class="card">
+      <input id="usdOut" type="number" step="0.01" placeholder="Withdraw USD value" />
+      <div class="preview" id="ethIn"></div>
+      <button class="btn" id="withdraw" disabled>Withdraw ETH</button>
+      <div class="helper-text">Remove collateral (5-min cooldown after depositing)</div>
+    </div>
+    
+    <div class="card">
+      <button class="btn" id="withdrawMaxSafe" disabled style="background:linear-gradient(135deg, #8b5cf6, #a78bfa);color:#fff;box-shadow:0 4px 15px rgba(139,92,246,0.4)">Withdraw Max Safe (Stay 150%)</button>
+      <div class="preview" id="withdrawMaxPreview"></div>
+      <div class="helper-text">Take maximum profits while staying safe at 150%</div>
+      <div class="warning-text" id="withdrawCooldownWarning" style="display:none">
+        5-minute cooldown after depositing (security protection)
+      </div>
+    </div>
+    
+    <div class="card">
+      <input id="usdRepayAuto" type="number" step="0.01" placeholder="Repay amount (auto-withdraw excess)" />
+      <button class="btn" id="repayAuto" disabled>Repay & Withdraw Excess</button>
+      <div class="helper-text">Smart exit: Repay and auto-withdraw collateral above 150%</div>
+    </div>
+    
+    <div class="card">
+      <button class="btn" id="risk" disabled style="background:linear-gradient(135deg, #dc2626, #f97316);color:#fff;box-shadow:0 4px 15px rgba(220,38,38,0.4)">Check Liquidation Risk</button>
+      <div id="riskText" style="margin-top:10px;text-align:center;font-weight:700"></div>
+      <div class="helper-text">Check if vault is in danger (below 110% ratio)</div>
+    </div>
+    
+    <!-- LIQUIDATIONS DASHBOARD LINK -->
+    <div class="card" style="margin-bottom:12px">
+      <button class="btn" onclick="window.location.href='liquidations.html?v=6.0.2&t=' + Date.now()" style="background:linear-gradient(135deg, #ff3366, #ff6b00);color:#fff;font-weight:800;box-shadow:0 4px 15px rgba(255,51,102,0.4)">🔥 Liquidation Dashboard</button>
+      <div class="helper-text" style="margin-top:6px">Find and liquidate underwater vaults (for liquidators)</div>
+    </div>
+    
+    <div class="card">
+      <button class="btn" id="repayToSafe" disabled>Repay to Safe (150%)</button>
+      <div class="preview" id="repayToSafePreview"></div>
+      <div class="helper-text">Auto-repay exact amount to reach safe 150%</div>
+    </div>
+    
+    <div class="card" id="emergencyCard" style="display:none">
+      <button class="btn" id="emergencyUnlock" disabled style="background:#ff6b00;color:#fff">Emergency Unlock (30-day recovery)</button>
+      <div class="preview" id="emergencyPreview"></div>
+      <div class="info-text">
+        Safety: With zero debt, recover collateral after 30 days
+      </div>
+    </div>
+    
+    <!-- ORACLE STATUS -->
+    <div class="card">
+      <div class="info-text" style="margin:0">
+        <strong>🎯 Oracle: Aave Price Feed (v6.0.2)</strong><br>
+        Public refresh · 4-hour confirmation · Stepping · TWAP
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer">
+    <h3>Official Contracts (Base Mainnet v6.0.2)</h3>
+    <div class="contracts">
+      <div><span class="label">bSunDAI Token:</span>
+        <a href="https://basescan.org/address/0xFfF5D0F0970a5f86C36F2ef3Cad45F4eEB81a6e5" target="_blank">
+          0xFfF5D0F0970a5f86C36F2ef3Cad45F4eEB81a6e5
+        </a>
+      </div>
+      <div><span class="label">Vault:</span>
+        <a href="https://basescan.org/address/0x53D9aF99890d14Ad4942801016C965A546dB98C2" target="_blank">
+          0x53D9aF99890d14Ad4942801016C965A546dB98C2
+        </a>
+      </div>
+      <div><span class="label">Oracle (Aave v6.0.2):</span>
+        <a href="https://basescan.org/address/0x343848Bef6B4852EFC77936C2f18A39079031cC1" target="_blank">
+          0x343848Bef6B4852EFC77936C2f18A39079031cC1
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const ethers = window.ethers;
+    if (!ethers || !ethers.Contract) alert("Ethers.js failed to load");
+    
+    // BASE MAINNET CONTRACTS (v6.0.2 - WITH EMERGENCY FUNCTIONS & PUBLIC ORACLE REFRESH)
+    const VAULT = "0x53D9aF99890d14Ad4942801016C965A546dB98C2";
+    const TOKEN = "0xFfF5D0F0970a5f86C36F2ef3Cad45F4eEB81a6e5";
+    const ORACLE = "0x343848Bef6B4852EFC77936C2f18A39079031cC1";
+    const BASE_CHAIN_ID = 8453;
+    
+    // UPDATED ABIs FOR v6.0.2 (ADDED refreshPrice TO ORACLE)
+    const ORACLE_ABI = [
+      {"type":"constructor","inputs":[],"stateMutability":"nonpayable"},
+      {"name":"ConfirmationCancelled","type":"event","inputs":[{"name":"reason","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},
+      {"name":"ConfirmationStarted","type":"event","inputs":[{"name":"targetPrice","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"currentPrice","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"confirmTime","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},
+      {"name":"EmergencyRecovery","type":"event","inputs":[{"name":"oldPrice","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"newPrice","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},
+      {"name":"PriceUpdated","type":"event","inputs":[{"name":"newPrice","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"twap","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"timestamp","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},
+      {"name":"PublicRefresh","type":"event","inputs":[{"name":"caller","type":"address","indexed":true,"internalType":"address"},{"name":"price","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"timestamp","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},
+      {"name":"SteppingApplied","type":"event","inputs":[{"name":"fromPrice","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"toPrice","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"step","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},
+      {"name":"VaultSet","type":"event","inputs":[{"name":"vault","type":"address","indexed":true,"internalType":"address"}],"anonymous":false},
+      {"name":"AAVE_ORACLE","type":"function","inputs":[],"outputs":[{"name":"","type":"address","internalType":"address"}],"stateMutability":"view"},
+      {"name":"MAX_PRICE_AGE","type":"function","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},
+      {"name":"getPriceStatus","type":"function","inputs":[],"outputs":[{"name":"currentPrice","type":"uint256","internalType":"uint256"},{"name":"aavePrice","type":"uint256","internalType":"uint256"},{"name":"divergenceBps","type":"uint256","internalType":"uint256"},{"name":"inConfirmation","type":"bool","internalType":"bool"},{"name":"confirmTimeRemaining","type":"uint256","internalType":"uint256"},{"name":"targetPrice","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},
+      {"name":"getPriceWithTimestamp","type":"function","inputs":[],"outputs":[{"name":"price","type":"uint256","internalType":"uint256"},{"name":"timestamp","type":"uint256","internalType":"uint256"}],"stateMutability":"nonpayable"},
+      {"name":"refreshPrice","type":"function","inputs":[],"outputs":[{"name":"price","type":"uint256","internalType":"uint256"},{"name":"timestamp","type":"uint256","internalType":"uint256"}],"stateMutability":"nonpayable"},
+      {"name":"peekPrice","type":"function","inputs":[],"outputs":[{"name":"price","type":"uint256","internalType":"uint256"},{"name":"timestamp","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},
+      {"name":"isOracleHealthy","type":"function","inputs":[],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"view"},
+      {"name":"isPriceFresh","type":"function","inputs":[],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"view"},
+      {"name":"lastUpdate","type":"function","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"}
+    ];
+    
+    const TOKEN_ABI = [{"name":"approve","type":"function","inputs":[{"name":"spender","type":"address","internalType":"address"},{"name":"value","type":"uint256","internalType":"uint256"}],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"nonpayable"},{"name":"balanceOf","type":"function","inputs":[{"name":"account","type":"address","internalType":"address"}],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"name":"decimals","type":"function","inputs":[],"outputs":[{"name":"","type":"uint8","internalType":"uint8"}],"stateMutability":"pure"}];
+    
+    const VAULT_ABI = [{"type":"constructor","inputs":[{"name":"_weth","type":"address","internalType":"address"},{"name":"_bsundai","type":"address","internalType":"address"},{"name":"_oracle","type":"address","internalType":"address"}],"stateMutability":"nonpayable"},{"name":"Deposit","type":"event","inputs":[{"name":"user","type":"address","indexed":true,"internalType":"address"},{"name":"amount","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"ratio","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"name":"Mint","type":"event","inputs":[{"name":"user","type":"address","indexed":true,"internalType":"address"},{"name":"amount","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"ratio","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"name":"Repay","type":"event","inputs":[{"name":"user","type":"address","indexed":true,"internalType":"address"},{"name":"amount","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"ratio","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"name":"Withdraw","type":"event","inputs":[{"name":"user","type":"address","indexed":true,"internalType":"address"},{"name":"amount","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"ratio","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"name":"Liquidation","type":"event","inputs":[{"name":"user","type":"address","indexed":true,"internalType":"address"},{"name":"repayAmount","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"liquidator","type":"address","indexed":true,"internalType":"address"},{"name":"reward","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"ratio","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"name":"EmergencyWithdraw","type":"event","inputs":[{"name":"user","type":"address","indexed":true,"internalType":"address"},{"name":"amount","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"name":"isUXSafe","type":"function","inputs":[],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"view"},{"name":"depositETH","type":"function","inputs":[],"outputs":[],"stateMutability":"payable"},{"name":"depositAndAutoMintETH","type":"function","inputs":[],"outputs":[],"stateMutability":"payable"},{"name":"mint","type":"function","inputs":[{"name":"amount","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},{"name":"repay","type":"function","inputs":[{"name":"amount","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},{"name":"withdrawETH","type":"function","inputs":[{"name":"amount","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},{"name":"repayAndAutoWithdraw","type":"function","inputs":[{"name":"repayAmount","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},{"name":"isLiquidatable","type":"function","inputs":[{"name":"user","type":"address","internalType":"address"}],"outputs":[{"name":"canLiquidate","type":"bool","internalType":"bool"},{"name":"currentRatio","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"name":"repayToHealth","type":"function","inputs":[{"name":"user","type":"address","internalType":"address"}],"outputs":[{"name":"repayNeeded","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"name":"vaultInfo","type":"function","inputs":[{"name":"user","type":"address","internalType":"address"}],"outputs":[{"name":"collateral","type":"uint256","internalType":"uint256"},{"name":"debt","type":"uint256","internalType":"uint256"},{"name":"collateralUSD","type":"uint256","internalType":"uint256"},{"name":"ratio","type":"uint256","internalType":"uint256"},{"name":"mintable","type":"uint256","internalType":"uint256"},{"name":"oracleHealthy","type":"bool","internalType":"bool"},{"name":"price","type":"uint256","internalType":"uint256"},{"name":"systemRatio","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"name":"vaults","type":"function","inputs":[{"name":"","type":"address","internalType":"address"}],"outputs":[{"name":"collateral","type":"uint256","internalType":"uint256"},{"name":"debt","type":"uint256","internalType":"uint256"},{"name":"lastDepositTime","type":"uint256","internalType":"uint256"},{"name":"lastWithdrawTime","type":"uint256","internalType":"uint256"},{"name":"lastLiquidationTime","type":"uint256","internalType":"uint256"},{"name":"lastDebtAccrual","type":"uint256","internalType":"uint256"},{"name":"undercollateralizedSince","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"name":"totalCollateral","type":"function","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"name":"totalDebt","type":"function","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"name":"systemHealth","type":"function","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"name":"COLLATERAL_RATIO","type":"function","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"name":"AUTO_MINT_RATIO","type":"function","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"name":"emergencyUnlock","type":"function","inputs":[],"outputs":[],"stateMutability":"nonpayable"},{"type":"receive","stateMutability":"payable"}];
+    
+    let provider, signer, vault, token, oracle, account, price = 0n, minRatio = 15000n, autoMintRatio = 15500n;
+    const DECIMALS = 10n ** 18n;
+    
+    const status = document.getElementById("status");
+    const error = document.getElementById("error");
+    const stats = document.getElementById("stats");
+    const walletText = document.getElementById("walletText");
+    const walletBtn = document.getElementById("walletBtn");
+
+    async function connectWallet() {
+      try {
+        if (!window.ethereum) return alert("Please install MetaMask");
+        await window.ethereum.request({ method: "eth_requestAccounts" });
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        signer = provider.getSigner();
+        account = await signer.getAddress();
+        
+        const network = await provider.getNetwork();
+        if (Number(network.chainId) !== BASE_CHAIN_ID) {
+          try {
+            await window.ethereum.request({
+              method: "wallet_switchEthereumChain",
+              params: [{ chainId: "0x2105" }]
+            });
+          } catch (e) {
+            if (e.code === 4902) {
+              await window.ethereum.request({
+                method: "wallet_addEthereumChain",
+                params: [{
+                  chainId: "0x2105",
+                  chainName: "Base",
+                  nativeCurrency: { name: "Ethereum", symbol: "ETH", decimals: 18 },
+                  rpcUrls: ["https://mainnet.base.org"],
+                  blockExplorerUrls: ["https://basescan.org"]
+                }]
+              });
+            } else {
+              return alert("Please switch to Base network");
+            }
+          }
+        }
+        
+        vault = new ethers.Contract(VAULT, VAULT_ABI, signer);
+        token = new ethers.Contract(TOKEN, TOKEN_ABI, signer);
+        oracle = new ethers.Contract(ORACLE, ORACLE_ABI, signer);
+        
+        minRatio = await vault.COLLATERAL_RATIO();
+        autoMintRatio = await vault.AUTO_MINT_RATIO();
+        
+        walletText.textContent = account.slice(0,6) + "..." + account.slice(-4);
+        walletBtn.classList.add("connected");
+        document.querySelectorAll(".btn").forEach(b => {
+          if (b.id !== 'howToBtn') b.disabled = false;
+        });
+        
+        await Promise.all([updatePrice(), loadVault()]);
+        setInterval(updatePrice, 60000);
+        await loadGlobalStats();
+        setInterval(loadGlobalStats, 60000);
+        
+        // Check oracle status
+        await checkOracleStatus();
+        setInterval(checkOracleStatus, 30000);
+        
+      } catch (e) {
+        error.textContent = e.message || "Connection failed";
+        console.error(e);
+      }
+    }
+
+    async function checkOracleStatus() {
+      try {
+        const [p, ts] = await oracle.peekPrice();
+        const oracleAge = Math.floor(Date.now() / 1000) - Number(ts);
+        const MAX_ORACLE_STALENESS = await oracle.MAX_PRICE_AGE();
+        const isStale = oracleAge > Number(MAX_ORACLE_STALENESS);
+        
+        const statusEl = document.getElementById("oracleStatus");
+        const wakeCard = document.getElementById("oracleWakeCard");
+        const wakeBtn = document.getElementById("oracleWakeBtn");
+        
+        if (isStale) {
+          wakeCard.style.display = "block";
+          wakeBtn.disabled = false;
+          statusEl.textContent = `⚠️ Oracle is ${Math.floor(oracleAge / 60)} min old (stale if >${Math.floor(Number(MAX_ORACLE_STALENESS) / 60)} min). Click to refresh!`;
+          statusEl.style.background = "rgba(255,204,0,0.1)";
+          statusEl.style.borderColor = "rgba(255,204,0,0.3)";
+          statusEl.style.color = "#ffcc00";
+        } else {
+          wakeCard.style.display = "block";
+          wakeBtn.disabled = true;
+          statusEl.textContent = `✓ Oracle is fresh (${Math.floor(oracleAge / 60)} min old, updates every ${Math.floor(Number(MAX_ORACLE_STALENESS) / 60)} min)`;
+          statusEl.style.background = "rgba(0,255,157,0.1)";
+          statusEl.style.borderColor = "rgba(0,255,157,0.3)";
+          statusEl.style.color = "#00ff9d";
+        }
+      } catch (e) {
+        console.log("Oracle status check failed:", e);
+      }
+    }
+
+    async function loadGlobalStats() {
+      try {
+        if (!account) return;
+        const [totalColl, totalDebt, health] = await Promise.all([
+          vault.totalCollateral(),
+          vault.totalDebt(),
+          vault.systemHealth()
+        ]);
+        const collNum = Number(ethers.utils.formatEther(totalColl));
+        const debtNum = Number(ethers.utils.formatEther(totalDebt));
+        const healthNum = Number(health); // FIXED: health is already a percentage
+        
+        document.getElementById("totalColl").textContent = collNum.toFixed(6) + " ETH";
+        document.getElementById("totalDebt").textContent = debtNum.toFixed(6) + " bSunDAI";
+        
+        const healthEl = document.getElementById("sysHealth");
+        
+        // FIXED: Check for infinite correctly (contract returns type(uint256).max when debt = 0)
+        if (debtNum === 0 || !isFinite(healthNum) || healthNum > 1e15) {
+          healthEl.textContent = "Infinite (no debt)";
+          healthEl.className = "value safe";
+        } else {
+          healthEl.textContent = healthNum.toFixed(1) + "%";
+          healthEl.className = "value " + (healthNum < 130 ? "risk" : healthNum < 150 ? "warn" : "safe");
+        }
+        
+        const yourColl = Number(ethers.utils.formatEther((await vault.vaultInfo(account)).collateral));
+        if (yourColl > 0 && collNum > 0) {
+          const share = (yourColl / collNum) * 100;
+          document.getElementById("yourShare").textContent = share < 0.01 ? "<0.01%" : share.toFixed(2) + "%";
+        } else {
+          document.getElementById("yourShare").textContent = "0%";
+        }
+        document.getElementById("globalStats").style.display = "block";
+      } catch (e) {
+        console.log("Global stats failed:", e);
+      }
+    }
+
+    async function updatePrice() {
+      try {
+        const [p, timestamp] = await oracle.peekPrice();
+        price = p;
+        document.getElementById("price").textContent = "$" + (Number(p)/1e18).toFixed(2) + " per ETH";
+        
+        if (price > 0n && account) {
+          document.querySelectorAll(".btn").forEach(b => {
+            if (b.id !== 'howToBtn') b.disabled = false;
+          });
+        }
+      } catch (e) {
+        console.error("Price update failed:", e);
+        document.getElementById("price").textContent = "⚠️ Oracle offline - retrying in 60s";
+        
+        if (price === 0n) {
+          ['deposit', 'mint', 'oneClickBtn', 'mintMaxSafe'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) btn.disabled = true;
+          });
+        }
+      }
+    }
+
+    function usdToETH(usd) {
+      if (!price || price === 0n) return 0n;
+      const usdWei = ethers.utils.parseUnits(usd.toString(), 18);
+      return usdWei.mul(DECIMALS).div(price);
+    }
+    
+    function usdToBSun(usd) {
+      return ethers.utils.parseUnits(usd.toString(), 18);
+    }
+
+    async function withLoading(btn, fn) {
+      const orig = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Processing...";
+      error.textContent = "";
+      status.textContent = "";
+      
+      try {
+        const result = await fn();
+        
+        if (result && result.hash) {
+          status.innerHTML = `Success! <a href="https://basescan.org/tx/${result.hash}" target="_blank" style="color:#00ff9d;text-decoration:underline">View TX</a>`;
+        } else {
+          status.textContent = "Success!";
+        }
+        
+        setTimeout(() => status.textContent = "", 8000);
+        await loadVault();
+        await checkOracleStatus();
+        
+      } catch (e) {
+        console.error("Transaction failed:", e);
+        
+        let errorMsg = e.message || "Transaction failed";
+        
+        if (errorMsg.includes("System not safe")) {
+          errorMsg = "❌ System not safe - Try waking oracle first (purple button above) or use manual deposit+mint.";
+        } else if (errorMsg.includes("insufficient collateral")) {
+          errorMsg = "❌ Insufficient collateral - deposit more ETH first";
+        } else if (errorMsg.includes("below minimum ratio") || errorMsg.includes("Below minimum")) {
+          errorMsg = "❌ This would make your vault unsafe (below 150%)";
+        } else if (errorMsg.includes("user rejected") || errorMsg.includes("User denied")) {
+          errorMsg = "Transaction cancelled by user";
+        } else if (errorMsg.includes("Cannot withdraw yet")) {
+          errorMsg = "❌ 5-minute cooldown active - wait before withdrawing";
+        } else if (errorMsg.includes("Vault must be empty")) {
+          errorMsg = "❌ Repay all debt first before emergency unlock";
+        } else if (errorMsg.includes("30 days")) {
+          errorMsg = "❌ Emergency unlock requires 30 days with zero debt";
+        } else if (errorMsg.includes("insufficient funds")) {
+          errorMsg = "❌ Insufficient ETH for gas fees";
+        } else if (errorMsg.includes("Oracle not stale")) {
+          errorMsg = "✓ Oracle is already fresh - no need to wake it!";
+        }
+        
+        error.textContent = errorMsg;
+        setTimeout(() => error.textContent = "", 10000);
+        
+      } finally {
+        btn.textContent = orig;
+        btn.disabled = false;
+      }
+    }
+
+    async function loadVault() {
+      try {
+        const i = await vault.vaultInfo(account);
+        const ratio = Number(i.ratio);
+        const ratioClass = ratio < 150 ? "risk" : ratio < 170 ? "warn" : "safe";
+        const ratioDisplay = ratio > 1e6 ? "Infinite" : ratio.toFixed(2) + "%";
+        
+        const collateralETH = Number(ethers.utils.formatEther(i.collateral));
+        const debtAmount = Number(ethers.utils.formatEther(i.debt));
+        const mintableAmount = Number(ethers.utils.formatEther(i.mintable));
+        
+        stats.innerHTML = `
+          <div class="stat"><div class="label">Collateral</div><div class="value">${collateralETH.toFixed(6)} ETH</div></div>
+          <div class="stat"><div class="label">Debt</div><div class="value">${debtAmount.toFixed(6)} bSunDAI</div></div>
+          <div class="stat"><div class="label">Ratio</div><div class="value ${ratioClass}">${ratioDisplay}</div></div>
+          <div class="stat"><div class="label">Can Mint</div><div class="value">${mintableAmount.toFixed(6)} bSunDAI</div></div>
+        `;
+
+        // Repay to Safe preview
+        const needed = await vault.repayToHealth(account);
+        const previewEl = document.getElementById("repayToSafePreview");
+        const btnEl = document.getElementById("repayToSafe");
+        
+        if (needed.gt(0)) {
+          previewEl.textContent = `Need ${Number(ethers.utils.formatEther(needed)).toFixed(2)} bSunDAI to reach 150%`;
+          previewEl.style.color = "#ffcc00";
+          btnEl.disabled = false;
+        } else {
+          previewEl.textContent = "✓ Already safe at 150%+";
+          previewEl.style.color = "#00ff9d";
+          btnEl.disabled = true;
+        }
+
+        // Mint Max Safe preview
+        const mintMaxPreviewEl = document.getElementById("mintMaxPreview");
+        const mintMaxBtn = document.getElementById("mintMaxSafe");
+        
+        if (i.mintable.gt(0)) {
+          const mintableNum = Number(ethers.utils.formatEther(i.mintable));
+          mintMaxPreviewEl.textContent = `Will mint ${mintableNum.toFixed(2)} bSunDAI (vault stays at 150%)`;
+          mintMaxPreviewEl.style.color = "#00ff9d";
+          mintMaxBtn.disabled = false;
+        } else if (i.collateral.eq(0)) {
+          mintMaxPreviewEl.textContent = "Deposit collateral first";
+          mintMaxPreviewEl.style.color = "#ffbd70";
+          mintMaxBtn.disabled = true;
+        } else {
+          mintMaxPreviewEl.textContent = "Already at maximum safe leverage";
+          mintMaxPreviewEl.style.color = "#ffbd70";
+          mintMaxBtn.disabled = true;
+        }
+
+        // Withdraw Max Safe preview - FIXED FORMULA
+        const withdrawMaxPreviewEl = document.getElementById("withdrawMaxPreview");
+        const withdrawMaxBtn = document.getElementById("withdrawMaxSafe");
+        const withdrawCooldownWarning = document.getElementById("withdrawCooldownWarning");
+        
+        const v = await vault.vaults(account);
+        const currentTime = Math.floor(Date.now() / 1000);
+        const lastDepositTime = Number(v.lastDepositTime);
+        const cooldownRemaining = 300 - (currentTime - lastDepositTime);
+        
+        if (cooldownRemaining > 0) {
+          withdrawCooldownWarning.style.display = "block";
+          withdrawCooldownWarning.textContent = `Withdraw available in ${Math.ceil(cooldownRemaining / 60)} minute(s)`;
+          withdrawMaxBtn.disabled = true;
+          withdrawMaxPreviewEl.textContent = "Waiting for cooldown...";
+          withdrawMaxPreviewEl.style.color = "#ffcc00";
+        } else {
+          withdrawCooldownWarning.style.display = "none";
+          
+          if (i.debt.eq(0) && i.collateral.gt(0)) {
+            const ethNum = Number(ethers.utils.formatEther(i.collateral));
+            const usdValue = ethNum * (Number(i.price) / 1e18);
+            withdrawMaxPreviewEl.textContent = `Will withdraw all ${ethNum.toFixed(4)} ETH (~$${usdValue.toFixed(2)})`;
+            withdrawMaxPreviewEl.style.color = "#00ff9d";
+            withdrawMaxBtn.disabled = false;
+          } else if (i.debt.gt(0) && i.collateral.gt(0) && i.price.gt(0)) {
+            // FIXED: Use same formula as button handler
+            const requiredCollateral = i.debt.mul(minRatio).mul(DECIMALS).div(i.price.mul(100));
+            const withdrawable = i.collateral.gt(requiredCollateral) ? i.collateral.sub(requiredCollateral) : ethers.BigNumber.from(0);
+            
+            if (withdrawable.gt(0)) {
+              const withdrawableNum = Number(ethers.utils.formatEther(withdrawable));
+              const withdrawableUSD = withdrawableNum * (Number(i.price) / 1e18);
+              withdrawMaxPreviewEl.textContent = `Will withdraw ${withdrawableNum.toFixed(4)} ETH (~$${withdrawableUSD.toFixed(2)}) safely`;
+              withdrawMaxPreviewEl.style.color = "#00ff9d";
+              withdrawMaxBtn.disabled = false;
+            } else {
+              withdrawMaxPreviewEl.textContent = "Already at minimum safe collateral";
+              withdrawMaxPreviewEl.style.color = "#ffbd70";
+              withdrawMaxBtn.disabled = true;
+            }
+          } else {
+            withdrawMaxPreviewEl.textContent = "No collateral available";
+            withdrawMaxPreviewEl.style.color = "#ffbd70";
+            withdrawMaxBtn.disabled = true;
+          }
+        }
+
+        // Emergency Unlock check
+        const emergencyCard = document.getElementById("emergencyCard");
+        const emergencyPreviewEl = document.getElementById("emergencyPreview");
+        const emergencyBtn = document.getElementById("emergencyUnlock");
+        
+        if (i.debt.eq(0) && i.collateral.gt(0)) {
+          const daysSinceDeposit = Math.floor((currentTime - lastDepositTime) / 86400);
+          
+          if (daysSinceDeposit >= 30) {
+            emergencyCard.style.display = "block";
+            emergencyPreviewEl.textContent = `Ready! Can recover ${Number(ethers.utils.formatEther(i.collateral)).toFixed(4)} ETH`;
+            emergencyPreviewEl.style.color = "#00ff9d";
+            emergencyBtn.disabled = false;
+          } else {
+            emergencyCard.style.display = "block";
+            emergencyPreviewEl.textContent = `Available in ${30 - daysSinceDeposit} days`;
+            emergencyPreviewEl.style.color = "#ffbd70";
+            emergencyBtn.disabled = true;
+          }
+        } else {
+          emergencyCard.style.display = "none";
+        }
+        
+      } catch (e) {
+        stats.innerHTML = "Failed to load vault";
+        console.error("loadVault error:", e);
+      }
+    }
+
+    // Live previews
+    ["usdIn", "usdOut", "usdOneClick"].forEach(id => {
+      document.getElementById(id).addEventListener("input", () => {
+        const usd = parseFloat(document.getElementById(id).value) || 0;
+        const target = document.getElementById(
+          id === "usdOneClick" ? "ethOneClick" : id === "usdIn" ? "ethOut" : "ethIn"
+        );
+        if (!usd || !price) {
+          target.textContent = "";
+          return;
+        }
+        const ethWei = usdToETH(usd);
+        const ethNum = Number(ethers.utils.formatEther(ethWei));
+        if (id === "usdOneClick") {
+          const mintable = usd / 1.55;
+          target.textContent = `≈ ${ethNum.toFixed(4)} ETH → ${mintable.toFixed(2)} bSunDAI (at 155%)`;
+        } else {
+          target.textContent = `≈ ${ethNum.toFixed(4)} ETH`;
+        }
+      });
+    });
+
+    // ORACLE WAKE BUTTON
+    document.getElementById("oracleWakeBtn").onclick = () => withLoading(document.getElementById("oracleWakeBtn"), async () => {
+      const tx = await oracle.refreshPrice();
+      await tx.wait();
+      status.textContent = "✓ Oracle refreshed successfully!";
+      return tx;
+    });
+
+    // BUTTON HANDLERS
+    document.getElementById("deposit").onclick = () => withLoading(document.getElementById("deposit"), async () => {
+      const u = parseFloat(document.getElementById("usdIn").value);
+      if (!u || u <= 0) throw new Error("Please enter a valid USD amount (e.g., 100)");
+      if (!price || price === 0n) throw new Error("Oracle offline - cannot calculate ETH amount");
+      
+      const ethValue = usdToETH(u);
+      const tx = await vault.depositETH({ value: ethValue });
+      await tx.wait();
+      return tx;
+    });
+    
+    document.getElementById("mint").onclick = () => withLoading(document.getElementById("mint"), async () => {
+      const u = parseFloat(document.getElementById("usdMint").value);
+      if (!u || u <= 0) throw new Error("Please enter a valid USD amount to mint");
+      
+      const mintAmount = usdToBSun(u);
+      const tx = await vault.mint(mintAmount);
+      await tx.wait();
+      return tx;
+    });
+    
+    document.getElementById("repay").onclick = () => withLoading(document.getElementById("repay"), async () => {
+      const u = parseFloat(document.getElementById("usdRepay").value);
+      if (!u || u <= 0) throw new Error("Please enter a valid repay amount");
+      await (await token.approve(VAULT, usdToBSun(u))).wait();
+      const tx = await vault.repay(usdToBSun(u));
+      await tx.wait();
+      return tx;
+    });
+    
+    document.getElementById("withdraw").onclick = () => withLoading(document.getElementById("withdraw"), async () => {
+      const u = parseFloat(document.getElementById("usdOut").value);
+      if (!u || u <= 0) throw new Error("Please enter a valid USD amount to withdraw");
+      const tx = await vault.withdrawETH(usdToETH(u));
+      await tx.wait();
+      return tx;
+    });
+    
+    document.getElementById("repayAuto").onclick = () => withLoading(document.getElementById("repayAuto"), async () => {
+      const u = parseFloat(document.getElementById("usdRepayAuto").value);
+      if (!u || u <= 0) throw new Error("Please enter a valid repay amount");
+      await (await token.approve(VAULT, usdToBSun(u))).wait();
+      const tx = await vault.repayAndAutoWithdraw(usdToBSun(u));
+      await tx.wait();
+      return tx;
+    });
+    
+    document.getElementById("risk").onclick = () => withLoading(document.getElementById("risk"), async () => {
+      const [can, ratio] = await vault.isLiquidatable(account);
+      document.getElementById("riskText").innerHTML = can
+        ? '<span class="risk">⚠️ LIQUIDATION RISK - Repay debt or add collateral!</span>'
+        : '<span class="safe">✓ You are safe (above 110%)</span>';
+    });
+    
+    document.getElementById("repayToSafe").onclick = () => withLoading(document.getElementById("repayToSafe"), async () => {
+      const needed = await vault.repayToHealth(account);
+      if (needed.eq(0)) throw new Error("Already safe at 150%+");
+      await (await token.approve(VAULT, needed)).wait();
+      const tx = await vault.repay(needed);
+      await tx.wait();
+      status.textContent = `Repaid ${ethers.utils.formatEther(needed)} bSunDAI - now at 150%`;
+      return tx;
+    });
+    
+    document.getElementById("oneClickBtn").onclick = () => withLoading(document.getElementById("oneClickBtn"), async () => {
+      const usd = parseFloat(document.getElementById("usdOneClick").value);
+      if (!usd || usd <= 0) throw new Error("Please enter a valid USD amount");
+      if (!price || price === 0n) throw new Error("Oracle offline - cannot calculate ETH amount");
+      
+      const ethValue = usdToETH(usd);
+      const tx = await vault.depositAndAutoMintETH({ value: ethValue });
+      await tx.wait();
+      return tx;
+    });
+
+    document.getElementById("mintMaxSafe").onclick = () => withLoading(document.getElementById("mintMaxSafe"), async () => {
+      const info = await vault.vaultInfo(account);
+      if (info.mintable.eq(0)) throw new Error("Need collateral first - deposit ETH to begin");
+      const tx = await vault.mint(info.mintable);
+      await tx.wait();
+      status.textContent = `✓ Minted ${Number(ethers.utils.formatEther(info.mintable)).toFixed(2)} bSunDAI`;
+      return tx;
+    });
+
+    document.getElementById("withdrawMaxSafe").onclick = () => withLoading(document.getElementById("withdrawMaxSafe"), async () => {
+      const info = await vault.vaultInfo(account);
+      
+      if (info.debt.eq(0)) {
+        if (info.collateral.eq(0)) throw new Error("No collateral to withdraw");
+        const tx = await vault.withdrawETH(info.collateral);
+        await tx.wait();
+        status.textContent = `✓ Withdrew all ${Number(ethers.utils.formatEther(info.collateral)).toFixed(4)} ETH`;
+        return tx;
+      } else {
+        const p = info.price.gt(0) ? info.price : (await oracle.peekPrice())[0];
+        if (p.eq(0)) throw new Error("Oracle offline - cannot calculate safe withdrawal");
+        
+        // FIXED: Use minRatio constant (150)
+        const requiredCollateral = info.debt.mul(minRatio).mul(DECIMALS).div(p.mul(100));
+        const withdrawable = info.collateral.gt(requiredCollateral) ? info.collateral.sub(requiredCollateral) : ethers.BigNumber.from(0);
+        
+        if (withdrawable.lte(0)) throw new Error("Already at minimum safe collateral (150%)");
+        
+        const tx = await vault.withdrawETH(withdrawable);
+        await tx.wait();
+        status.textContent = `✓ Withdrew ${Number(ethers.utils.formatEther(withdrawable)).toFixed(4)} ETH safely`;
+        return tx;
+      }
+    });
+
+    document.getElementById("emergencyUnlock").onclick = () => withLoading(document.getElementById("emergencyUnlock"), async () => {
+      const tx = await vault.emergencyUnlock();
+      await tx.wait();
+      status.textContent = "✓ Emergency unlock successful - collateral recovered!";
+      return tx;
+    });
+
+    walletBtn.onclick = connectWallet;
+
+    // Nebula Background
+    const bg = document.getElementById("bg");
+    let t = 0, mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
+    function animate() {
+      t += 0.004;
+      mouseX += (targetX - mouseX) * 0.05;
+      mouseY += (targetY - mouseY) * 0.05;
+      const x1 = 25 + Math.sin(t * 0.7) * 20 + mouseX * 15;
+      const y1 = 25 + Math.cos(t * 0.8) * 15 + mouseY * 10;
+      const x2 = 75 + Math.cos(t * 0.5) * 18 - mouseX * 12;
+      const y2 = 70 + Math.sin(t * 0.6) * 14 - mouseY * 10;
+      const x3 = 50 + Math.sin(t * 0.3) * 15 + mouseX * 10;
+      const y3 = 50 + Math.cos(t * 0.4) * 12 + mouseY * 10;
+      bg.style.background = `
+        radial-gradient(circle at ${x1}% ${y1}%, rgba(255,200,100,0.20), transparent 65%),
+        radial-gradient(circle at ${x2}% ${y2}%, rgba(255,130,40,0.16), transparent 65%),
+        radial-gradient(circle at ${x3}% ${y3}%, rgba(120,0,180,0.22), transparent 75%)
+      `;
+      requestAnimationFrame(animate);
+    }
+    window.addEventListener("mousemove", e => {
+      targetX = (e.clientX / innerWidth - 0.5);
+      targetY = (e.clientY / innerHeight - 0.5);
+    });
+    window.addEventListener("deviceorientation", e => {
+      if (e.gamma && e.beta) { targetX = e.gamma/45; targetY = e.beta/45; }
+    });
+    animate();
+
+    // HOW-TO MODAL (keeping original comprehensive guide)
+    const howToBtn = document.getElementById("howToBtn");
+    const modal = document.createElement("div");
+    modal.className = "modal";
+    modal.innerHTML = `
+      <div class="modal-content">
+        <span class="close">×</span>
+        <h3>📖 Complete bSunDAI User Guide</h3>
+        
+        <h4>🚀 Getting Started</h4>
+        <ol>
+          <li><strong>Install MetaMask:</strong> Download from metamask.io if you don't have it yet</li>
+          <li><strong>Get ETH on Base:</strong> Bridge ETH to Base network using bridge.base.org or buy directly on Base</li>
+          <li><strong>Connect Wallet:</strong> Click "Connect Wallet" button (top right). MetaMask will automatically switch to Base network</li>
+          <li><strong>Check Price:</strong> Current ETH/USD price displays at top (updates every 60 seconds from Aave oracle)</li>
+        </ol>
+        
+        <h4>💰 Creating Your First Vault (Easiest Method)</h4>
+        <ol>
+          <li><strong>One-Click Auto Mint (Recommended):</strong>
+            <ul style="margin-top:8px">
+              <li>Enter USD amount you want to deposit (e.g., $1000)</li>
+              <li>See preview showing ETH amount and bSunDAI you'll receive</li>
+              <li>Click "1-Click Auto Mint (155%)" - deposits ETH and mints bSunDAI in one transaction</li>
+              <li>Your vault will be at safe 155% ratio (5% extra safety buffer)</li>
+            </ul>
+          </li>
+        </ol>
+        
+        <div class="note">
+          <strong>🌟 New in v6.0.2:</strong><br>
+          • Oracle Wake Button: If oracle is stale (>3 min), click purple "Wake Oracle" button<br>
+          • 7-day Emergency Functions: If oracle fails for 7+ days, emergency repay/withdraw unlocks<br>
+          • Improved system health tracking
+        </div>
+        
+        <h4>⚙️ Manual Vault Management</h4>
+        <ol>
+          <li><strong>Deposit ETH:</strong> Add collateral, starts 5-minute withdrawal cooldown</li>
+          <li><strong>Mint bSunDAI:</strong> Create stablecoins, must maintain 150% ratio</li>
+          <li><strong>Repay Debt:</strong> Burn bSunDAI, no cooldown</li>
+          <li><strong>Withdraw ETH:</strong> Remove collateral (5-min cooldown, must stay above 150%)</li>
+        </ol>
+        
+        <h4>🛡️ Safety Features</h4>
+        <div class="note">
+          <strong>150% Minimum Ratio:</strong> System enforces safe leverage<br>
+          <strong>5-Minute Cooldown:</strong> Prevents flash loan attacks<br>
+          <strong>30-Day Emergency Unlock:</strong> Recover collateral if zero debt for 30 days<br>
+          <strong>7-Day Oracle Failure Override:</strong> Emergency exit if oracle dies (v6.0.2)
+        </div>
+        
+        <h4>⚠️ Liquidation Risk</h4>
+        <div class="warning-box">
+          If ratio drops below 110%, liquidators can repay your debt for your collateral at discount.<br><br>
+          <strong>Avoid by:</strong> Keep ratio >150%, add collateral during drops, repay debt to improve ratio
+        </div>
+        
+        <h4>💡 Pro Tips</h4>
+        <ul style="line-height:1.8">
+          <li>Use purple "Wake Oracle" button if system seems stuck</li>
+          <li>Start conservative at 155%, get comfortable first</li>
+          <li>Monitor ETH price - if dropping, add collateral</li>
+          <li>Use "Mint Max Safe" and "Withdraw Max Safe" for automatic calculations</li>
+          <li>Check "Global Stats" to see total system health and your share</li>
+        </ul>
+        
+        <div class="note" style="margin-top:20px">
+          <strong>🌟 Remember:</strong> bSunDAI is ownerless, immutable software. No company, no support team, no reversals. You are in complete control!
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    howToBtn.onclick = () => modal.style.display = "flex";
+    modal.onclick = e => {
+      if (e.target.className === "modal" || e.target.className === "close") modal.style.display = "none";
+    };
+
+    window.addEventListener("load", connectWallet);
+  </script>
+</body>
+</html>
