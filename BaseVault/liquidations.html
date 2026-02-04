@@ -300,21 +300,22 @@
       try {
         const [p, timestamp] = await oracle.peekPrice();
         
-        // CRITICAL: Check oracle freshness before using price
+        // Check oracle freshness but don't block - just log warning
         const now = Math.floor(Date.now() / 1000);
         const age = now - Number(timestamp);
-        const MAX_ORACLE_AGE = Number(await oracle.MAX_PRICE_AGE());
         
-        if (age > MAX_ORACLE_AGE) {
-          throw new Error(`Oracle stale (${Math.floor(age/60)} min old) - liquidation calculations paused for safety`);
+        try {
+          const MAX_ORACLE_AGE = Number(await oracle.MAX_PRICE_AGE());
+          if (age > MAX_ORACLE_AGE) {
+            console.warn(`⚠️ Oracle stale (${Math.floor(age/60)} min old) - profit calculations may be inaccurate`);
+          }
+        } catch (e) {
+          console.log("Could not check MAX_PRICE_AGE:", e);
         }
         
         price = p;
       } catch (e) {
         console.error("Price update failed:", e);
-        if (e.message && e.message.includes("stale")) {
-          document.getElementById("error").textContent = e.message;
-        }
         price = 0n;
       }
     }
@@ -395,10 +396,29 @@
       `;
       
       try {
+        let oracleStale = false;
+        let oracleAge = 0;
+        
         await updatePrice();
         
+        // Check if oracle is stale but don't block scan
         if (price === 0n) {
-          throw new Error("Oracle offline or stale - cannot calculate liquidation rewards safely");
+          throw new Error("Oracle offline - cannot calculate liquidation rewards");
+        }
+        
+        try {
+          const [_, timestamp] = await oracle.peekPrice();
+          const now = Math.floor(Date.now() / 1000);
+          oracleAge = Math.floor((now - Number(timestamp)) / 60); // Age in minutes
+          const MAX_ORACLE_AGE = Number(await oracle.MAX_PRICE_AGE());
+          oracleStale = (now - Number(timestamp)) > MAX_ORACLE_AGE;
+        } catch (e) {
+          console.log("Could not check oracle age:", e);
+        }
+        
+        if (oracleStale) {
+          // Show warning but allow scan to continue
+          document.getElementById("error").textContent = `⚠️ WARNING: Oracle is ${oracleAge} min old - profit calculations may be inaccurate!`;
         }
         
         const vaultOwners = await getAllVaultOwners();
