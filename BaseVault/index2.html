@@ -550,6 +550,28 @@
       return ethers.utils.parseUnits(usd.toString(), 18);
     }
 
+    async function ensureOracleFresh() {
+      try {
+        const [_, ts] = await oracle.peekPrice();
+        const age = Math.floor(Date.now() / 1000) - Number(ts);
+        const MAX_AGE = 300; // 5 minutes
+        
+        if (age > MAX_AGE) {
+          console.log(`Oracle stale (${Math.floor(age / 60)} min old), auto-waking...`);
+          status.textContent = "Waking oracle...";
+          await (await oracle.refreshPrice()).wait();
+          console.log("Oracle refreshed successfully");
+          status.textContent = "";
+          
+          // Refresh oracle status display
+          await checkOracleStatus();
+        }
+      } catch (e) {
+        console.log("ensureOracleFresh check failed (non-critical):", e);
+        // Don't throw - let the transaction attempt anyway
+      }
+    }
+
     async function withLoading(btn, fn) {
       const orig = btn.textContent;
       btn.disabled = true;
@@ -770,6 +792,8 @@
       if (!u || u <= 0) throw new Error("Please enter a valid USD amount (e.g., 100)");
       if (!price || price === 0n) throw new Error("Oracle offline - cannot calculate ETH amount");
       
+      await ensureOracleFresh(); // Auto-wake oracle if stale
+      
       const ethValue = usdToETH(u);
       const tx = await vault.depositETH({ value: ethValue });
       await tx.wait();
@@ -779,6 +803,8 @@
     document.getElementById("mint").onclick = () => withLoading(document.getElementById("mint"), async () => {
       const u = parseFloat(document.getElementById("usdMint").value);
       if (!u || u <= 0) throw new Error("Please enter a valid USD amount to mint");
+      
+      await ensureOracleFresh(); // Auto-wake oracle if stale
       
       const mintAmount = usdToBSun(u);
       
@@ -806,6 +832,8 @@
     document.getElementById("withdraw").onclick = () => withLoading(document.getElementById("withdraw"), async () => {
       const u = parseFloat(document.getElementById("usdOut").value);
       if (!u || u <= 0) throw new Error("Please enter a valid USD amount to withdraw");
+      
+      await ensureOracleFresh(); // Auto-wake oracle if stale
       
       const withdrawAmount = usdToETH(u);
       const info = await vault.vaultInfo(account);
@@ -836,6 +864,9 @@
     document.getElementById("repayAuto").onclick = () => withLoading(document.getElementById("repayAuto"), async () => {
       const u = parseFloat(document.getElementById("usdRepayAuto").value);
       if (!u || u <= 0) throw new Error("Please enter a valid repay amount");
+      
+      await ensureOracleFresh(); // Auto-wake oracle if stale
+      
       await (await token.approve(VAULT, usdToBSun(u))).wait();
       const tx = await vault.repayAndAutoWithdraw(usdToBSun(u));
       await tx.wait();
@@ -864,6 +895,8 @@
       if (!usd || usd <= 0) throw new Error("Please enter a valid USD amount");
       if (!price || price === 0n) throw new Error("Oracle offline - cannot calculate ETH amount");
       
+      await ensureOracleFresh(); // Auto-wake oracle if stale
+      
       const ethValue = usdToETH(usd);
       const tx = await vault.depositAndAutoMintETH({ value: ethValue });
       await tx.wait();
@@ -871,6 +904,8 @@
     });
 
     document.getElementById("mintMaxSafe").onclick = () => withLoading(document.getElementById("mintMaxSafe"), async () => {
+      await ensureOracleFresh(); // Auto-wake oracle if stale
+      
       const info = await vault.vaultInfo(account);
       if (info.mintable.eq(0)) throw new Error("Need collateral first - deposit ETH to begin");
       
@@ -884,6 +919,8 @@
     });
 
     document.getElementById("withdrawMaxSafe").onclick = () => withLoading(document.getElementById("withdrawMaxSafe"), async () => {
+      await ensureOracleFresh(); // Auto-wake oracle if stale
+      
       const info = await vault.vaultInfo(account);
       
       if (info.debt.eq(0)) {
