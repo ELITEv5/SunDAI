@@ -223,14 +223,14 @@
     </div>
     
     <!-- ORACLE WAKE BUTTON -->
-    <div class="card" id="oracleWakeCard" style="display:none">
-      <button class="btn" id="oracleWakeBtn" style="background:linear-gradient(135deg, #8b5cf6, #a78bfa);color:#fff;box-shadow:0 4px 15px rgba(139,92,246,0.4)">⏰ Wake Oracle (If Stale)</button>
-      <div class="info-text" style="margin-top:6px" id="oracleStatus">Oracle status: Checking...</div>
+    <div class="card" id="oracleWakeCard">
+      <button class="btn" id="oracleWakeBtn" disabled style="background:linear-gradient(135deg, #8b5cf6, #a78bfa);color:#fff;box-shadow:0 4px 15px rgba(139,92,246,0.4)">Wake Oracle (If Stale)</button>
+      <div class="info-text" style="margin-top:6px" id="oracleStatus">Oracle status: Connect wallet to check...</div>
     </div>
     
     <!-- HOW TO BUTTON -->
     <div class="card" style="margin-bottom:12px">
-      <button class="btn" id="howToBtn" style="background:linear-gradient(135deg, #f59e0b, #fbbf24);color:#000;font-weight:800;box-shadow:0 4px 15px rgba(245,158,11,0.4)">📖 Complete User Guide</button>
+      <button class="btn" id="howToBtn" style="background:linear-gradient(135deg, #f59e0b, #fbbf24);color:#000;font-weight:800;box-shadow:0 4px 15px rgba(245,158,11,0.4)">Complete User Guide</button>
     </div>
     
     <div class="card">
@@ -295,7 +295,7 @@
     
     <!-- LIQUIDATIONS DASHBOARD LINK -->
     <div class="card" style="margin-bottom:12px">
-      <button class="btn" onclick="window.location.href='liquidations.html?v=6.0.2&t=' + Date.now()" style="background:linear-gradient(135deg, #ff3366, #ff6b00);color:#fff;font-weight:800;box-shadow:0 4px 15px rgba(255,51,102,0.4)">🔥 Liquidation Dashboard</button>
+      <button class="btn" onclick="window.location.href='liquidations.html?v=6.0.2&t=' + Date.now()" style="background:linear-gradient(135deg, #ff3366, #ff6b00);color:#fff;font-weight:800;box-shadow:0 4px 15px rgba(255,51,102,0.4)">Liquidation Dashboard</button>
       <div class="helper-text" style="margin-top:6px">Find and liquidate underwater vaults (for liquidators)</div>
     </div>
     
@@ -316,7 +316,7 @@
     <!-- ORACLE STATUS -->
     <div class="card">
       <div class="info-text" style="margin:0">
-        <strong>🎯 Oracle: Aave Price Feed (v6.0.2)</strong><br>
+        <strong>Oracle: Aave Price Feed (v6.0.2)</strong><br>
         Public refresh · 4-hour confirmation · Stepping · TWAP
       </div>
     </div>
@@ -456,18 +456,15 @@
         const isStale = oracleAge > Number(MAX_ORACLE_STALENESS);
         
         const statusEl = document.getElementById("oracleStatus");
-        const wakeCard = document.getElementById("oracleWakeCard");
         const wakeBtn = document.getElementById("oracleWakeBtn");
         
         if (isStale) {
-          wakeCard.style.display = "block";
           wakeBtn.disabled = false;
           statusEl.textContent = `⚠️ Oracle is ${Math.floor(oracleAge / 60)} min old (stale if >${Math.floor(Number(MAX_ORACLE_STALENESS) / 60)} min). Click to refresh!`;
           statusEl.style.background = "rgba(255,204,0,0.1)";
           statusEl.style.borderColor = "rgba(255,204,0,0.3)";
           statusEl.style.color = "#ffcc00";
         } else {
-          wakeCard.style.display = "block";
           wakeBtn.disabled = true;
           statusEl.textContent = `✓ Oracle is fresh (${Math.floor(oracleAge / 60)} min old, updates every ${Math.floor(Number(MAX_ORACLE_STALENESS) / 60)} min)`;
           statusEl.style.background = "rgba(0,255,157,0.1)";
@@ -476,6 +473,7 @@
         }
       } catch (e) {
         console.log("Oracle status check failed:", e);
+        document.getElementById("oracleStatus").textContent = "Connect wallet to check oracle status";
       }
     }
 
@@ -921,9 +919,9 @@
     modal.innerHTML = `
       <div class="modal-content">
         <span class="close">×</span>
-        <h3>📖 Complete bSunDAI User Guide</h3>
+        <h3>Complete bSunDAI User Guide</h3>
         
-        <h4>🚀 Getting Started</h4>
+        <h4>Getting Started</h4>
         <ol>
           <li><strong>Install MetaMask:</strong> Download from metamask.io if you don't have it yet</li>
           <li><strong>Get ETH on Base:</strong> Bridge ETH to Base network using bridge.base.org or buy directly on Base</li>
@@ -931,7 +929,7 @@
           <li><strong>Check Price:</strong> Current ETH/USD price displays at top (updates every 60 seconds from Aave oracle)</li>
         </ol>
         
-        <h4>💰 Creating Your First Vault (Easiest Method)</h4>
+        <h4>Creating Your First Vault (Easiest Method)</h4>
         <ol>
           <li><strong>One-Click Auto Mint (Recommended):</strong>
             <ul style="margin-top:8px">
@@ -944,13 +942,13 @@
         </ol>
         
         <div class="note">
-          <strong>🌟 New in v6.0.2:</strong><br>
+          <strong>New in v6.0.2:</strong><br>
           • Oracle Wake Button: If oracle is stale (>3 min), click purple "Wake Oracle" button<br>
           • 7-day Emergency Functions: If oracle fails for 7+ days, emergency repay/withdraw unlocks<br>
           • Improved system health tracking
         </div>
         
-        <h4>⚙️ Manual Vault Management</h4>
+        <h4>Manual Vault Management</h4>
         <ol>
           <li><strong>Deposit ETH:</strong> Add collateral, starts 5-minute withdrawal cooldown</li>
           <li><strong>Mint bSunDAI:</strong> Create stablecoins, must maintain 150% ratio</li>
@@ -958,7 +956,7 @@
           <li><strong>Withdraw ETH:</strong> Remove collateral (5-min cooldown, must stay above 150%)</li>
         </ol>
         
-        <h4>🛡️ Safety Features</h4>
+        <h4>Safety Features</h4>
         <div class="note">
           <strong>150% Minimum Ratio:</strong> System enforces safe leverage<br>
           <strong>5-Minute Cooldown:</strong> Prevents flash loan attacks<br>
@@ -966,13 +964,13 @@
           <strong>7-Day Oracle Failure Override:</strong> Emergency exit if oracle dies (v6.0.2)
         </div>
         
-        <h4>⚠️ Liquidation Risk</h4>
+        <h4>Liquidation Risk</h4>
         <div class="warning-box">
           If ratio drops below 110%, liquidators can repay your debt for your collateral at discount.<br><br>
           <strong>Avoid by:</strong> Keep ratio >150%, add collateral during drops, repay debt to improve ratio
         </div>
         
-        <h4>💡 Pro Tips</h4>
+        <h4>Pro Tips</h4>
         <ul style="line-height:1.8">
           <li>Use purple "Wake Oracle" button if system seems stuck</li>
           <li>Start conservative at 155%, get comfortable first</li>
@@ -982,7 +980,7 @@
         </ul>
         
         <div class="note" style="margin-top:20px">
-          <strong>🌟 Remember:</strong> bSunDAI is ownerless, immutable software. No company, no support team, no reversals. You are in complete control!
+          <strong>Remember:</strong> bSunDAI is ownerless, immutable software. No company, no support team, no reversals. You are in complete control!
         </div>
       </div>
     `;
