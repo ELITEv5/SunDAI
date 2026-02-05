@@ -1010,71 +1010,232 @@
     modal.className = "modal";
     modal.innerHTML = `
       <div class="modal-content">
-        <span class="close">×</span>
-        <h3>Complete bSunDAI User Guide</h3>
-        
-        <h4>Getting Started</h4>
-        <ol>
-          <li><strong>Install MetaMask:</strong> Download from metamask.io if you don't have it yet</li>
-          <li><strong>Get ETH on Base:</strong> Bridge ETH to Base network using bridge.base.org or buy directly on Base</li>
-          <li><strong>Connect Wallet:</strong> Click "Connect Wallet" button (top right). MetaMask will automatically switch to Base network</li>
-          <li><strong>Check Price:</strong> Current ETH/USD price displays at top (updates every 60 seconds from Aave oracle)</li>
-        </ol>
-        
-        <h4>Creating Your First Vault (Easiest Method)</h4>
-        <ol>
-          <li><strong>One-Click Auto Mint (Recommended):</strong>
-            <ul style="margin-top:8px">
-              <li>Enter USD amount you want to deposit (e.g., $1000)</li>
-              <li>See preview showing ETH amount and bSunDAI you'll receive</li>
-              <li>Click "1-Click Auto Mint (155%)" - deposits ETH and mints bSunDAI in one transaction</li>
-              <li>Your vault will be at safe 155% ratio (5% extra safety buffer)</li>
-            </ul>
-          </li>
-        </ol>
-        
-        <div class="note">
-          <strong>New in v6.0.2:</strong><br>
-          • Oracle Wake Button: If oracle is stale (>3 min), click purple "Wake Oracle" button<br>
-          • 7-day Emergency Functions: If oracle fails for 7+ days, emergency repay/withdraw unlocks<br>
-          • Improved system health tracking
-        </div>
-        
-        <h4>Manual Vault Management</h4>
-        <ol>
-          <li><strong>Deposit ETH:</strong> Add collateral, starts 5-minute withdrawal cooldown</li>
-          <li><strong>Mint bSunDAI:</strong> Create stablecoins, must maintain 150% ratio</li>
-          <li><strong>Repay Debt:</strong> Burn bSunDAI, no cooldown</li>
-          <li><strong>Withdraw ETH:</strong> Remove collateral (5-min cooldown, must stay above 150%)</li>
-        </ol>
-        
-        <h4>Safety Features</h4>
-        <div class="note">
-          <strong>150% Minimum Ratio:</strong> System enforces safe leverage<br>
-          <strong>5-Minute Cooldown:</strong> Prevents flash loan attacks<br>
-          <strong>30-Day Emergency Unlock:</strong> Recover collateral if zero debt for 30 days<br>
-          <strong>7-Day Oracle Failure Override:</strong> Emergency exit if oracle dies (v6.0.2)
-        </div>
-        
-        <h4>Liquidation Risk</h4>
-        <div class="warning-box">
-          If ratio drops below 110%, liquidators can repay your debt for your collateral at discount.<br><br>
-          <strong>Avoid by:</strong> Keep ratio >150%, add collateral during drops, repay debt to improve ratio
-        </div>
-        
-        <h4>Pro Tips</h4>
-        <ul style="line-height:1.8">
-          <li>Use purple "Wake Oracle" button if system seems stuck</li>
-          <li>Start conservative at 155%, get comfortable first</li>
-          <li>Monitor ETH price - if dropping, add collateral</li>
-          <li>Use "Mint Max Safe" and "Withdraw Max Safe" for automatic calculations</li>
-          <li>Check "Global Stats" to see total system health and your share</li>
-        </ul>
-        
-        <div class="note" style="margin-top:20px">
-          <strong>Remember:</strong> bSunDAI is ownerless, immutable software. No company, no support team, no reversals. You are in complete control!
-        </div>
-      </div>
+  <span class="close">×</span>
+  <h3>📖 Complete bSunDAI User Guide (Base Network • v6.1)</h3>
+  
+  <div class="note" style="background:rgba(0,255,157,0.1);border-color:#00ff9d;margin-bottom:20px">
+    <strong>🎉 NEW in v6.1:</strong> On-chain vault discovery! Liquidation dashboard now works perfectly - no more RPC limitations!
+  </div>
+  
+  <h4>🚀 Getting Started (Complete Beginner Guide)</h4>
+  <ol style="line-height:2">
+    <li><strong>Install MetaMask Wallet:</strong>
+      <ul style="margin-top:8px">
+        <li>Go to <a href="https://metamask.io" target="_blank" style="color:#ffd700">metamask.io</a></li>
+        <li>Download the browser extension (Chrome, Firefox, or Brave)</li>
+        <li>Create a new wallet and <strong>SAVE YOUR SEED PHRASE SAFELY</strong></li>
+      </ul>
+    </li>
+    <li><strong>Get ETH on Base Network:</strong>
+      <ul style="margin-top:8px">
+        <li><strong>Option 1 (Easiest):</strong> Bridge from Ethereum using <a href="https://bridge.base.org" target="_blank" style="color:#ffd700">bridge.base.org</a></li>
+        <li><strong>Option 2:</strong> Buy directly on Base using Coinbase or other exchanges</li>
+        <li>You'll need at least <strong>$0.10 worth of ETH for gas fees</strong> (transactions are cheap on Base!)</li>
+      </ul>
+    </li>
+    <li><strong>Connect Your Wallet:</strong>
+      <ul style="margin-top:8px">
+        <li>Click the <strong>"Connect Wallet"</strong> button (top right corner)</li>
+        <li>MetaMask will pop up - click "Connect"</li>
+        <li>If not on Base, MetaMask will ask to switch networks - click "Switch"</li>
+        <li>✅ You're connected when you see your address in the button!</li>
+      </ul>
+    </li>
+    <li><strong>Check the Oracle Price:</strong>
+      <ul style="margin-top:8px">
+        <li>ETH/USD price shown at top of page</li>
+        <li>Updates automatically from Chainlink oracle (most reliable price feed)</li>
+        <li>If price seems stale, click <strong>"🔄 Refresh Oracle"</strong> button</li>
+      </ul>
+    </li>
+  </ol>
+  
+  <h4>💰 Create Your First Vault (RECOMMENDED METHOD)</h4>
+  <div class="note" style="background:linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,107,0,0.1));border-color:#ffd700">
+    <strong>⚡ One-Click Auto Mint - The Safest Way to Start</strong><br>
+    Perfect for beginners! Opens your vault at a super-safe 155% ratio.
+  </div>
+  
+  <ol style="line-height:2;margin-top:16px">
+    <li><strong>Enter USD Amount:</strong>
+      <ul style="margin-top:8px">
+        <li>Type how much you want to deposit in dollars (example: <strong>100</strong> for $100)</li>
+        <li>System automatically calculates required ETH based on current price</li>
+        <li>Shows exactly how much bSunDAI you'll receive</li>
+      </ul>
+    </li>
+    <li><strong>Preview Your Vault:</strong>
+      <ul style="margin-top:8px">
+        <li><strong>Collateral:</strong> How much ETH you're depositing</li>
+        <li><strong>Debt:</strong> How much bSunDAI you're minting</li>
+        <li><strong>Starting Ratio:</strong> 155% (very safe!)</li>
+      </ul>
+    </li>
+    <li><strong>Click "💎 1-Click Auto Mint (155%)"</strong>
+      <ul style="margin-top:8px">
+        <li>MetaMask pops up showing the transaction</li>
+        <li>Review gas fee (usually $0.05-0.20 on Base)</li>
+        <li>Click "Confirm" in MetaMask</li>
+        <li>⏳ Wait 2-5 seconds for confirmation</li>
+        <li>✅ Done! Your vault is created!</li>
+      </ul>
+    </li>
+  </ol>
+  
+  <div class="note" style="margin-top:16px">
+    <strong>🛡️ Why 155% is Safe:</strong><br>
+    • Liquidation happens at 110%<br>
+    • You start at 155% = <strong>45% safety buffer</strong><br>
+    • ETH would need to drop <strong>29%</strong> before you're at risk<br>
+    • Gives you plenty of time to add collateral if needed
+  </div>
+  
+  <h4>🔧 Managing Your Vault (Advanced Users)</h4>
+  <p style="color:#ffbd70;margin-bottom:12px;margin-top:20px">Once you're comfortable, you can manage your vault manually:</p>
+  
+  <div style="background:rgba(255,107,0,0.05);padding:16px;border-radius:12px;margin-bottom:16px">
+    <strong style="color:#ffd700">💎 Deposit More ETH</strong>
+    <ul style="margin-top:8px;line-height:1.8">
+      <li>Enter USD value → Converts to ETH automatically</li>
+      <li>Improves your health ratio instantly</li>
+      <li>⏰ Starts 5-minute withdrawal cooldown (prevents flash loan attacks)</li>
+      <li><strong>When to use:</strong> ETH price is dropping, add collateral to stay safe</li>
+    </ul>
+  </div>
+  
+  <div style="background:rgba(255,107,0,0.05);padding:16px;border-radius:12px;margin-bottom:16px">
+    <strong style="color:#ffd700">🪙 Mint More bSunDAI</strong>
+    <ul style="margin-top:8px;line-height:1.8">
+      <li>Must keep vault above <strong>150% ratio</strong></li>
+      <li>Click <strong>"📊 Mint Max Safe"</strong> for automatic calculation (leaves 2% safety buffer)</li>
+      <li>System prevents you from minting too much (safety first!)</li>
+      <li><strong>When to use:</strong> ETH price is rising, you can safely mint more</li>
+    </ul>
+  </div>
+  
+  <div style="background:rgba(255,107,0,0.05);padding:16px;border-radius:12px;margin-bottom:16px">
+    <strong style="color:#ffd700">💸 Repay Debt</strong>
+    <ul style="margin-top:8px;line-height:1.8">
+      <li>Burn bSunDAI to reduce or eliminate your debt</li>
+      <li>Improves your ratio immediately</li>
+      <li>Click <strong>"🎯 Repay to Safe (150%)"</strong> to hit exactly 150% ratio</li>
+      <li><strong>When to use:</strong> Vault getting risky, or you want to close it</li>
+    </ul>
+  </div>
+  
+  <div style="background:rgba(255,107,0,0.05);padding:16px;border-radius:12px;margin-bottom:16px">
+    <strong style="color:#ffd700">📤 Withdraw ETH</strong>
+    <ul style="margin-top:8px;line-height:1.8">
+      <li>⏰ Must wait <strong>5 minutes</strong> after last deposit (security cooldown)</li>
+      <li>Must keep vault above <strong>150% ratio</strong></li>
+      <li>Click <strong>"💰 Withdraw Max Safe"</strong> for automatic safe calculation</li>
+      <li>Button is grayed out during cooldown period</li>
+      <li><strong>When to use:</strong> Take profits or close vault (after repaying debt)</li>
+    </ul>
+  </div>
+  
+  <h4>🛡️ Safety Systems (What Protects You)</h4>
+  <div class="note" style="background:rgba(0,255,157,0.05);border-color:#00ff9d">
+    <strong>Built-in Protections:</strong><br>
+    <strong>✓ 150% Minimum Ratio:</strong> You can't mint too much bSunDAI - system blocks unsafe minting<br>
+    <strong>✓ 155% Auto-Mint Buffer:</strong> One-click mint gives you extra safety cushion<br>
+    <strong>✓ 5-Minute Cooldown:</strong> Prevents flash loan attacks (can't deposit & withdraw instantly)<br>
+    <strong>✓ Chainlink Oracle:</strong> Industry-standard price feeds (same as Aave, MakerDAO)<br>
+    <strong>✓ System Health Check:</strong> Minting pauses if overall system gets too risky<br>
+    <strong>✓ 0.5% Annual Fee:</strong> Very low stability fee to maintain system
+  </div>
+  
+  <h4>🆘 Emergency Features (Worst-Case Protection)</h4>
+  <div class="note" style="background:rgba(255,204,0,0.05);border-color:#ffcc00">
+    <strong>⚠️ Oracle Failure Protection (New in v6.0.2!):</strong><br>
+    • If Chainlink oracle fails for <strong>7+ days</strong>, emergency functions unlock<br>
+    • You can <strong>emergencyRepay()</strong> to burn debt without oracle<br>
+    • You can <strong>emergencyWithdrawETH()</strong> to recover collateral<br>
+    • <strong>Guarantees you can ALWAYS recover your funds</strong><br>
+    • No admin intervention needed - fully autonomous!
+  </div>
+  
+  <h4>⚠️ Understanding Liquidation Risk</h4>
+  <div class="warning-box" style="background:rgba(255,51,102,0.1);border:2px solid #ff3366;padding:16px;border-radius:12px;margin:16px 0">
+    <strong style="color:#ff3366;font-size:1.1em">🚨 IMPORTANT: When Your Vault Can Be Liquidated</strong><br><br>
+    
+    <strong>Liquidation Threshold: 110%</strong><br>
+    If your vault health ratio drops below 110%, liquidators can pay your debt and take your ETH at a discount.<br><br>
+    
+    <strong>How Liquidation Works:</strong><br>
+    • Liquidator repays up to 20% of your debt<br>
+    • They receive your ETH at a 2-5% discount (Dutch auction)<br>
+    • Bonus starts at 5%, drops to 2% over 3 hours<br>
+    • This creates an economic incentive to keep the system healthy<br><br>
+    
+    <strong>How to AVOID Liquidation:</strong><br>
+    ✓ Keep your ratio comfortably above <strong>150%</strong> at all times<br>
+    ✓ Add collateral EARLY when ETH price starts dropping<br>
+    ✓ Repay some debt to improve your ratio<br>
+    ✓ Check your vault daily during volatile markets<br>
+    ✓ Set price alerts on your phone for ETH drops
+  </div>
+  
+  <h4>💡 Pro Tips for Success</h4>
+  <ul style="line-height:2;margin-top:12px">
+    <li><strong>🎯 Start Conservative:</strong> Use 155% ratio until you're comfortable (one-click auto mint does this)</li>
+    <li><strong>📊 Monitor Your Ratio:</strong> Check dashboard daily - it shows your exact health</li>
+    <li><strong>⚡ Act Early:</strong> Add collateral when ETH drops 5-10%, don't wait for emergency</li>
+    <li><strong>🔄 Use "Max Safe" Buttons:</strong> They do the math for you and include safety buffers</li>
+    <li><strong>📈 Take Profits on ETH Rallies:</strong> When ETH pumps, your ratio improves - you can safely mint more or withdraw collateral</li>
+    <li><strong>🛡️ Emergency Plan:</strong> Know how much ETH you can add if needed - keep some liquid</li>
+    <li><strong>👀 Watch the Liquidation Dashboard:</strong> See other vaults' health (link in top nav)</li>
+  </ul>
+  
+  <h4>🔧 v6.1 New Features (Technical Users)</h4>
+  <div class="note" style="background:rgba(138,92,246,0.1);border-color:#8b5cf6">
+    <strong>🎉 On-Chain Vault Enumeration:</strong><br>
+    • Every vault is registered on-chain when created<br>
+    • Liquidation dashboard can find ALL vaults directly from blockchain<br>
+    • No more relying on RPC event logs (which often fail)<br>
+    • Liquidators get complete, trustless vault discovery<br>
+    • ~20k gas one-time registration per user<br><br>
+    
+    <strong>📊 New View Functions:</strong><br>
+    • <code>getVaultOwnersCount()</code> - Total number of vaults<br>
+    • <code>getVaultOwnersPaginated(start, count)</code> - Batch fetch vault addresses<br>
+    • Perfect for liquidation bots and dashboards!
+  </div>
+  
+  <h4>❓ Common Questions</h4>
+  <div style="background:rgba(255,107,0,0.05);padding:16px;border-radius:12px;margin-top:16px">
+    <strong>Q: What happens to my bSunDAI?</strong><br>
+    A: It's a standard ERC-20 token - send it, trade it, hold it. Always backed by your ETH collateral in the vault.<br><br>
+    
+    <strong>Q: Can I have multiple vaults?</strong><br>
+    A: No, one vault per wallet address. Use multiple wallets if needed.<br><br>
+    
+    <strong>Q: What if ETH crashes overnight?</strong><br>
+    A: Keep ratio above 150% to have buffer. If liquidated, you keep remaining collateral - it's not a total loss.<br><br>
+    
+    <strong>Q: Are there any fees?</strong><br>
+    A: 0.5% annual stability fee (0.00000158% per second). Plus Base network gas fees (~$0.05-0.20 per transaction).<br><br>
+    
+    <strong>Q: Can the protocol be shut down?</strong><br>
+    A: NO! It's completely immutable. No admin keys, no governance. Once deployed, it runs forever.<br><br>
+    
+    <strong>Q: What if I need help?</strong><br>
+    A: This is autonomous software - there's no support desk. But the interface has built-in safety checks and "Max Safe" buttons to prevent errors.
+  </div>
+  
+  <div class="note" style="margin-top:24px;background:rgba(255,51,102,0.1);border-color:#ff3366">
+    <strong>⚠️ FINAL IMPORTANT DISCLAIMER:</strong><br>
+    bSunDAI is <strong>ownerless, immutable software</strong>. There is:<br>
+    • No company behind it<br>
+    • No customer support<br>
+    • No ability to reverse transactions<br>
+    • No admin who can help if you make a mistake<br><br>
+    
+    <strong>You are 100% in control and 100% responsible.</strong><br><br>
+    
+    This is the price of true self-sovereignty. Test with small amounts first. Only deposit what you can afford to lose. DeFi is powerful but risky!
+  </div>
+</div>
     `;
     document.body.appendChild(modal);
     howToBtn.onclick = () => modal.style.display = "flex";
