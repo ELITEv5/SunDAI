@@ -91,6 +91,41 @@
     .empty-state {
       text-align: center; padding: 60px 20px; color: #00ff9d; font-size: 1.2em;
     }
+    .info-box {
+      background: rgba(255, 107, 0, 0.05); border: 1px solid rgba(255, 107, 0, 0.3);
+      border-radius: 12px; padding: 16px 20px; margin-bottom: 20px;
+      line-height: 1.6;
+    }
+    .info-box h3 {
+      color: #ff6b00; margin: 0 0 12px 0; font-size: 1.1em;
+      display: flex; align-items: center; justify-content: space-between;
+      cursor: pointer; user-select: none;
+    }
+    .info-box h3:hover { color: #ffd700; }
+    .info-box ul {
+      margin: 0; padding-left: 20px; color: #ffebd1;
+    }
+    .info-box li {
+      margin: 8px 0; font-size: 0.95em;
+    }
+    .info-box .highlight {
+      color: #ffd700; font-weight: 600;
+    }
+    .info-content {
+      max-height: 500px;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .info-content.collapsed {
+      max-height: 0;
+    }
+    .toggle-icon {
+      transition: transform 0.3s ease;
+      font-size: 0.9em;
+    }
+    .toggle-icon.collapsed {
+      transform: rotate(-90deg);
+    }
     .stats-header {
       background: linear-gradient(135deg, rgba(255,51,102,0.2), rgba(255,107,0,0.2));
       border: 2px solid #ff3366; border-radius: 12px; padding: 20px;
@@ -130,6 +165,29 @@
     
     <div class="status" id="status"></div>
     <div class="error" id="error"></div>
+    
+    <div class="info-box">
+      <h3 onclick="toggleInfo()">
+        📖 How Liquidations Work
+        <span class="toggle-icon" id="toggleIcon">▼</span>
+      </h3>
+      <div class="info-content" id="infoContent">
+        <ul>
+          <li><span class="highlight">Liquidation Trigger:</span> Vaults below 110% health ratio can be liquidated</li>
+          <li><span class="highlight">Minimum Repay:</span> 20% of total debt (automatically calculated)</li>
+          <li><span class="highlight">Dutch Auction Bonus:</span> Starts at 5% immediately after withdrawal, decreases to 2% over 3 hours</li>
+          <li><span class="highlight">Cooldown:</span> 10-minute cooldown between liquidations of the same vault</li>
+          <li><span class="highlight">Process:</span> Two-step transaction
+            <ul style="margin-top:4px;">
+              <li>Step 1: Approve pSunDAI spending (one-time per session)</li>
+              <li>Step 2: Execute liquidation and receive PLS reward</li>
+            </ul>
+          </li>
+          <li><span class="highlight">Interest Buffer:</span> Dashboard automatically adds 1% buffer to handle debt growth during transaction</li>
+          <li><span class="highlight">Auto-Rescan:</span> Dashboard refreshes every 2 minutes to find new opportunities</li>
+        </ul>
+      </div>
+    </div>
     
     <button class="btn scan" id="scanBtn" onclick="scanAll()">
       🔍 Scan for Liquidation Opportunities
@@ -624,6 +682,14 @@ Solution:
     }
 
     document.getElementById("walletBtn").onclick = connectWallet;
+
+    // Toggle info box
+    function toggleInfo() {
+      const content = document.getElementById("infoContent");
+      const icon = document.getElementById("toggleIcon");
+      content.classList.toggle("collapsed");
+      icon.classList.toggle("collapsed");
+    }
 
     // Nebula Background
     const bg = document.getElementById("bg");
