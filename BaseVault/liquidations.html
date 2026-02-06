@@ -98,7 +98,7 @@
     .value.risk { color: #ff3366; text-shadow: 0 0 8px rgba(255,51,102,0.5); }
     .status, .error { text-align: center; font-weight: bold; margin-top: 10px; transition: opacity .4s ease; }
     .status { color: #00ff9d; }
-    .error { color: #ff3366; }
+    .error { color: #ff3366; font-size: 0.9em; line-height: 1.4; white-space: pre-line; }
     .info-grid { display: grid; gap: 8px; margin: 12px 0; }
     .info-row { display: flex; justify-content: space-between; align-items: center; }
     .address { font-family: monospace; font-size: 0.85em; }
@@ -112,6 +112,53 @@
     }
     .empty-state {
       text-align: center; padding: 60px 20px; color: #00ff9d; font-size: 1.2em;
+    }
+    .info-box {
+      background: rgba(255, 107, 0, 0.05); 
+      border: 1px solid rgba(255, 107, 0, 0.3);
+      border-radius: 12px; 
+      padding: 16px 20px; 
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+    .info-box h3 {
+      color: #ff6b00; 
+      margin: 0 0 12px 0; 
+      font-size: 1.1em;
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between;
+      cursor: pointer; 
+      user-select: none;
+    }
+    .info-box h3:hover { color: #ffd700; }
+    .info-box ul {
+      margin: 0; 
+      padding-left: 20px; 
+      color: #ffebd1;
+    }
+    .info-box li {
+      margin: 8px 0; 
+      font-size: 0.95em;
+    }
+    .info-box .highlight {
+      color: #ffd700; 
+      font-weight: 600;
+    }
+    .info-content {
+      max-height: 500px;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .info-content.collapsed {
+      max-height: 0;
+    }
+    .toggle-icon {
+      transition: transform 0.3s ease;
+      font-size: 0.9em;
+    }
+    .toggle-icon.collapsed {
+      transform: rotate(-90deg);
     }
     .stats-header {
       background: linear-gradient(135deg, rgba(255,51,102,0.2), rgba(255,107,0,0.2));
@@ -131,15 +178,6 @@
     }
     .tab:hover { background: rgba(255,107,0,0.2); }
     .tab.active { background: rgba(255,107,0,0.3); border-color: #ffd700; }
-    .info-box {
-      background: rgba(0,255,157,0.1);
-      border: 1px solid rgba(0,255,157,0.3);
-      border-radius: 8px;
-      padding: 12px;
-      margin: 15px 0;
-      font-size: 0.9em;
-      line-height: 1.6;
-    }
     .warning-box {
       background: rgba(255,204,0,0.1);
       border: 1px solid rgba(255,204,0,0.3);
@@ -171,17 +209,32 @@
     <h1>Liquidation Dashboard<span class="network-badge">BASE</span><span class="version-badge">v6.1.0</span></h1>
     <h2>Real-Time Vault Monitoring</h2>
     
-    <div class="info-box">
-      <strong>📖 How Liquidations Work (v6.1.0):</strong><br>
-      • Vaults below 110% health can be liquidated<br>
-      • Minimum repay: 20% of debt (or full debt if less)<br>
-      • Dutch auction: Bonus starts at 5%, decreases to 2% over 3 hours<br>
-      • 10-minute cooldown between liquidations of same vault<br>
-      • Two-step process: Approve bSunDAI → Liquidate vault
-    </div>
-    
     <div class="status" id="status"></div>
     <div class="error" id="error"></div>
+    
+    <div class="info-box">
+      <h3 onclick="toggleInfo()">
+        📖 How Liquidations Work (v6.1.0)
+        <span class="toggle-icon" id="toggleIcon">▼</span>
+      </h3>
+      <div class="info-content" id="infoContent">
+        <ul>
+          <li><span class="highlight">Liquidation Trigger:</span> Vaults below 110% health ratio can be liquidated</li>
+          <li><span class="highlight">Minimum Repay:</span> 20% of total debt (automatically calculated)</li>
+          <li><span class="highlight">Dutch Auction Bonus:</span> Starts at 5% immediately after withdrawal, decreases to 2% over 3 hours</li>
+          <li><span class="highlight">Cooldown:</span> 10-minute cooldown between liquidations of the same vault</li>
+          <li><span class="highlight">Process:</span> Two-step transaction
+            <ul style="margin-top:4px;">
+              <li>Step 1: Approve bSunDAI spending (one-time per session)</li>
+              <li>Step 2: Execute liquidation and receive ETH reward</li>
+            </ul>
+          </li>
+          <li><span class="highlight">Interest Buffer:</span> Dashboard automatically adds 1% buffer to handle debt growth during transaction</li>
+          <li><span class="highlight">Auto-Rescan:</span> Dashboard refreshes every 2 minutes to find new opportunities</li>
+          <li><span class="highlight">On-Chain Discovery:</span> v6.1.0 uses trustless vault enumeration (no RPC limits)</li>
+        </ul>
+      </div>
+    </div>
     
     <button class="btn scan" id="scanBtn" onclick="scanAll()">
       🔍 Scan for Liquidation Opportunities
@@ -214,7 +267,7 @@
     if (!ethers || !ethers.Contract) alert("Ethers.js failed to load");
     
     // BASE MAINNET CONTRACTS (v6.1.0)
-    const VAULT = "0xAC51c80fd592ca404ef1c87f9aDc57541246D211"; // UPDATE THIS WITH YOUR v6.1.0 ADDRESS
+    const VAULT = "0xAC51c80fd592ca404ef1c87f9aDc57541246D211";
     const TOKEN = "0x6e64FeaFC041f66C8e3143cC4CbB99056abBF124";
     const ORACLE = "0x9702d59075322d1C27d5A5D99b86cd8f53d5b8b1";
     const BASE_CHAIN_ID = 8453;
@@ -299,19 +352,6 @@
     async function updatePrice() {
       try {
         const [p, timestamp] = await oracle.peekPrice();
-        
-        const now = Math.floor(Date.now() / 1000);
-        const age = now - Number(timestamp);
-        
-        try {
-          const MAX_ORACLE_AGE = Number(await oracle.MAX_PRICE_AGE());
-          if (age > MAX_ORACLE_AGE) {
-            console.warn(`⚠️ Oracle stale (${Math.floor(age/60)} min old) - profit calculations may be inaccurate`);
-          }
-        } catch (e) {
-          console.log("Could not check MAX_PRICE_AGE:", e);
-        }
-        
         price = p;
       } catch (e) {
         console.error("Price update failed:", e);
@@ -322,13 +362,9 @@
     async function getAllVaultOwners() {
       try {
         // v6.1.0: Use on-chain enumeration
-        console.log("📊 Using on-chain vault enumeration (v6.1.0)");
-        
         const count = await vault.getVaultOwnersCount();
-        console.log(`✅ Found ${count} registered vault owners`);
         
         if (count == 0) {
-          console.log('⚠️ No vaults registered yet');
           return [];
         }
         
@@ -339,27 +375,21 @@
         for (let i = 0; i < count; i += BATCH_SIZE) {
           const batch = await vault.getVaultOwnersPaginated(i, BATCH_SIZE);
           allOwners.push(...batch);
-          console.log(`✅ Loaded batch ${Math.floor(i/BATCH_SIZE) + 1}: ${batch.length} addresses`);
         }
         
-        // Deduplicate (shouldn't be needed but safety first)
+        // Deduplicate
         const uniqueOwners = [...new Set(allOwners)];
-        console.log(`✅ Total unique vault owners: ${uniqueOwners.length}`);
-        
         return uniqueOwners;
         
       } catch (e) {
-        console.error('❌ Error fetching vault owners:', e);
-        
+        console.error('Error fetching vault owners:', e);
         // Fallback: check connected wallet only
-        console.log('⚠️ Falling back to connected wallet only');
-        return userAddress ? [userAddress] : [];
+        return account ? [account] : [];
       }
     }
 
     async function scanAll() {
       if (isScanning) {
-        console.log("Scan already in progress");
         document.getElementById("error").textContent = "⏳ Scan already in progress...";
         setTimeout(() => document.getElementById("error").textContent = "", 3000);
         return;
@@ -399,11 +429,8 @@
         const ownersToCheck = vaultOwners.length > 0 ? vaultOwners : [account];
         
         if (vaultOwners.length === 0) {
-          console.log("⚠️ No vaults found via enumeration - checking connected wallet as fallback");
           document.getElementById("error").textContent = "⚠️ Showing your wallet only";
         }
-        
-        console.log(`📊 Checking ${ownersToCheck.length} vault owner(s)...`);
         
         const liquidatable = [];
         const risky = [];
@@ -617,7 +644,6 @@
                 class="btn danger" 
                 style="margin-top:12px;"
                 data-owner="${v.owner}"
-                data-repay-float="${v.minRepay}"
                 data-repay-bn="${v.minRepayBN.toString()}"
                 onclick="liquidateVault(this)"
                 ${!v.canLiquidate ? 'disabled' : ''}
@@ -716,49 +742,43 @@
       results.innerHTML = html;
     }
 
+    // ═══════════════════════════════════════════════════════════════
+    // LIQUIDATION FUNCTION - Fixed for interest accrual timing
+    // ═══════════════════════════════════════════════════════════════
     async function liquidateVault(btn) {
       try {
         const owner = btn.dataset.owner;
-        const repayFloat = parseFloat(btn.dataset.repayFloat);
-        const repayBN = ethers.BigNumber.from(btn.dataset.repayBn);
+        const suggestedMinRepay = ethers.BigNumber.from(btn.dataset.repayBn);
         
         const originalText = btn.textContent;
         btn.disabled = true;
-        btn.textContent = "⏳ Checking balance...";
+        btn.textContent = "⏳ Processing...";
         document.getElementById("error").textContent = "";
         
-        console.log("═══════════════════════════════════════");
-        console.log("LIQUIDATION INITIATED");
-        console.log("═══════════════════════════════════════");
-        console.log("Target vault:", owner);
-        console.log("Repay amount (float):", repayFloat);
-        console.log("Repay amount (BN):", repayBN.toString());
-        console.log("Repay amount (formatted):", ethers.utils.formatEther(repayBN));
+        // CRITICAL FIX: Add 1% buffer to account for interest accrual
+        // The contract calls _touch(user) which adds interest BEFORE checking if repayAmount >= 20%
+        // This buffer ensures we're still above the 20% minimum after interest accrues
+        const minRepayWithBuffer = suggestedMinRepay.mul(10100).div(10000); // +1% safety
+        const approvalAmount = minRepayWithBuffer.mul(10050).div(10000); // +0.5% more for approval
+        
+        btn.textContent = "⏳ Checking balance...";
         
         // Step 1: Check balance
         const balance = await token.balanceOf(account);
-        console.log("Your bSunDAI balance:", ethers.utils.formatEther(balance));
         
-        if (balance.lt(repayBN)) {
-          throw new Error(`Insufficient bSunDAI. Need ${ethers.utils.formatEther(repayBN)}, have ${ethers.utils.formatEther(balance)}`);
+        if (balance.lt(minRepayWithBuffer)) {
+          throw new Error(`Insufficient bSunDAI. Need ${ethers.utils.formatEther(minRepayWithBuffer)}, have ${ethers.utils.formatEther(balance)}`);
         }
         
         // Step 2: Check allowance
         const currentAllowance = await token.allowance(account, VAULT);
-        console.log("Current allowance:", ethers.utils.formatEther(currentAllowance));
         
         // Step 3: Approve if needed
-        if (currentAllowance.lt(repayBN)) {
+        if (currentAllowance.lt(approvalAmount)) {
           btn.textContent = "⏳ Approving bSunDAI...";
-          console.log("Approving", ethers.utils.formatEther(repayBN), "bSunDAI for vault...");
           
-          const approveTx = await token.approve(VAULT, repayBN);
-          console.log("Approve TX hash:", approveTx.hash);
-          
+          const approveTx = await token.approve(VAULT, approvalAmount);
           await approveTx.wait();
-          console.log("✅ Approval confirmed");
-        } else {
-          console.log("✅ Sufficient allowance already exists");
         }
         
         // Step 4: Verify vault status
@@ -770,19 +790,11 @@
           throw new Error(`Vault recovered! Current ratio: ${ratio.toFixed(2)}% (above 110% threshold)`);
         }
         
-        console.log("Vault still liquidatable. Ratio:", ratio.toFixed(2) + "%");
-        
         // Step 5: Execute liquidation
         btn.textContent = "⏳ Executing liquidation...";
-        console.log("Calling liquidate() with repayAmount:", repayBN.toString());
         
-        const liqTx = await vault.liquidate(owner, repayBN);
-        console.log("Liquidation TX hash:", liqTx.hash);
-        
+        const liqTx = await vault.liquidate(owner, minRepayWithBuffer);
         const receipt = await liqTx.wait();
-        console.log("✅ Liquidation confirmed!");
-        console.log("Gas used:", receipt.gasUsed.toString());
-        console.log("═══════════════════════════════════════");
         
         document.getElementById("status").innerHTML = `
           ✅ Liquidation successful! 🎉<br>
@@ -795,32 +807,51 @@
         setTimeout(() => scanAll(), 2000);
         
       } catch (e) {
-        console.error("═══════════════════════════════════════");
-        console.error("LIQUIDATION FAILED");
-        console.error("═══════════════════════════════════════");
-        console.error("Error:", e);
-        console.error("Error reason:", e.reason);
-        console.error("Error code:", e.code);
-        console.error("═══════════════════════════════════════");
+        console.error("LIQUIDATION FAILED:", e);
         
         let errorMsg = "Liquidation failed: ";
         
         if (e.message.includes("Insufficient bSunDAI")) {
-          errorMsg += e.message;
+          errorMsg = `Insufficient bSunDAI balance
+
+${e.message}
+
+Solution:
+• Mint more bSunDAI from your vault, or
+• Find a smaller liquidation opportunity that requires less bSunDAI`;
         } else if (e.message.includes("Vault recovered")) {
-          errorMsg += e.message;
+          errorMsg = `Transaction reverted: Vault is now "Safe"
+
+The vault owner added collateral or repaid debt between your scan and liquidation attempt.
+
+Solution:
+• Click "Rescan" to refresh the liquidation opportunities list`;
+        } else if (e.reason && e.reason.includes("Liquidation cooldown")) {
+          errorMsg = `Transaction reverted: "Liquidation cooldown"
+
+This vault was recently liquidated and is in cooldown period (10 minutes).
+
+Solution:
+• Find another liquidation opportunity or wait for the cooldown to expire`;
+        } else if (e.reason && e.reason.includes("Not enough collateral")) {
+          errorMsg = `Transaction reverted: "Not enough collateral"
+
+The vault owner added collateral between your scan and liquidation attempt.
+
+Solution:
+• Click "Rescan" to refresh the liquidation opportunities list`;
         } else if (e.reason) {
           errorMsg += e.reason;
         } else if (e.message.includes("user rejected")) {
-          errorMsg += "Transaction cancelled by user";
+          errorMsg = "Transaction cancelled by user";
         } else if (e.message.includes("insufficient funds")) {
-          errorMsg += "Insufficient ETH for gas fees";
+          errorMsg = "Insufficient ETH for gas fees";
         } else {
           errorMsg += e.message || "Unknown error";
         }
         
         document.getElementById("error").textContent = errorMsg;
-        setTimeout(() => document.getElementById("error").textContent = "", 10000);
+        setTimeout(() => document.getElementById("error").textContent = "", 15000);
         
         btn.disabled = false;
         btn.textContent = "🔥 Liquidate Now";
@@ -828,6 +859,14 @@
     }
 
     document.getElementById("walletBtn").onclick = connectWallet;
+
+    // Toggle info box
+    function toggleInfo() {
+      const content = document.getElementById("infoContent");
+      const icon = document.getElementById("toggleIcon");
+      content.classList.toggle("collapsed");
+      icon.classList.toggle("collapsed");
+    }
 
     // Nebula Background
     const bg = document.getElementById("bg");
@@ -862,7 +901,6 @@
     
     setInterval(() => {
       if (scanData && document.getElementById("scanBtn").textContent === "🔄 Rescan") {
-        console.log("Auto-rescanning...");
         scanAll();
       }
     }, 120000);
