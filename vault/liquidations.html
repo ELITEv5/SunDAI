@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>pSunDAI – Liquidation Dashboard [DEBUG]</title>
+  <title>pSunDAI – Liquidation Dashboard</title>
   <link rel="icon" href="sundailogo.png" type="image/png" />
   <meta name="description" content="Real-time liquidation opportunities for SunDAI vaults on PulseChain." />
   <meta name="theme-color" content="#FF6B00" />
@@ -111,11 +111,6 @@
     .tab.active { background: rgba(255,107,0,0.3); border-color: #ffd700; }
     #bg { opacity: 0; animation: fadeIn 2s ease forwards; }
     @keyframes fadeIn { to { opacity: 1; } }
-    .debug-badge {
-      position: fixed; top: 70px; right: 20px; background: #ffcc00; color: #000;
-      padding: 5px 12px; border-radius: 5px; font-size: 0.8em; font-weight: 700;
-      z-index: 9999;
-    }
     @media (max-width: 600px) {
       .info-row { flex-direction: column; align-items: flex-start; gap: 4px; }
       .address { font-size: 0.75em; }
@@ -125,14 +120,13 @@
 <body>
   <div id="bg"></div>
   
-  <div class="debug-badge">🐛 DEBUG MODE</div>
   <div class="back-btn" onclick="window.location.href='index.html?t=' + Date.now()">← Back to Vault</div>
   <div class="wallet" id="walletBtn"><span id="walletText">Connect Wallet</span></div>
   
   <div class="container">
     <img src="sundailogo.png" class="logo" alt="SunDAI Logo" />
     <h1>Liquidation Dashboard</h1>
-    <h2>Real-Time Vault Monitoring (Debug Build)</h2>
+    <h2>Real-Time Vault Monitoring</h2>
     
     <div class="status" id="status"></div>
     <div class="error" id="error"></div>
@@ -158,8 +152,7 @@
     
     <div id="results">
       <div style="text-align:center;padding:40px;color:#ffbd70;">
-        Click "Scan" to find liquidation opportunities<br>
-        <div style="font-size:0.85em;margin-top:10px;color:#ffcc00;">Debug mode: Check browser console for detailed logs</div>
+        Click "Scan" to find liquidation opportunities
       </div>
     </div>
   </div>
@@ -230,7 +223,6 @@
           [p, t] = await oracle.peekPriceView();
         }
         price = p;
-        console.log("Oracle price updated:", ethers.formatEther(price), "USD/PLS");
       } catch {
         price = 0n;
       }
@@ -252,7 +244,6 @@
         ];
         
         const uniqueAddresses = [...new Set(allAddresses)];
-        console.log(`Found ${uniqueAddresses.length} unique vault owners`);
         return uniqueAddresses;
         
       } catch (e) {
@@ -309,15 +300,7 @@
             if (ratio < 110) {
               const liqInfo = await vault.liquidationInfo(owner);
               
-              console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-              console.log("LIQUIDATABLE VAULT FOUND!");
-              console.log("Owner:", owner);
-              console.log("minRepay (raw BigInt):", liqInfo.minRepay.toString());
-              console.log("minRepay (formatted):", ethers.formatEther(liqInfo.minRepay));
-              console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-              
               vaultData.minRepay = Number(ethers.formatEther(liqInfo.minRepay));
-              vaultData.minRepayBigInt = liqInfo.minRepay;
               vaultData.reward = Number(ethers.formatEther(liqInfo.reward));
               vaultData.bonusBps = Number(liqInfo.bonusBps);
               
@@ -349,11 +332,6 @@
         
         scanData = { liquidatable, risky, healthy };
         
-        console.log("SCAN RESULTS:");
-        console.log("  Liquidatable:", liquidatable.length);
-        console.log("  At Risk:", risky.length);
-        console.log("  Healthy:", healthy.length);
-        
         document.getElementById("liqCount").textContent = liquidatable.length;
         document.getElementById("riskyCount").textContent = risky.length;
         document.getElementById("healthyCount").textContent = healthy.length;
@@ -366,7 +344,6 @@
         
       } catch (e) {
         document.getElementById("error").textContent = "Scan failed: " + (e.message || "Unknown error");
-        console.error("SCAN ERROR:", e);
       } finally {
         btn.disabled = false;
         btn.textContent = "🔄 Rescan";
@@ -538,88 +515,48 @@
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // LIQUIDATION FUNCTION WITH INTEREST ACCRUAL FIX
+    // LIQUIDATION FUNCTION - Fixed for interest accrual timing
     // ═══════════════════════════════════════════════════════════════
     async function liquidateVault(ownerAddress) {
       try {
         const btn = event.target;
         btn.disabled = true;
-        btn.textContent = "⏳ Fetching data...";
+        btn.textContent = "⏳ Processing...";
         document.getElementById("error").textContent = "";
         
-        console.log("═══════════════════════════════════════════════════════════");
-        console.log("LIQUIDATION STARTED");
-        console.log("Time:", new Date().toISOString());
-        console.log("Vault address:", ownerAddress);
-        console.log("Liquidator:", account);
-        console.log("═══════════════════════════════════════════════════════════");
-        
-        // CRITICAL: Simulate what _touch() will do by calling vaultInfo first
-        // This gives us the debt AFTER interest accrual
-        const vaultInfo = await vault.vaultInfo(ownerAddress);
-        const currentDebt = vaultInfo.debt;
-        
-        console.log("VAULT STATE (before touch simulation):");
-        console.log("  Current debt:", ethers.formatEther(currentDebt), "pSunDAI");
-        console.log("  Ratio:", Number(vaultInfo.ratio).toFixed(2), "%");
-        
-        // Get liquidation info - but this is based on OLD debt before touch
+        // Get liquidation parameters
         const liqInfo = await vault.liquidationInfo(ownerAddress);
         const suggestedMinRepay = liqInfo.minRepay;
         
-        console.log("LIQUIDATION INFO (OLD debt basis):");
-        console.log("  Suggested minRepay:", ethers.formatEther(suggestedMinRepay), "pSunDAI");
-        
-        // SOLUTION: Add 1% buffer to account for interest accrual during liquidate() call
-        // The contract calls _touch(user) which adds interest BEFORE checking repayAmount
-        // So we need to overshoot the 20% minimum slightly
+        // CRITICAL FIX: Add 1% buffer to account for interest accrual
+        // The contract calls _touch(user) which adds interest BEFORE checking if repayAmount >= 20%
+        // This buffer ensures we're still above the 20% minimum after interest accrues
         const minRepayWithBuffer = (suggestedMinRepay * 10100n) / 10000n; // +1% safety
         
-        console.log("ADJUSTED REPAY (with 1% interest buffer):");
-        console.log("  Adjusted minRepay:", ethers.formatEther(minRepayWithBuffer), "pSunDAI");
-        console.log("  Buffer added: 1% to account for interest accrual");
-        
-        // Approve with additional safety margin
-        const approvalAmount = (minRepayWithBuffer * 10050n) / 10000n; // +0.5% more for rounding
-        
-        console.log("APPROVAL AMOUNT:");
-        console.log("  Approving:", ethers.formatEther(approvalAmount), "pSunDAI");
+        // Approve with additional margin for rounding
+        const approvalAmount = (minRepayWithBuffer * 10050n) / 10000n; // +0.5% more
         
         btn.textContent = "⏳ Checking balance...";
         
-        // Check balance
+        // Verify sufficient balance
         const balance = await token.balanceOf(account);
-        console.log("BALANCE CHECK:");
-        console.log("  Your balance:", ethers.formatEther(balance), "pSunDAI");
-        console.log("  Need:", ethers.formatEther(minRepayWithBuffer), "pSunDAI");
-        
         if (balance < minRepayWithBuffer) {
-          throw new Error(`Insufficient pSunDAI. Need ${ethers.formatEther(minRepayWithBuffer)}, have ${ethers.formatEther(balance)}`);
+          throw new Error(`Insufficient pSunDAI balance. Need ${ethers.formatEther(minRepayWithBuffer)}, have ${ethers.formatEther(balance)}`);
         }
         
         btn.textContent = "⏳ Approving...";
         
-        // Approve
-        console.log("APPROVING TOKEN SPEND...");
+        // Approve token spending
         const approveTx = await token.approve(VAULT, approvalAmount);
-        console.log("  Approval tx hash:", approveTx.hash);
         await approveTx.wait();
-        console.log("  ✅ Approval confirmed");
         
         btn.textContent = "⏳ Liquidating...";
         
-        // Execute with buffered amount
-        console.log("EXECUTING LIQUIDATION:");
-        console.log("  Using repay amount:", ethers.formatEther(minRepayWithBuffer), "pSunDAI");
-        console.log("  This accounts for interest that will accrue during _touch()");
-        
+        // Execute liquidation
         const liqTx = await vault.liquidate(ownerAddress, minRepayWithBuffer);
-        console.log("  Liquidation tx hash:", liqTx.hash);
         const receipt = await liqTx.wait();
-        console.log("  ✅ Transaction confirmed");
-        console.log("  Gas used:", receipt.gasUsed.toString());
         
-        // Parse events
+        // Parse reward from events
         let rewardPLS = "unknown";
         try {
           const liquidateEvent = receipt.logs.find(log => {
@@ -631,37 +568,56 @@
           if (liquidateEvent) {
             const parsed = vault.interface.parseLog(liquidateEvent);
             rewardPLS = ethers.formatEther(parsed.args.reward);
-            console.log("EVENT PARSED:");
-            console.log("  Reward:", rewardPLS, "PLS");
           }
         } catch (e) {
-          console.log("Could not parse reward:", e);
+          // Silent fail on event parsing
         }
-        
-        console.log("═══════════════════════════════════════════════════════════");
-        console.log("✅ LIQUIDATION SUCCESSFUL!");
-        console.log("Reward received:", rewardPLS, "PLS");
-        console.log("═══════════════════════════════════════════════════════════");
         
         document.getElementById("status").textContent = `✅ Liquidation successful! Received ${rewardPLS} PLS 🎉`;
         setTimeout(() => document.getElementById("status").textContent = "", 8000);
         
+        // Rescan after short delay
         setTimeout(() => scanAll(), 2000);
         
       } catch (e) {
-        console.error("═══════════════════════════════════════════════════════════");
-        console.error("❌ LIQUIDATION FAILED");
-        console.error("═══════════════════════════════════════════════════════════");
-        console.error("Error:", e);
-        
         let errorMsg = e.reason || e.message || "Unknown error";
         
+        // Provide helpful context for common errors
         if (errorMsg.includes("Too small")) {
-          errorMsg = `Contract rejected: "Too small". Even with 1% interest buffer, the amount was insufficient. The vault's interest is accruing faster than expected. Try manually increasing the repay amount by 5-10%.`;
+          errorMsg = `Transaction reverted: "Too small"
+          
+This happens when vault debt accrues interest between scan and liquidation. The 1% buffer wasn't enough to cover the interest growth.
+
+Solutions:
+• Wait 10-30 seconds and try again (the 1% buffer should work on retry)
+• If it fails again, the vault's interest is accruing very fast - skip this one and find another liquidation opportunity
+• The dashboard automatically adds a 1% safety buffer to all liquidations`;
+        } else if (errorMsg.includes("Safe")) {
+          errorMsg = `Transaction reverted: Vault is now "Safe"
+          
+The vault owner added collateral or repaid debt between your scan and liquidation attempt.
+
+Solution:
+• Click "Rescan" to refresh the liquidation opportunities list`;
+        } else if (errorMsg.includes("Cooldown")) {
+          errorMsg = `Transaction reverted: "Cooldown"
+          
+This vault was recently liquidated and is in cooldown period (10 minutes).
+
+Solution:
+• Find another liquidation opportunity or wait for the cooldown to expire`;
+        } else if (errorMsg.includes("Insufficient")) {
+          errorMsg = `Insufficient pSunDAI balance
+          
+You don't have enough pSunDAI in your wallet to perform this liquidation.
+
+Solution:
+• Mint more pSunDAI from your vault, or
+• Find a smaller liquidation opportunity that requires less pSunDAI`;
         }
         
-        document.getElementById("error").textContent = "Liquidation failed: " + errorMsg;
-        setTimeout(() => document.getElementById("error").textContent = "", 12000);
+        document.getElementById("error").textContent = errorMsg;
+        setTimeout(() => document.getElementById("error").textContent = "", 15000);
         event.target.disabled = false;
         event.target.textContent = "🔥 Liquidate Now";
       }
