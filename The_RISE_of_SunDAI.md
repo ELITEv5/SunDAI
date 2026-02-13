@@ -706,10 +706,10 @@ This is **bootstrap phase** - patience required.
 ### Contract Addresses
 ```
 pSunDAI Stablecoin:     0x5529c1cb179b2c256501031adCDAfC22D9c6d236
-RISE Token:             [To be added]
+RISE Token:             0xE558edc934FDbB65cdF4868617D5F0D80595aD11
 sSunDAI Vault:          [To be added]
-RISE/WPLS LP:           [To be added]
-pSunDAI/PLS LP:         [To be added]
+RISE/WPLS LP:           0xE54489f764D7a1ABaE829a2d4ae280Deae726511
+pSunDAI/PLS LP:         0x490743C92d0A60EfaE050d4B7656CDCa79E4d722
 ```
 
 ### Audits & Security
