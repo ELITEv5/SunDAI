@@ -1,4 +1,4 @@
-const CACHE = "sundai-v11";
+const CACHE = "sundai-v12";
 
 const FILES = [
   "./",
@@ -22,15 +22,23 @@ self.addEventListener("install", e => {
 });
 
 self.addEventListener("activate", e => {
-  e.waitUntil(self.clients.claim());
+  // Clean up old caches
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
+  );
 });
 
 self.addEventListener("fetch", e => {
-  const url = new URL(e.request.url);
-
   if (e.request.mode === "navigate") {
+    // Strip query string for cache lookup so ?t=timestamp doesn't cause misses
+    const url = new URL(e.request.url);
+    url.search = "";
+    const cleanRequest = new Request(url.toString());
+
     e.respondWith(
-      caches.match(e.request)
+      caches.match(cleanRequest)
         .then(r => r || fetch(e.request))
     );
     return;
