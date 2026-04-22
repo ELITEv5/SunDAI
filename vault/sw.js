@@ -1,4 +1,4 @@
-const CACHE = "sundai-v10";
+const CACHE = "sundai-v11";
 
 const FILES = [
   "./",
@@ -29,7 +29,10 @@ self.addEventListener("fetch", e => {
   const url = new URL(e.request.url);
 
   if (e.request.mode === "navigate") {
-    e.respondWith(caches.match("./index.html").then(r => r || fetch(e.request)));
+    e.respondWith(
+      caches.match(e.request)
+        .then(r => r || fetch(e.request))
+    );
     return;
   }
 
