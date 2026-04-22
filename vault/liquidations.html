@@ -13,6 +13,33 @@
   <meta name="robots" content="index,follow" />
   
   <script src="ethers.umd.min.js"></script>
+  <script>
+    // Mobile MetaMask redirect (mirrors index.html)
+    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      if (!navigator.userAgent.includes("MetaMaskMobile")) {
+        const url = location.origin + location.pathname + location.search + location.hash;
+        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (isIOS) {
+          const deepLink = "metamask://dapp/" + url.replace(/^https?:\/\//, '');
+          const appStoreUrl = "https://apps.apple.com/us/app/metamask-blockchain-wallet/id1438144202";
+          const fallbackTimer = setTimeout(() => {
+            document.body.innerHTML = `
+              <div style="font-family:sans-serif;text-align:center;padding:60px 20px;background:#0a001f;color:#ffebd1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px">
+                <img src="sundailogo.png" style="width:100px;margin-bottom:10px" />
+                <h2 style="color:#ffd700;margin:0">MetaMask Required</h2>
+                <p style="color:#ffbd70;max-width:300px;margin:0">To use SunDAI, you need the MetaMask wallet app.</p>
+                <a href="${appStoreUrl}" style="background:linear-gradient(135deg,#ff8c00,#ffa500);color:#000;font-weight:800;padding:16px 32px;border-radius:12px;text-decoration:none;font-size:1.1em">Get MetaMask on App Store</a>
+                <a href="${deepLink}" style="color:#ffbd70;font-size:0.9em">Already installed? Open MetaMask</a>
+              </div>`;
+          }, 1500);
+          window.addEventListener("blur", () => clearTimeout(fallbackTimer));
+          location.replace(deepLink);
+        } else {
+          location.replace("https://metamask.app.link/dapp/" + encodeURIComponent(url));
+        }
+      }
+    }
+  </script>
   <style>
     body {
       margin: 0;
@@ -175,7 +202,7 @@
         <ul>
           <li><span class="highlight">Liquidation Trigger:</span> Vaults below 110% health ratio can be liquidated</li>
           <li><span class="highlight">Minimum Repay:</span> 20% of total debt (automatically calculated)</li>
-          <li><span class="highlight">Dutch Auction Bonus:</span> Starts at 5% immediately after withdrawal, decreases to 2% over 3 hours</li>
+          <li><span class="highlight">Dutch Auction Bonus:</span> Starts at 2% and increases to 5% over 3 hours — wait longer for a bigger bonus</li>
           <li><span class="highlight">Cooldown:</span> 10-minute cooldown between liquidations of the same vault</li>
           <li><span class="highlight">Process:</span> Two-step transaction
             <ul style="margin-top:4px;">
@@ -194,15 +221,15 @@
     </button>
     
     <div class="tabs" id="tabs" style="display:none;">
-      <div class="tab active" onclick="showTab('liquidatable')">
+      <div class="tab active" onclick="showTab(event, 'liquidatable')">
         <div style="font-size:0.8em;color:#ffbd70;">Liquidatable</div>
         <div id="liqCount" style="font-size:1.5em;color:#ff3366;">0</div>
       </div>
-      <div class="tab" onclick="showTab('risky')">
+      <div class="tab" onclick="showTab(event, 'risky')">
         <div style="font-size:0.8em;color:#ffbd70;">At Risk</div>
         <div id="riskyCount" style="font-size:1.5em;color:#ffcc00;">0</div>
       </div>
-      <div class="tab" onclick="showTab('healthy')">
+      <div class="tab" onclick="showTab(event, 'healthy')">
         <div style="font-size:0.8em;color:#ffbd70;">Healthy</div>
         <div id="healthyCount" style="font-size:1.5em;color:#00ff9d;">0</div>
       </div>
@@ -286,14 +313,17 @@
       }
     }
 
+    // Vault deployment block - avoids scanning from genesis (gets slower over time)
+    const VAULT_DEPLOY_BLOCK = 25581279;
+
     async function getAllVaultOwners() {
       try {
         const depositFilter = vault.filters.Deposit();
         const mintFilter = vault.filters.Mint();
         
         const [depositEvents, mintEvents] = await Promise.all([
-          vault.queryFilter(depositFilter, 0, 'latest'),
-          vault.queryFilter(mintFilter, 0, 'latest')
+          vault.queryFilter(depositFilter, VAULT_DEPLOY_BLOCK, 'latest'),
+          vault.queryFilter(mintFilter, VAULT_DEPLOY_BLOCK, 'latest')
         ]);
         
         const allAddresses = [
@@ -399,6 +429,7 @@
         
         document.getElementById("status").textContent = `✅ Scan complete! Found ${vaultOwners.length} total vaults`;
         setTimeout(() => document.getElementById("status").textContent = "", 5000);
+        scanComplete = true;
         
       } catch (e) {
         document.getElementById("error").textContent = "Scan failed: " + (e.message || "Unknown error");
@@ -408,10 +439,10 @@
       }
     }
 
-    function showTab(tab) {
+    function showTab(e, tab) {
       currentTab = tab;
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      event.target.closest('.tab').classList.add('active');
+      e.target.closest('.tab').classList.add('active');
       displayCurrentTab();
     }
 
@@ -480,7 +511,7 @@
               <button 
                 class="btn danger" 
                 style="margin-top:12px;"
-                onclick="liquidateVault('${v.owner}')"
+                onclick="liquidateVault('${v.owner}', this)"
               >
                 🔥 Liquidate Now (minRepay: ${v.minRepay.toFixed(6)})
               </button>
@@ -575,9 +606,8 @@
     // ═══════════════════════════════════════════════════════════════
     // LIQUIDATION FUNCTION - Fixed for interest accrual timing
     // ═══════════════════════════════════════════════════════════════
-    async function liquidateVault(ownerAddress) {
+    async function liquidateVault(ownerAddress, btn) {
       try {
-        const btn = event.target;
         btn.disabled = true;
         btn.textContent = "⏳ Processing...";
         document.getElementById("error").textContent = "";
@@ -676,8 +706,8 @@ Solution:
         
         document.getElementById("error").textContent = errorMsg;
         setTimeout(() => document.getElementById("error").textContent = "", 15000);
-        event.target.disabled = false;
-        event.target.textContent = "🔥 Liquidate Now";
+        btn.disabled = false;
+        btn.textContent = "🔥 Liquidate Now";
       }
     }
 
@@ -722,10 +752,10 @@ Solution:
 
     window.addEventListener("load", connectWallet);
     
+    let scanComplete = false;
+
     setInterval(() => {
-      if (scanData && document.getElementById("scanBtn").textContent === "🔄 Rescan") {
-        scanAll();
-      }
+      if (scanComplete) scanAll();
     }, 120000);
   </script>
 </body>
