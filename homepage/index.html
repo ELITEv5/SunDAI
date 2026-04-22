@@ -47,7 +47,7 @@
             z-index: 0;
         }
 
-        /* Minimal starfield - just subtle dots */
+        /* Minimal starfield */
         .starfield {
             position: fixed;
             top: 0;
@@ -65,7 +65,7 @@
             height: 1px;
         }
 
-        /* Header - clean and minimal */
+        /* Header */
         .header {
             position: fixed;
             top: 0;
@@ -123,6 +123,25 @@
             min-height: 100vh;
         }
 
+        /* Ecosystem banner */
+        .ecosystem-banner {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .ecosystem-label {
+            display: inline-block;
+            font-size: 0.7rem;
+            color: var(--primary-gold);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 600;
+            border: 1px solid rgba(255, 182, 39, 0.3);
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            background: rgba(255, 182, 39, 0.05);
+        }
+
         /* Title section */
         .intro {
             text-align: center;
@@ -140,17 +159,52 @@
         .intro-subtitle {
             font-size: clamp(1rem, 2vw, 1.25rem);
             color: var(--text-secondary);
-            max-width: 700px;
+            max-width: 760px;
             margin: 0 auto;
             font-weight: 400;
+        }
+
+        /* Section dividers */
+        .section-label {
+            font-size: 0.7rem;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .section-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-subtle);
         }
 
         /* Protocol cards grid */
         .protocols-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
             gap: 2rem;
-            margin-top: 3rem;
+            margin-top: 0.5rem;
+        }
+
+        .sunpls-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-top: 0.5rem;
+            margin-bottom: 2rem;
+            align-items: start;
+        }
+
+        @media (max-width: 1024px) {
+            .sunpls-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         /* Protocol card */
@@ -187,7 +241,28 @@
             opacity: 1;
         }
 
-        /* Protocol indicator - subtle glowing dot */
+        /* SunPLS featured card gets slightly elevated treatment */
+        .protocol-card.featured {
+            border-color: rgba(255, 182, 39, 0.22);
+            background: rgba(22, 22, 34, 0.9);
+        }
+
+        .protocol-card.featured::before {
+            opacity: 0.5;
+        }
+
+        /* Horizontal layout for SunPLS card */
+        .card-inner {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: start;
+        }
+
+        .card-left {}
+        .card-right {}
+
+        /* Protocol indicator */
         .protocol-indicator {
             width: 8px;
             height: 8px;
@@ -203,13 +278,8 @@
             50% { opacity: 1; transform: scale(1.2); }
         }
 
-        .protocol-card:nth-child(2) .protocol-indicator {
-            animation-delay: 1s;
-        }
-
-        .protocol-card:nth-child(3) .protocol-indicator {
-            animation-delay: 2s;
-        }
+        .protocol-card:nth-child(2) .protocol-indicator { animation-delay: 1s; }
+        .protocol-card:nth-child(3) .protocol-indicator { animation-delay: 2s; }
 
         /* Protocol content */
         .protocol-header {
@@ -237,6 +307,30 @@
             margin-bottom: 1.5rem;
             font-size: 0.95rem;
             line-height: 1.7;
+        }
+
+        /* Explainer block for SunPLS */
+        .explainer {
+            background: rgba(255, 182, 39, 0.04);
+            border: 1px solid rgba(255, 182, 39, 0.12);
+            border-radius: 8px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .explainer-title {
+            font-size: 0.7rem;
+            color: var(--primary-gold);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+            margin-bottom: 0.6rem;
+        }
+
+        .explainer p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.65;
         }
 
         .protocol-stats {
@@ -268,7 +362,7 @@
             font-family: 'JetBrains Mono', monospace;
         }
 
-        /* Button */
+        /* Buttons */
         .protocol-button {
             display: block;
             width: 100%;
@@ -298,7 +392,7 @@
             transform: translateY(0);
         }
 
-        /* Network buttons for multi-chain access */
+        /* Network buttons */
         .network-buttons {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -363,6 +457,13 @@
         }
 
         /* Responsive */
+        @media (max-width: 900px) {
+            .card-inner {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+        }
+
         @media (max-width: 768px) {
             .header {
                 padding: 1.5rem 1.5rem;
@@ -407,24 +508,15 @@
             opacity: 0;
         }
 
-        .protocol-card:nth-child(1) {
-            animation-delay: 0.1s;
-        }
-
-        .protocol-card:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-
-        .protocol-card:nth-child(3) {
-            animation-delay: 0.3s;
-        }
+        .sunpls-grid .protocol-card:nth-child(1) { animation-delay: 0.1s; }
+        .sunpls-grid .protocol-card:nth-child(2) { animation-delay: 0.2s; }
+        .protocols-grid .protocol-card:nth-child(1) { animation-delay: 0.3s; }
+        .protocols-grid .protocol-card:nth-child(2) { animation-delay: 0.4s; }
+        .protocols-grid .protocol-card:nth-child(3) { animation-delay: 0.5s; }
     </style>
 </head>
 <body>
-    <!-- Background -->
     <div class="background"></div>
-
-    <!-- Minimal starfield -->
     <div class="starfield" id="starfield"></div>
 
     <!-- Header -->
@@ -442,16 +534,125 @@
 
     <!-- Main Container -->
     <main class="container">
+
         <!-- Intro -->
+        <div class="ecosystem-banner">
+            <span class="ecosystem-label">ELITE TEAM6 Ecosystem</span>
+        </div>
         <section class="intro">
-            <h1 class="intro-title">The SunDAI System</h1>
+            <h1 class="intro-title">The Sun Protocol Suite</h1>
             <p class="intro-subtitle">
-                Overcollateralized stable assets on PulseChain and Base. Zero governance, zero admin keys, pure economic incentives. Running autonomously forever.
+                Two autonomous stable asset systems — SunDAI and SunPLS — built on PulseChain and Base. Zero governance, zero admin keys, pure economic incentives. Running autonomously forever.
             </p>
         </section>
 
-        <!-- Protocols Grid -->
+        <!-- SunPLS — Featured Row -->
+        <div class="section-label">SunPLS — PLS-Native Autonomous Monetary Asset</div>
+        <div class="sunpls-grid">
+            <article class="protocol-card featured">
+                <div class="protocol-indicator"></div>
+                <div class="card-inner">
+                    <div class="card-left">
+                        <div class="protocol-header">
+                            <h2 class="protocol-name">SunPLS Vault</h2>
+                            <p class="protocol-type">Algorithmic CDP · PulseChain</p>
+                        </div>
+                        <p class="protocol-description">
+                            Mint SunPLS by depositing PLS as collateral. Unlike dollar-pegged stablecoins, SunPLS targets its own internal equilibrium price <strong style="color: var(--text-primary);">R</strong> — defended by a feedback controller that automatically adjusts the borrowing rate every hour. No peg promise. No governance. Pure math.
+                        </p>
+                        <div class="explainer">
+                            <div class="explainer-title">How it works</div>
+                            <p>When SunPLS trades above R, the controller raises the borrowing rate — discouraging new minting and pulling price down. When SunPLS trades below R, the rate falls — making borrowing cheap and encouraging new supply. Arbitrageurs can always redeem SunPLS directly against vault collateral at the R price, creating a hard price floor. Dutch-auction liquidations enforce solvency at all times.</p>
+                        </div>
+                        <div class="explainer">
+                            <div class="explainer-title">SunPLS vs. SunDAI</div>
+                            <p>SunDAI is collateralized against PLS and targets $1 USD value. SunPLS is also collateralized against PLS but is <em>not</em> pegged to USD — it targets a self-defined internal equilibrium price, making it an independent monetary asset denominated in PLS rather than dollars.</p>
+                        </div>
+                    </div>
+                    <div class="card-right">
+                        <div class="protocol-stats">
+                            <div class="stat">
+                                <div class="stat-label">Min Collateral</div>
+                                <div class="stat-value">150%</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Liq Threshold</div>
+                                <div class="stat-value">110%</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Redemption CR</div>
+                                <div class="stat-value">≤ 130%</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Auto-Mint CR</div>
+                                <div class="stat-value">155%</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Epoch Length</div>
+                                <div class="stat-value">1 Hour</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Liq Bonus</div>
+                                <div class="stat-value">2–5%</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Redemption Fee</div>
+                                <div class="stat-value">0.5%</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Network</div>
+                                <div class="stat-value">PulseChain</div>
+                            </div>
+                        </div>
+                        <a href="https://ipfs.io/ipfs/bafybeigbbfwtonwvyv4isujc5pbhianl6wm25h3xlqozbl6dlmduh5lvuy/index.html"
+                           class="protocol-button"
+                           target="_blank">
+                            Open SunPLS Vault →
+                        </a>
+                    </div>
+                </div>
+            </article>
+
+            <!-- sSunPLS LP Staking -->
+            <article class="protocol-card">
+                <div class="protocol-indicator"></div>
+                <div class="protocol-header">
+                    <h2 class="protocol-name">sSunPLS Staking</h2>
+                    <p class="protocol-type">Auto-Compound LP Vault</p>
+                </div>
+                <p class="protocol-description">
+                    Stake SunPLS/WPLS LP tokens to earn auto-compounded trading fees. Your position grows automatically — no claiming required. Withdraw anytime with your compounded gains.
+                </p>
+                <div class="protocol-stats">
+                    <div class="stat">
+                        <div class="stat-label">Trading Fee</div>
+                        <div class="stat-value">0.3%</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Harvest Batch</div>
+                        <div class="stat-value">1% TVL</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Lockup</div>
+                        <div class="stat-value">None</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Yield Type</div>
+                        <div class="stat-value">Organic</div>
+                    </div>
+                </div>
+                <a href="https://ipfs.io/ipfs/bafybeiekay5yht6gz6spstgaxxel3by2bog5pokacdx25e3zumb3442gju/sSunPLS.html"
+                   class="protocol-button"
+                   target="_blank">
+                    Access Staking →
+                </a>
+            </article>
+        </div>
+
+        <!-- SunDAI Row -->
+        <div class="section-label">SunDAI — Dollar-Stable CDP System</div>
         <div class="protocols-grid">
+
             <!-- Minting Vault -->
             <article class="protocol-card">
                 <div class="protocol-indicator"></div>
@@ -481,15 +682,15 @@
                     </div>
                 </div>
                 <div class="network-buttons">
-                    <a href="https://ipfs.io/ipfs/bafybeiea24wk6ocucxjyyjekz6xcypl5ulkg3ems6tfl2oogod3mdphveq/index.html" 
-                       class="network-button" 
+                    <a href="https://ipfs.io/ipfs/bafybeiea24wk6ocucxjyyjekz6xcypl5ulkg3ems6tfl2oogod3mdphveq/index.html"
+                       class="network-button"
                        target="_blank">
-                        Access PulseChain →
+                        PulseChain →
                     </a>
-                    <a href="https://ipfs.io/ipfs/bafybeibloee77g2qfxdmexx67k3zmwwu7275tyrnjcyblazphonnpl56xa/index.html" 
-                       class="network-button" 
+                    <a href="https://ipfs.io/ipfs/bafybeibloee77g2qfxdmexx67k3zmwwu7275tyrnjcyblazphonnpl56xa/index.html"
+                       class="network-button"
                        target="_blank">
-                        Access BASE →
+                        BASE →
                     </a>
                 </div>
             </article>
@@ -522,8 +723,8 @@
                         <div class="stat-value">Organic</div>
                     </div>
                 </div>
-                <a href="https://ipfs.io/ipfs/bafybeiecid627j7eidfdc72dsyebec36nks4evv6gqr7en5vvymk3x6xna/sSunDAI.html" 
-                   class="protocol-button" 
+                <a href="https://ipfs.io/ipfs/bafybeiecid627j7eidfdc72dsyebec36nks4evv6gqr7en5vvymk3x6xna/sSunDAI.html"
+                   class="protocol-button"
                    target="_blank">
                     Access Staking →
                 </a>
@@ -557,8 +758,8 @@
                         <div class="stat-value">90%</div>
                     </div>
                 </div>
-                <a href="https://ipfs.io/ipfs/bafybeia5s47wptey5jlaqlzevz3b2hfgnpfukha2krfq5ibliyodebrkbq/index.html" 
-                   class="protocol-button" 
+                <a href="https://ipfs.io/ipfs/bafybeia5s47wptey5jlaqlzevz3b2hfgnpfukha2krfq5ibliyodebrkbq/index.html"
+                   class="protocol-button"
                    target="_blank">
                     Access Destiny →
                 </a>
@@ -577,12 +778,9 @@
     </main>
 
     <script>
-        // Generate minimal starfield - just subtle dots
         function createStarfield() {
             const starfield = document.getElementById('starfield');
-            const starCount = 100;
-
-            for (let i = 0; i < starCount; i++) {
+            for (let i = 0; i < 100; i++) {
                 const star = document.createElement('div');
                 star.className = 'star';
                 star.style.left = Math.random() * 100 + '%';
@@ -590,7 +788,6 @@
                 starfield.appendChild(star);
             }
         }
-
         window.addEventListener('DOMContentLoaded', createStarfield);
     </script>
 </body>
