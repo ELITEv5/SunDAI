@@ -1,8 +1,9 @@
-const CACHE = "sundai-v9";
+const CACHE = "sundai-v10";
 
 const FILES = [
   "./",
   "./index.html",
+  "./liquidations.html",
   "./manifest.json",
   "./sundailogo.png",
   "./icon-192.png",
