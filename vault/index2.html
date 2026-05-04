@@ -358,7 +358,7 @@
     .step-desc { font-size: 0.78em; color: rgba(255,235,209,0.5); line-height: 1.5; }
 
     /* ── RISK TEXT ── */
-    #riskResult { margin-top: 9px; text-align: center; font-weight: 800; font-size: 0.95em; }
+    #riskResult { margin-top: 9px; text-align: center; font-weight: 700; font-size: 0.88em; min-height: 18px; line-height: 1.5; }
 
     /* ── FOOTER ── */
     .footer {
@@ -384,14 +384,12 @@
 
 <!-- NAV -->
 <nav class="nav">
-  <a class="nav-logo" href="index3.html">
+  <a class="nav-logo" href="index_vault.html">
     <img src="sundailogo.png" alt="SunDAI" />
     <span>SunDAI</span>
   </a>
   <div class="nav-links">
-    <a class="nav-link active" href="index3.html">Vault</a>
-    <a class="nav-link" href="stakeindex.html">Stake</a>
-    <a class="nav-link" href="sSunDAI.html">sSunDAI</a>
+    <a class="nav-link active" href="index_vault.html">Vault</a>
     <a class="nav-link" href="liquidations.html">Liquidate</a>
   </div>
   <button class="wallet-btn" id="walletBtn">Connect Wallet</button>
@@ -567,12 +565,13 @@
     <div class="exp-body">
       <div class="exp-inner">
         <p>The easiest way to start. Enter the USD value of PLS you want to deposit. The protocol deposits your PLS <em>and</em> mints pSunDAI in a <strong>single transaction</strong>.</p>
-        <p>Your vault opens at <strong>155% collateral ratio</strong> — 5% above the 150% minimum — giving you a built-in safety buffer from day one.</p>
+        <p>Your vault opens at <strong>155% collateral ratio</strong>. This ratio is set directly in the smart contract code and cannot be changed — it builds in a 5% buffer above the 150% minimum so that rounding in the blockchain math never causes the transaction to revert unexpectedly.</p>
+        <p>To get more pSunDAI from the same collateral (down to exactly 150%), use <strong>Deposit PLS</strong> then <strong>Mint pSunDAI</strong> separately below.</p>
         <div class="exp-example">
           Deposit: $155 of PLS<br>
           Vault holds: $155 PLS collateral<br>
           You receive: $100 pSunDAI<br>
-          Your ratio: 155% — safely above minimum
+          Your ratio: 155% — safely above 150% minimum
         </div>
       </div>
     </div>
@@ -664,7 +663,8 @@
     <div class="exp-body">
       <div class="exp-inner">
         <p>Burns pSunDAI to reduce your debt and raise your ratio. Instant — no cooldown. Use this whenever PLS is falling and your ratio approaches 150%, or when you want to exit the vault.</p>
-        <p>Two helpful shortcuts: <strong>Repay to Safe</strong> auto-calculates the exact amount to bring you back to exactly 150%. <strong>Repay & Withdraw</strong> repays your specified amount then automatically returns any PLS above 150% to your wallet.</p>
+        <p><strong>Repay to Safe</strong> auto-calculates the exact amount to bring you back to exactly 150%. <strong>Repay &amp; Withdraw</strong> repays your specified amount then automatically returns any freed collateral to your wallet.</p>
+        <p><strong>Important:</strong> If you repay your entire debt using Repay &amp; Withdraw, the contract closes your vault completely and returns <em>all</em> your collateral at once — not just the excess. Use plain Repay if you only want to reduce debt without touching your collateral.</p>
         <p>Repaying requires two transactions: an <strong>approval</strong> (authorise the vault to spend your pSunDAI) followed by the repayment itself.</p>
       </div>
     </div>
@@ -737,6 +737,56 @@
   <div class="section-head">
     <div class="section-label">Safety & Advanced</div>
     <div class="section-line"></div>
+  </div>
+
+  <!-- WAKE ORACLE -->
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">Oracle Price Feed</div>
+      <div class="badge green" id="oracleCardBadge">Live</div>
+    </div>
+    <div class="exp-toggle" onclick="toggleExp(this)">
+      <svg width="9" height="9" viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9" fill="currentColor"/></svg>
+      What is the oracle and why does it matter?
+    </div>
+    <div class="exp-body">
+      <div class="exp-inner">
+        <p>The oracle is the on-chain price feed that tells the vault the current PLS/USD rate. It aggregates prices across multiple PulseX trading pairs and uses a <strong>stepping mechanism</strong> — prices move at most 5–10% per update — to protect users from flash crashes and manipulation.</p>
+        <p>If the oracle hasn't been updated recently, all vault calculations use a stale price. Press <strong>Wake Oracle</strong> to trigger a fresh price update. There is a 30-minute cooldown between updates.</p>
+        <p>The status bar at the top of the page always shows the current oracle state. You can also wake it here.</p>
+      </div>
+    </div>
+    <div class="preview-auto" id="oracleStatusText">Checking oracle status...</div>
+    <button class="btn btn-orange" id="pokeBtn" disabled>
+      <div class="spin"></div><span>Wake Oracle</span>
+    </button>
+  </div>
+
+  <!-- CHECK MY VAULT RISK -->
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">Check My Liquidation Risk</div>
+      <div class="badge amber">Safety Check</div>
+    </div>
+    <div class="exp-toggle" onclick="toggleExp(this)">
+      <svg width="9" height="9" viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9" fill="currentColor"/></svg>
+      What does this check?
+    </div>
+    <div class="exp-body">
+      <div class="exp-inner">
+        <p>Queries the contract to check whether your vault is currently eligible for liquidation. A vault becomes liquidatable when its collateral ratio falls <strong>below 110%</strong>.</p>
+        <p>Your ratio gauge above gives a live reading — this button is a direct contract-level confirmation. If you see red, repay debt or add collateral immediately.</p>
+        <div class="exp-example">
+          Safe:  ratio above 150% — no action needed<br>
+          Warn:  ratio 110–150% — monitor closely<br>
+          Risk:  ratio below 110% — liquidatable now
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-red" id="riskCheckBtn" disabled onclick="checkMyRisk()">
+      <div class="spin"></div><span>Check My Liquidation Risk</span>
+    </button>
+    <div id="riskResult"></div>
   </div>
 
   <!-- LIQUIDATION DASHBOARD LINK -->
@@ -814,10 +864,15 @@
   const ORACLE_ADDR = "0xC19C8201701585D9087F261eaCd3Ee3345251Da3";
   const DECIMALS    = 10n ** 18n;
 
+  // Contract constants (verified against pSunDAIVault_ASA_v5_6.sol)
+  // depositAndAutoMintPLS() hardcodes 155 as the ratio buffer (line 197 of contract)
+  // COLLATERAL_RATIO = 150, LIQUIDATION_RATIO = 110
+  const AUTO_MINT_RATIO = 155; // hardcoded in contract, cannot be changed
+
   let provider, signer, vault, token, oracle, account;
-  let currentPrice = 0n;       // oracle price (18 decimals)
-  let currentMintable = 0n;    // from last vaultInfo
-  let currentDebt = 0n;        // from last vaultInfo
+  let currentPrice = 0n;
+  let currentMintable = 0n;
+  let currentDebt = 0n;
 
   // ── NEBULA ───────────────────────────────────────
   let t=0, mx=0, my=0, tx_=0, ty_=0;
@@ -880,25 +935,46 @@
       catch { [p,ts]=await safeCall(oracle.peekPriceView(),3000); }
       const healthy=await safeCall(oracle.isHealthy(),3000);
       const age=Math.floor(Date.now()/1000)-Number(ts);
+      const cardText = document.getElementById("oracleStatusText");
+      const cardBadge = document.getElementById("oracleCardBadge");
+      const pokeBtn = document.getElementById("pokeBtn");
       if (healthy && age<86400) {
         setOracleBar("", `Oracle synced — ${(age/60).toFixed(0)} min ago`);
+        if (cardText)  { cardText.textContent = `Price is fresh — last updated ${(age/60).toFixed(0)} min ago. No action needed.`; cardText.style.color="var(--safe)"; }
+        if (cardBadge) { cardBadge.textContent="Live"; cardBadge.className="badge green"; }
+        if (pokeBtn)   pokeBtn.disabled = true;
       } else {
         setOracleBar("stale","Oracle price is stale —",true);
+        if (cardText)  { cardText.textContent = `Oracle price is stale (${(age/60).toFixed(0)} min old) — press Wake Oracle to update.`; cardText.style.color="var(--risk)"; }
+        if (cardBadge) { cardBadge.textContent="Stale"; cardBadge.className="badge amber"; }
+        if (pokeBtn)   pokeBtn.disabled = false;
       }
     } catch {
       setOracleBar("stale","Oracle check failed —",true);
+      const cardText = document.getElementById("oracleStatusText");
+      if (cardText) { cardText.textContent = "Oracle check failed — press Wake Oracle to try again."; cardText.style.color="var(--risk)"; }
+      const pokeBtn = document.getElementById("pokeBtn");
+      if (pokeBtn) pokeBtn.disabled = false;
     }
   }
 
   async function pokeOracle() {
     if (!signer) return toast("Connect wallet first","err");
+    const pokeBtn = document.getElementById("pokeBtn");
+    const cardText = document.getElementById("oracleStatusText");
     try {
       setOracleBar("checking","Sending wake-up...");
+      if (cardText) { cardText.textContent="Sending wake-up transaction..."; cardText.style.color="var(--warn)"; }
+      if (pokeBtn) pokeBtn.classList.add("loading");
       await (await oracle.connect(signer).poke()).wait();
       toast("Oracle updated successfully");
       setTimeout(checkOracleHealth,2000);
     } catch(e) {
       setOracleBar("stale","Wake failed — "+friendlyErr(e),true);
+      if (cardText) { cardText.textContent="Wake failed: "+friendlyErr(e); cardText.style.color="var(--risk)"; }
+      toast(friendlyErr(e),"err");
+    } finally {
+      if (pokeBtn) pokeBtn.classList.remove("loading");
     }
   }
 
@@ -968,6 +1044,9 @@
       oracle = new ethers.Contract(ORACLE_ADDR, OA, provider);
       window.oracle=oracle;
 
+      // Re-fetch account (chain switch may have changed signer)
+      account = await signer.getAddress();
+
       const wb=document.getElementById("walletBtn");
       wb.textContent=account.slice(0,6)+"..."+account.slice(-4);
       wb.classList.add("connected");
@@ -1024,16 +1103,27 @@
   async function loadGlobalStats() {
     try {
       const [tc,td,h]=await Promise.all([vault.totalCollateral(),vault.totalDebt(),vault.systemHealth()]);
-      const cn=Number(ethers.formatEther(tc)), dn=Number(ethers.formatEther(td));
-      document.getElementById("gColl").textContent="$"+fmt(cn*Number(ethers.formatEther(currentPrice)));
-      document.getElementById("gDebt").textContent=fmt(dn,0)+" pSunDAI";
+      const collNum   = Number(ethers.formatEther(tc));
+      const debtNum   = Number(ethers.formatEther(td));
+      // Show total collateral as PLS count; USD value in tooltip/sub
+      document.getElementById("gColl").textContent = fmt(collNum,0) + " PLS";
+      document.getElementById("gColl").title = currentPrice > 0n
+        ? "≈ $" + fmt(collNum * Number(ethers.formatEther(currentPrice)), 0) + " USD"
+        : "";
+      document.getElementById("gDebt").textContent = fmt(debtNum,0) + " pSunDAI";
       const hEl=document.getElementById("gHealth");
       const hn=Number(h);
-      hEl.textContent=fmt(hn,1)+"%";
-      hEl.style.color=hn<130?"var(--risk)":hn<150?"var(--warn)":"var(--safe)";
+      // systemHealth() returns type(uint256).max when totalDebt == 0
+      if (hn > 1e15) {
+        hEl.textContent="No debt";
+        hEl.style.color="var(--safe)";
+      } else {
+        hEl.textContent=fmt(hn,1)+"%";
+        hEl.style.color=hn<130?"var(--risk)":hn<150?"var(--warn)":"var(--safe)";
+      }
       const yi=await vault.vaultInfo(account);
       const yc=Number(ethers.formatEther(yi.collateral));
-      document.getElementById("gShare").textContent=yc>0&&cn>0?fmt((yc/cn)*100,2)+"%":"0%";
+      document.getElementById("gShare").textContent=yc>0&&collNum>0?fmt((yc/collNum)*100,2)+"%":"0%";
     } catch {}
   }
 
@@ -1068,14 +1158,14 @@
 
       // Ratio display
       const ratioStr = ratio>1e6 ? "No debt" : fmt(ratio,1)+"%";
-      const ratioClass = ratio>1e6 ? "safe" : ratio<150 ? "risk" : ratio<165 ? "warn" : "safe";
+      const ratioClass = ratio>1e6 ? "safe" : ratio<150 ? "risk" : ratio<170 ? "warn" : "safe";
       const rd=document.getElementById("ratioNum");
       rd.textContent=ratioStr;
       rd.className="ratio-num "+ratioClass;
       const captionMap={
         safe: ratio>1e6 ? "No debt — vault is open" : "Vault is healthy",
-        warn: "Getting close to 150% — consider adding collateral or repaying",
-        risk: "Below 150% — add collateral or repay immediately!"
+        warn: "Ratio below 170% — consider topping up collateral or repaying some debt",
+        risk: "Below 150% minimum — add collateral or repay immediately to avoid liquidation!"
       };
       const rc=document.getElementById("ratioCaption");
       rc.textContent=captionMap[ratioClass];
@@ -1087,12 +1177,15 @@
       const rtsLabel=document.getElementById("repayToSafeLabel");
       const rtsPreview=document.getElementById("prevRepayToSafe");
       if (needed>0n) {
-        rtsLabel.textContent=`Repay to Safe (150%) — ${fmt(Number(ethers.formatEther(needed)),2)} pSunDAI`;
-        rtsPreview.textContent=`Repaying ${fmt(Number(ethers.formatEther(needed)),2)} pSunDAI restores vault to 150%`;
+        const neededAmt = fmt(Number(ethers.formatEther(needed)),2);
+        rtsLabel.textContent=`Repay to Safe — burn ${neededAmt} pSunDAI`;
+        rtsPreview.textContent=`Repaying ${neededAmt} pSunDAI restores vault to exactly 150%`;
+        rtsPreview.style.color="var(--warn)";
         rtsBtn.disabled=false;
       } else {
         rtsLabel.textContent="Repay to Safe (150%)";
-        rtsPreview.textContent=debtAmt>0?"Already at or above 150% — no repayment needed":"No debt";
+        rtsPreview.textContent=debtAmt>0?"Already at or above 150% — vault is safe":"No debt — nothing to repay";
+        rtsPreview.style.color="var(--safe)";
         rtsBtn.disabled=true;
       }
 
@@ -1159,10 +1252,28 @@
       document.getElementById("mint").disabled=!(i.mintable>0n);
       document.getElementById("repay").disabled=!(i.debt>0n);
       document.getElementById("repayAuto").disabled=!(i.debt>0n);
+      document.getElementById("riskCheckBtn").disabled=false;
 
     } catch(e) {
       console.error("loadVault:",e);
     }
+  }
+
+  // ── CHECK MY RISK ─────────────────────────────────
+  async function checkMyRisk() {
+    await withLoading("riskCheckBtn", async () => {
+      const can = await vault.canLiquidate(account);
+      const info = await vault.vaultInfo(account);
+      const ratio = Number(info.ratio);
+      const el = document.getElementById("riskResult");
+      if (can) {
+        el.innerHTML = `<span style="color:var(--risk)">Your vault is liquidatable (ratio ${fmt(ratio,1)}%) — repay debt or add collateral immediately!</span>`;
+      } else if (ratio < 150) {
+        el.innerHTML = `<span style="color:var(--warn)">Ratio is ${fmt(ratio,1)}% — below 150% minimum. Top up to avoid liquidation risk.</span>`;
+      } else {
+        el.innerHTML = `<span style="color:var(--safe)">Your vault is safe — ratio is ${ratio > 1e6 ? "No debt" : fmt(ratio,1)+"%"}</span>`;
+      }
+    });
   }
 
   // ── MAX FILL HELPERS ─────────────────────────────
@@ -1182,9 +1293,11 @@
     const u=parseFloat(document.getElementById("usdOneClick").value)||0;
     if (!u||!currentPrice) return document.getElementById("prevOneClick").textContent="";
     const plsAmt=Number(ethers.formatEther(usdToPLS(u)));
-    const pSunAmt=u/1.55; // 155% ratio: collateral / 1.55 = mintable
+    // Contract hardcodes 155% for depositAndAutoMintPLS() — cannot be changed
+    const pSunAmt = u / (AUTO_MINT_RATIO / 100);
     document.getElementById("prevOneClick").textContent=
       `${fmt(plsAmt,0)} PLS deposited → ${fmt(pSunAmt,2)} pSunDAI minted at 155%`;
+
   });
 
   document.getElementById("usdIn").addEventListener("input", ()=>{
@@ -1213,7 +1326,7 @@
     if (!currentPrice||currentPrice===0n) throw new Error("Oracle price unavailable — wake the oracle first");
     const plsWei=usdToPLS(u);
     await (await vault.depositAndAutoMintPLS({value:plsWei})).wait();
-    const minted=u/1.55;
+    const minted = u / (AUTO_MINT_RATIO / 100);
     toast(`Deposited ${fmt(Number(ethers.formatEther(plsWei)),0)} PLS, minted ${fmt(minted,2)} pSunDAI at 155%`);
     document.getElementById("usdOneClick").value="";
     document.getElementById("prevOneClick").textContent="";
@@ -1243,6 +1356,8 @@
   document.getElementById("repay").onclick = ()=>withLoading("repay", async ()=>{
     const u=parseFloat(document.getElementById("usdRepay").value);
     if (!u||u<=0) throw new Error("Enter an amount to repay");
+    const debtNum = Number(ethers.formatEther(currentDebt));
+    if (debtNum > 0 && u > debtNum) throw new Error(`Cannot repay more than your debt (${fmt(debtNum,4)} pSunDAI). Use Max to fill exact amount.`);
     const wei=ethers.parseUnits(String(u),18);
     await (await token.approve(VAULT_ADDR,wei)).wait();
     await (await vault.repay(wei)).wait();
@@ -1254,10 +1369,13 @@
   document.getElementById("repayAuto").onclick = ()=>withLoading("repayAuto", async ()=>{
     const u=parseFloat(document.getElementById("usdRepay").value);
     if (!u||u<=0) throw new Error("Enter an amount to repay");
+    const debtNum = Number(ethers.formatEther(currentDebt));
+    if (debtNum > 0 && u > debtNum) throw new Error(`Cannot repay more than your debt (${fmt(debtNum,4)} pSunDAI). Use Max to fill exact amount.`);
     const wei=ethers.parseUnits(String(u),18);
     await (await token.approve(VAULT_ADDR,wei)).wait();
     await (await vault.repayAndAutoWithdraw(wei)).wait();
-    toast(`Repaid ${fmt(u,2)} pSunDAI and withdrew excess collateral`);
+    // Note: if this repays ALL debt, the contract returns ALL collateral too
+    toast(`Repaid ${fmt(u,2)} pSunDAI and withdrew freed collateral`);
     document.getElementById("usdRepay").value="";
     document.getElementById("prevRepay").textContent="";
   });
@@ -1265,7 +1383,11 @@
   document.getElementById("repayToSafe").onclick = ()=>withLoading("repayToSafe", async ()=>{
     const needed=await vault.repayToHealth(account);
     if (needed===0n) throw new Error("Already at or above 150% — no repayment needed");
-    await (await token.approve(VAULT_ADDR,needed)).wait();
+    // Approve currentDebt (not just `needed`) because interest accrues between
+    // the repayToHealth() view call and when autoRepayToHealth() executes.
+    // The contract will only burn what's actually needed — excess approval is safe.
+    const approveAmt = currentDebt > needed ? currentDebt : needed;
+    await (await token.approve(VAULT_ADDR, approveAmt)).wait();
     await (await vault.autoRepayToHealth()).wait();
     toast(`Repaid ${fmt(Number(ethers.formatEther(needed)),2)} pSunDAI — vault restored to 150%`);
   });
