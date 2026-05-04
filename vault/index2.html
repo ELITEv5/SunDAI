@@ -72,6 +72,60 @@
     .nav-link.active { color: var(--gold); border-color: rgba(255,215,0,0.3); background: rgba(255,215,0,0.07); }
     @media (max-width: 540px) { .nav-link { padding: 6px 8px; font-size: 0.78em; } }
 
+    /* ── RESPONSIVE LAYOUT ── */
+    /* Laptop (>900px): center with max-width, comfortable padding */
+    @media (min-width: 900px) {
+      .page { padding-top: 108px; padding-left: 0; padding-right: 0; }
+      .hero h1 { font-size: 2.8em; }
+      .card { padding: 20px; }
+      .vault-panel { padding: 22px; }
+    }
+    /* Tablet (541–899px): standard layout */
+    @media (max-width: 899px) and (min-width: 541px) {
+      .page { padding: 104px 20px 80px; }
+    }
+    /* Phone (≤540px): tighter, touch-friendly */
+    @media (max-width: 540px) {
+      .nav { padding: 0 12px; }
+      .wallet-btn { padding: 6px 12px; font-size: 0.8em; }
+      .page { padding: 96px 10px 70px; }
+      .hero { padding: 12px 0 14px; }
+      .hero h1 { font-size: 1.9em; }
+      .hero-logo { width: 64px; height: 64px; }
+      .price-pill { padding: 6px 14px; }
+      .card { padding: 14px 12px; margin-bottom: 8px; }
+      .vault-panel { padding: 14px 12px; }
+      .card-title { font-size: 0.92em; }
+      /* Stack repay buttons on small phones */
+      .repay-grid { grid-template-columns: 1fr !important; }
+      /* Stack withdraw buttons on small phones */
+      .withdraw-grid { grid-template-columns: 1fr !important; }
+      /* Global strip: 2 cols on phone */
+      .global-strip { grid-template-columns: 1fr 1fr; }
+      /* Vault grid: 2 cols still fine */
+      .vault-grid { gap: 6px; }
+      .vstat { padding: 9px 10px; }
+      .vstat-val { font-size: 0.95em; }
+      /* Nav links: icon only on very small */
+      .nav-link { padding: 5px 7px; font-size: 0.75em; }
+      /* Inputs: full comfortable touch height */
+      input[type="number"] { padding: 14px 12px; font-size: 1em; }
+      .btn { padding: 15px 12px; font-size: 0.92em; }
+      .max-btn { padding: 0 12px; font-size: 0.8em; }
+      /* Ratio number smaller on phone */
+      .ratio-num { font-size: 1.8em; }
+      /* Explainer examples scroll on tiny screens */
+      .exp-example { overflow-x: auto; }
+      /* Footer contracts wrap well */
+      .contract a { font-size: 0.68em; }
+    }
+    /* Very small phones (≤360px) */
+    @media (max-width: 360px) {
+      .hero h1 { font-size: 1.65em; }
+      .nav-logo span { display: none; }
+      .page { padding-left: 8px; padding-right: 8px; }
+    }
+
     .wallet-btn {
       background: rgba(255,140,0,0.12); border: 1.5px solid var(--sun);
       color: var(--cream); font-family: var(--sans); font-weight: 700; font-size: 0.85em;
@@ -84,11 +138,12 @@
     .oracle-bar {
       position: fixed; top: 60px; left: 0; right: 0; z-index: 999;
       display: flex; align-items: center; justify-content: center; gap: 8px;
-      padding: 6px 16px; font-size: 0.78em; font-weight: 600; transition: all 0.3s;
-      background: rgba(0,255,157,0.07); border-bottom: 1px solid rgba(0,255,157,0.18); color: var(--safe);
+      padding: 6px 16px; font-size: 0.78em; font-weight: 600; transition: color 0.3s, border-color 0.3s;
+      background: rgba(7,0,22,0.97); backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(0,255,157,0.25); color: var(--safe);
     }
-    .oracle-bar.stale { background: rgba(255,51,102,0.08); border-color: rgba(255,51,102,0.25); color: var(--risk); }
-    .oracle-bar.checking { background: rgba(255,215,0,0.06); border-color: rgba(255,215,0,0.18); color: var(--warn); }
+    .oracle-bar.stale   { border-color: rgba(255,51,102,0.35);  color: var(--risk); }
+    .oracle-bar.checking{ border-color: rgba(255,215,0,0.25);   color: var(--warn); }
     .oracle-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
     .oracle-bar.stale .oracle-dot { animation: blink 1s infinite; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.15} }
@@ -625,6 +680,7 @@
       <div class="exp-inner">
         <p>Creates pSunDAI against your existing collateral. The protocol will reject the transaction if minting would drop your ratio <strong>below 150%</strong>.</p>
         <p>Your "Available to Mint" figure in the vault panel above shows exactly how much you can safely mint right now. Use the Max button to fill it automatically.</p>
+        <p>Note: minting is also blocked if the <strong>overall system health drops below 130%</strong>. This is a protocol-wide safety pause — it has nothing to do with your personal vault. If you see an unexpected revert, check the System Health figure in the stats strip above.</p>
         <div class="exp-example">
           Collateral value: $300 | Existing debt: $100<br>
           Current ratio: 300%<br>
@@ -673,7 +729,7 @@
       <button class="max-btn" onclick="fillRepayMax()">Max</button>
     </div>
     <div class="preview" id="prevRepay"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px">
+    <div class="repay-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px">
       <button class="btn btn-orange" id="repay" disabled>
         <div class="spin"></div><span>Repay</span>
       </button>
@@ -721,7 +777,7 @@
       <input id="usdOut" type="number" step="0.01" min="0" placeholder="USD value of PLS to withdraw" />
     </div>
     <div class="preview" id="prevWithdraw"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+    <div class="withdraw-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
       <button class="btn btn-purple" id="withdraw" disabled>
         <div class="spin"></div><span>Withdraw</span>
       </button>
@@ -867,7 +923,8 @@
   // Contract constants (verified against pSunDAIVault_ASA_v5_6.sol)
   // depositAndAutoMintPLS() hardcodes 155 as the ratio buffer (line 197 of contract)
   // COLLATERAL_RATIO = 150, LIQUIDATION_RATIO = 110
-  const AUTO_MINT_RATIO = 155; // hardcoded in contract, cannot be changed
+  const AUTO_MINT_RATIO  = 155;   // hardcoded in contract, cannot be changed
+  const MIN_ACTION_AMOUNT = 1e14; // 0.0001 PLS minimum per contract require()
 
   let provider, signer, vault, token, oracle, account;
   let currentPrice = 0n;
@@ -935,26 +992,43 @@
       catch { [p,ts]=await safeCall(oracle.peekPriceView(),3000); }
       const healthy=await safeCall(oracle.isHealthy(),3000);
       const age=Math.floor(Date.now()/1000)-Number(ts);
-      const cardText = document.getElementById("oracleStatusText");
+      const cardText  = document.getElementById("oracleStatusText");
       const cardBadge = document.getElementById("oracleCardBadge");
-      const pokeBtn = document.getElementById("pokeBtn");
-      if (healthy && age<86400) {
+      const pokeBtn   = document.getElementById("pokeBtn");
+
+      // Check poke cooldown using contract view function
+      let canPoke = true;
+      let secsUntilPoke = 0;
+      try {
+        canPoke = await safeCall(oracle.canPoke(), 3000);
+        if (!canPoke) secsUntilPoke = Number(await safeCall(oracle.timeUntilNextPoke(), 3000));
+      } catch {}
+
+      if (healthy && age < 86400) {
         setOracleBar("", `Oracle synced — ${(age/60).toFixed(0)} min ago`);
         if (cardText)  { cardText.textContent = `Price is fresh — last updated ${(age/60).toFixed(0)} min ago. No action needed.`; cardText.style.color="var(--safe)"; }
         if (cardBadge) { cardBadge.textContent="Live"; cardBadge.className="badge green"; }
-        if (pokeBtn)   pokeBtn.disabled = true;
+        if (pokeBtn)   { pokeBtn.disabled = true; pokeBtn.querySelector("span").textContent = "Wake Oracle"; }
       } else {
-        setOracleBar("stale","Oracle price is stale —",true);
-        if (cardText)  { cardText.textContent = `Oracle price is stale (${(age/60).toFixed(0)} min old) — press Wake Oracle to update.`; cardText.style.color="var(--risk)"; }
-        if (cardBadge) { cardBadge.textContent="Stale"; cardBadge.className="badge amber"; }
-        if (pokeBtn)   pokeBtn.disabled = false;
+        if (canPoke) {
+          setOracleBar("stale","Oracle price is stale —",true);
+          if (cardText)  { cardText.textContent = `Oracle price is stale (${(age/60).toFixed(0)} min old) — press Wake Oracle to update.`; cardText.style.color="var(--risk)"; }
+          if (cardBadge) { cardBadge.textContent="Stale"; cardBadge.className="badge amber"; }
+          if (pokeBtn)   { pokeBtn.disabled = false; pokeBtn.querySelector("span").textContent = "Wake Oracle"; }
+        } else {
+          const minsLeft = Math.ceil(secsUntilPoke / 60);
+          setOracleBar("stale",`Oracle stale — poke available in ${minsLeft} min`);
+          if (cardText)  { cardText.textContent = `Oracle is stale but poke cooldown active — available again in ${minsLeft} minute${minsLeft===1?"":"s"}.`; cardText.style.color="var(--warn)"; }
+          if (cardBadge) { cardBadge.textContent="Cooldown"; cardBadge.className="badge amber"; }
+          if (pokeBtn)   { pokeBtn.disabled = true; pokeBtn.querySelector("span").textContent = `Wake Oracle (${minsLeft} min cooldown)`; }
+        }
       }
     } catch {
       setOracleBar("stale","Oracle check failed —",true);
       const cardText = document.getElementById("oracleStatusText");
       if (cardText) { cardText.textContent = "Oracle check failed — press Wake Oracle to try again."; cardText.style.color="var(--risk)"; }
       const pokeBtn = document.getElementById("pokeBtn");
-      if (pokeBtn) pokeBtn.disabled = false;
+      if (pokeBtn) { pokeBtn.disabled = false; pokeBtn.querySelector("span").textContent = "Wake Oracle"; }
     }
   }
 
@@ -963,6 +1037,15 @@
     const pokeBtn = document.getElementById("pokeBtn");
     const cardText = document.getElementById("oracleStatusText");
     try {
+      // Pre-check cooldown before sending tx (saves gas if on cooldown)
+      let canPoke = true;
+      try { canPoke = await safeCall(oracle.canPoke(), 3000); } catch {}
+      if (!canPoke) {
+        let secs = 0;
+        try { secs = Number(await safeCall(oracle.timeUntilNextPoke(), 3000)); } catch {}
+        const mins = Math.ceil(secs / 60);
+        return toast(`Poke cooldown active — wait ${mins} more minute${mins===1?"":"s"}`, "err");
+      }
       setOracleBar("checking","Sending wake-up...");
       if (cardText) { cardText.textContent="Sending wake-up transaction..."; cardText.style.color="var(--warn)"; }
       if (pokeBtn) pokeBtn.classList.add("loading");
@@ -970,9 +1053,10 @@
       toast("Oracle updated successfully");
       setTimeout(checkOracleHealth,2000);
     } catch(e) {
-      setOracleBar("stale","Wake failed — "+friendlyErr(e),true);
-      if (cardText) { cardText.textContent="Wake failed: "+friendlyErr(e); cardText.style.color="var(--risk)"; }
-      toast(friendlyErr(e),"err");
+      const msg = friendlyErr(e);
+      setOracleBar("stale","Wake failed — "+msg,true);
+      if (cardText) { cardText.textContent="Wake failed: "+msg; cardText.style.color="var(--risk)"; }
+      toast(msg,"err");
     } finally {
       if (pokeBtn) pokeBtn.classList.remove("loading");
     }
@@ -983,6 +1067,7 @@
     const m = e?.reason || e?.data?.message || e?.message || "Transaction failed";
     if (m.includes("repay all debt") || m.includes("Must repay")) return "You must repay all debt before this action.";
     if (m.includes("ratio") || m.includes("RATIO"))               return "This would drop your vault below 150% — not allowed.";
+    if (m.includes("System undercollateralized") || m.includes("system") && m.includes("130")) return "The overall system health is below 130% — minting is paused until the system recovers. Your vault is fine; this is a protocol-wide safety pause.";
     if (m.includes("cooldown") || m.includes("Cooldown"))          return "Withdrawal cooldown active — wait 5 min after depositing.";
     if (m.includes("Oracle") || m.includes("oracle") || m.includes("price")) return "Oracle price unavailable — try waking the oracle first.";
     if (m.includes("allowance") || m.includes("approve"))          return "Token approval needed — please approve then retry.";
@@ -1325,6 +1410,7 @@
     if (!u||u<=0) throw new Error("Enter a deposit amount");
     if (!currentPrice||currentPrice===0n) throw new Error("Oracle price unavailable — wake the oracle first");
     const plsWei=usdToPLS(u);
+    if (plsWei < BigInt(MIN_ACTION_AMOUNT)) throw new Error("Amount too small — minimum deposit is 0.0001 PLS");
     await (await vault.depositAndAutoMintPLS({value:plsWei})).wait();
     const minted = u / (AUTO_MINT_RATIO / 100);
     toast(`Deposited ${fmt(Number(ethers.formatEther(plsWei)),0)} PLS, minted ${fmt(minted,2)} pSunDAI at 155%`);
@@ -1337,6 +1423,7 @@
     if (!u||u<=0) throw new Error("Enter a deposit amount");
     if (!currentPrice||currentPrice===0n) throw new Error("Oracle price unavailable — wake the oracle first");
     const plsWei=usdToPLS(u);
+    if (plsWei < BigInt(MIN_ACTION_AMOUNT)) throw new Error("Amount too small — minimum deposit is 0.0001 PLS");
     await (await vault.depositPLS({value:plsWei})).wait();
     toast(`Deposited ${fmtPLS(plsWei)} PLS into vault`);
     document.getElementById("usdIn").value="";
