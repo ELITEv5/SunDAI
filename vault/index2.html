@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>SunDAI – Golden Sun Vault</title>
   <link rel="icon" href="sundailogo.png" type="image/png" />
@@ -13,7 +13,6 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-  <!-- Mobile wallet deep-link -->
   <script>
     if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && !navigator.userAgent.includes("MetaMaskMobile")) {
       const url = location.origin + location.pathname + location.search + location.hash;
@@ -43,6 +42,7 @@
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
     body {
       background: var(--bg); color: var(--cream);
       font-family: var(--sans); min-height: 100vh; overflow-x: hidden;
@@ -54,96 +54,47 @@
 
     /* ── NAV ── */
     .nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: 60px;
-      display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
-      background: rgba(7,0,26,0.88); backdrop-filter: blur(20px);
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: 56px;
+      display: flex; align-items: center; justify-content: space-between; padding: 0 16px;
+      background: rgba(7,0,26,0.95); backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border);
     }
-    .nav-logo { display: flex; align-items: center; gap: 9px; text-decoration: none; color: var(--cream); }
-    .nav-logo img { height: 28px; width: 28px; object-fit: contain; }
-    .nav-logo span { font-weight: 800; font-size: 1.05em; }
-    .nav-links { display: flex; gap: 2px; }
+    .nav-logo { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--cream); flex-shrink: 0; }
+    .nav-logo img { height: 26px; width: 26px; object-fit: contain; }
+    .nav-logo span { font-weight: 800; font-size: 1em; }
+    .nav-center { display: flex; gap: 2px; }
     .nav-link {
-      padding: 6px 13px; border-radius: 8px; font-size: 0.85em; font-weight: 700;
+      padding: 6px 14px; border-radius: 8px; font-size: 0.85em; font-weight: 700;
       text-decoration: none; color: rgba(255,235,209,0.55); transition: all 0.15s ease;
-      border: 1px solid transparent;
+      border: 1px solid transparent; white-space: nowrap;
     }
     .nav-link:hover { color: var(--cream); background: rgba(255,140,0,0.1); }
     .nav-link.active { color: var(--gold); border-color: rgba(255,215,0,0.3); background: rgba(255,215,0,0.07); }
-    @media (max-width: 540px) { .nav-link { padding: 6px 8px; font-size: 0.78em; } }
-
-    /* ── RESPONSIVE LAYOUT ── */
-    /* Laptop (>900px): center with max-width, comfortable padding */
-    @media (min-width: 900px) {
-      .page { padding-top: 108px; padding-left: 0; padding-right: 0; }
-      .hero h1 { font-size: 2.8em; }
-      .card { padding: 20px; }
-      .vault-panel { padding: 22px; }
-    }
-    /* Tablet (541–899px): standard layout */
-    @media (max-width: 899px) and (min-width: 541px) {
-      .page { padding: 104px 20px 80px; }
-    }
-    /* Phone (≤540px): tighter, touch-friendly */
-    @media (max-width: 540px) {
-      .nav { padding: 0 12px; }
-      .wallet-btn { padding: 6px 12px; font-size: 0.8em; }
-      .page { padding: 96px 10px 70px; }
-      .hero { padding: 12px 0 14px; }
-      .hero h1 { font-size: 1.9em; }
-      .hero-logo { width: 64px; height: 64px; }
-      .price-pill { padding: 6px 14px; }
-      .card { padding: 14px 12px; margin-bottom: 8px; }
-      .vault-panel { padding: 14px 12px; }
-      .card-title { font-size: 0.92em; }
-      /* Stack repay buttons on small phones */
-      .repay-grid { grid-template-columns: 1fr !important; }
-      /* Stack withdraw buttons on small phones */
-      .withdraw-grid { grid-template-columns: 1fr !important; }
-      /* Global strip: 2 cols on phone */
-      .global-strip { grid-template-columns: 1fr 1fr; }
-      /* Vault grid: 2 cols still fine */
-      .vault-grid { gap: 6px; }
-      .vstat { padding: 9px 10px; }
-      .vstat-val { font-size: 0.95em; }
-      /* Nav links: icon only on very small */
-      .nav-link { padding: 5px 7px; font-size: 0.75em; }
-      /* Inputs: full comfortable touch height */
-      input[type="number"] { padding: 14px 12px; font-size: 1em; }
-      .btn { padding: 15px 12px; font-size: 0.92em; }
-      .max-btn { padding: 0 12px; font-size: 0.8em; }
-      /* Ratio number smaller on phone */
-      .ratio-num { font-size: 1.8em; }
-      /* Explainer examples scroll on tiny screens */
-      .exp-example { overflow-x: auto; }
-      /* Footer contracts wrap well */
-      .contract a { font-size: 0.68em; }
-    }
-    /* Very small phones (≤360px) */
-    @media (max-width: 360px) {
-      .hero h1 { font-size: 1.65em; }
-      .nav-logo span { display: none; }
-      .page { padding-left: 8px; padding-right: 8px; }
-    }
-
     .wallet-btn {
       background: rgba(255,140,0,0.12); border: 1.5px solid var(--sun);
-      color: var(--cream); font-family: var(--sans); font-weight: 700; font-size: 0.85em;
-      padding: 7px 16px; border-radius: 9px; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+      color: var(--cream); font-family: var(--sans); font-weight: 700; font-size: 0.82em;
+      padding: 6px 14px; border-radius: 9px; cursor: pointer; transition: all 0.2s;
+      white-space: nowrap; flex-shrink: 0; min-height: 36px;
     }
     .wallet-btn:hover { background: rgba(255,140,0,0.22); }
     .wallet-btn.connected { border-color: var(--gold); color: var(--gold); background: rgba(255,215,0,0.08); }
+    @media (max-width: 480px) {
+      .nav { padding: 0 12px; }
+      .nav-logo span { display: none; }
+      .nav-link { padding: 6px 10px; font-size: 0.8em; }
+      .wallet-btn { padding: 6px 10px; font-size: 0.78em; }
+    }
 
     /* ── ORACLE BAR ── */
     .oracle-bar {
-      position: fixed; top: 60px; left: 0; right: 0; z-index: 999;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      padding: 6px 16px; font-size: 0.78em; font-weight: 600; transition: color 0.3s, border-color 0.3s;
-      background: rgba(7,0,22,0.97); backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(0,255,157,0.25); color: var(--safe);
+      position: fixed; top: 56px; left: 0; right: 0; z-index: 999;
+      display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;
+      padding: 5px 16px; font-size: 0.76em; font-weight: 600; transition: all 0.3s;
+      background: rgba(0,20,10,0.97); border-bottom: 1px solid rgba(0,255,157,0.25);
+      color: var(--safe); backdrop-filter: blur(12px); min-height: 28px;
     }
-    .oracle-bar.stale   { border-color: rgba(255,51,102,0.35);  color: var(--risk); }
-    .oracle-bar.checking{ border-color: rgba(255,215,0,0.25);   color: var(--warn); }
+    .oracle-bar.stale  { background: rgba(25,0,10,0.97);  border-color: rgba(255,51,102,0.35); color: var(--risk); }
+    .oracle-bar.checking { background: rgba(18,14,0,0.97); border-color: rgba(255,215,0,0.25);  color: var(--warn); }
     .oracle-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
     .oracle-bar.stale .oracle-dot { animation: blink 1s infinite; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.15} }
@@ -157,13 +108,14 @@
     /* ── PAGE ── */
     .page {
       max-width: 520px; width: 100%; margin: 0 auto;
-      padding: 100px 14px 80px; position: relative; z-index: 10;
+      padding: 96px 14px 80px; position: relative; z-index: 10;
     }
+    @media (max-width: 480px) { .page { padding: 90px 12px 70px; } }
 
     /* ── HERO ── */
-    .hero { text-align: center; padding: 20px 0 18px; }
+    .hero { text-align: center; padding: 16px 0 16px; }
     .hero-logo {
-      width: 80px; height: 80px; object-fit: contain; display: block; margin: 0 auto 10px;
+      width: 72px; height: 72px; object-fit: contain; display: block; margin: 0 auto 10px;
       animation: glow 4s ease-in-out infinite;
     }
     @keyframes glow {
@@ -172,12 +124,12 @@
       100% { filter: drop-shadow(0 0 10px rgba(180,120,255,0.5)); }
     }
     .hero h1 {
-      font-size: 2.4em; font-weight: 800;
+      font-size: clamp(1.8em, 6vw, 2.4em); font-weight: 800;
       background: linear-gradient(90deg, #FF8C00, #FFD700, #FDE047);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text; margin-bottom: 4px;
     }
-    .hero-sub { color: rgba(255,235,209,0.55); font-size: 0.9em; margin-bottom: 14px; }
+    .hero-sub { color: rgba(255,235,209,0.55); font-size: 0.88em; margin-bottom: 14px; }
     .price-pill {
       display: inline-flex; align-items: center; gap: 7px;
       background: rgba(255,215,0,0.07); border: 1px solid rgba(255,215,0,0.22);
@@ -187,10 +139,11 @@
     .price-pill .val { color: var(--gold); font-weight: 800; font-family: var(--mono); font-size: 1em; }
 
     /* ── TOAST ── */
-    .toast-area { min-height: 36px; text-align: center; margin: 6px 0; }
+    .toast-area { min-height: 34px; text-align: center; margin: 6px 0; }
     .toast {
-      display: inline-block; font-size: 0.86em; font-weight: 600;
+      display: inline-block; font-size: 0.84em; font-weight: 600;
       padding: 7px 16px; border-radius: 9px; animation: toastIn 0.2s ease;
+      max-width: 95vw; word-break: break-word;
     }
     @keyframes toastIn { from { opacity:0; transform:translateY(-5px); } to { opacity:1; transform:none; } }
     .toast.ok  { background: rgba(0,255,157,0.1);  border: 1px solid rgba(0,255,157,0.25);  color: var(--safe); }
@@ -199,26 +152,22 @@
     /* ── INTRO BANNER ── */
     .intro-banner {
       background: linear-gradient(135deg, rgba(255,107,0,0.1), rgba(139,92,246,0.08));
-      border: 1px solid rgba(255,107,0,0.25); border-radius: var(--r); overflow: hidden; margin-bottom: 12px;
+      border: 1px solid rgba(255,107,0,0.25); border-radius: var(--r); overflow: hidden; margin-bottom: 10px;
     }
     .intro-header {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 13px 16px; cursor: pointer; user-select: none;
+      padding: 13px 16px; cursor: pointer; user-select: none; min-height: 44px;
     }
     .intro-header:hover { background: rgba(255,140,0,0.05); }
-    .intro-title { font-weight: 700; color: var(--sun); font-size: 0.92em; }
-    .intro-chevron { color: var(--gold); font-size: 0.85em; transition: transform 0.3s; }
-    .intro-body {
-      max-height: 0; overflow: hidden; transition: max-height 0.4s ease;
-      padding: 0 16px;
-    }
-    .intro-body.open { max-height: 800px; padding: 0 16px 16px; }
-    .intro-body p { font-size: 0.86em; color: rgba(255,235,209,0.78); line-height: 1.7; margin-bottom: 9px; }
+    .intro-title { font-weight: 700; color: var(--sun); font-size: 0.9em; }
+    .intro-chevron { color: var(--gold); font-size: 0.85em; transition: transform 0.3s; flex-shrink: 0; margin-left: 8px; }
+    .intro-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; padding: 0 16px; }
+    .intro-body.open { max-height: 900px; padding: 0 16px 16px; }
+    .intro-body p { font-size: 0.85em; color: rgba(255,235,209,0.78); line-height: 1.7; margin-bottom: 9px; }
     .intro-body strong { color: var(--gold); }
-    .intro-body p:last-of-type { margin-bottom: 12px; }
-    .pills { display: flex; flex-wrap: wrap; gap: 6px; }
+    .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
     .pill {
-      font-size: 0.75em; font-weight: 700; padding: 3px 11px; border-radius: 100px;
+      font-size: 0.74em; font-weight: 700; padding: 3px 10px; border-radius: 100px;
       background: rgba(0,255,157,0.08); border: 1px solid rgba(0,255,157,0.22); color: var(--safe);
     }
     .pill.amber { background: rgba(255,140,0,0.1); border-color: rgba(255,140,0,0.28); color: var(--sun); }
@@ -234,21 +183,18 @@
     /* ── VAULT HEALTH PANEL ── */
     .vault-panel {
       background: rgba(10,0,30,0.75); border: 1.5px solid var(--border);
-      border-radius: var(--r); padding: 18px; margin-bottom: 12px;
+      border-radius: var(--r); padding: 16px; margin-bottom: 12px;
       backdrop-filter: blur(16px); box-shadow: 0 0 28px rgba(255,140,0,0.18);
     }
     .panel-title {
-      font-size: 0.7em; font-weight: 700; text-transform: uppercase;
+      font-size: 0.68em; font-weight: 700; text-transform: uppercase;
       letter-spacing: 0.09em; color: rgba(255,235,209,0.38); margin-bottom: 12px;
     }
     .vault-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
-    .vstat {
-      background: rgba(255,107,0,0.09); border: 1px solid rgba(255,107,0,0.16);
-      border-radius: 11px; padding: 10px 12px;
-    }
-    .vstat-label { font-size: 0.72em; color: rgba(255,189,112,0.65); margin-bottom: 3px; font-weight: 600; }
-    .vstat-val { font-size: 1.05em; font-weight: 800; font-family: var(--mono); color: var(--gold); }
-    .vstat-sub { font-size: 0.7em; color: rgba(255,235,209,0.4); margin-top: 1px; font-family: var(--mono); }
+    .vstat { background: rgba(255,107,0,0.09); border: 1px solid rgba(255,107,0,0.16); border-radius: 11px; padding: 10px 12px; }
+    .vstat-label { font-size: 0.7em; color: rgba(255,189,112,0.65); margin-bottom: 3px; font-weight: 600; }
+    .vstat-val { font-size: 1em; font-weight: 800; font-family: var(--mono); color: var(--gold); word-break: break-word; }
+    .vstat-sub { font-size: 0.68em; color: rgba(255,235,209,0.4); margin-top: 2px; font-family: var(--mono); }
     .vstat-val.safe { color: var(--safe); }
     .vstat-val.warn { color: var(--warn); }
     .vstat-val.risk { color: var(--risk); }
@@ -256,7 +202,7 @@
     /* ── RATIO GAUGE ── */
     .gauge-label-row {
       display: flex; justify-content: space-between;
-      font-size: 0.68em; color: rgba(255,235,209,0.35); margin-bottom: 5px; font-family: var(--mono);
+      font-size: 0.67em; color: rgba(255,235,209,0.35); margin-bottom: 5px; font-family: var(--mono);
     }
     .gauge-track {
       height: 8px; border-radius: 100px; background: rgba(255,255,255,0.06); position: relative; overflow: visible;
@@ -265,7 +211,7 @@
       height: 100%; border-radius: 100px; transition: width 0.7s cubic-bezier(.4,0,.2,1);
       background: linear-gradient(90deg, var(--risk) 0%, var(--warn) 30%, var(--safe) 70%);
     }
-    /* 150% marker: (150-110)/(250-110) = 28.57% */
+    /* 150% marker position: (150-110)/(250-110) = 28.57% */
     .gauge-mark {
       position: absolute; top: -4px; bottom: -4px; width: 2px;
       background: rgba(255,255,255,0.35); border-radius: 2px; left: 28.57%;
@@ -276,35 +222,25 @@
       font-family: var(--mono); white-space: nowrap;
     }
     .ratio-row { display: flex; align-items: baseline; justify-content: center; gap: 10px; margin-top: 18px; }
-    .ratio-num { font-size: 2.2em; font-weight: 800; font-family: var(--mono); transition: color 0.4s; }
+    .ratio-num { font-size: clamp(1.8em, 7vw, 2.2em); font-weight: 800; font-family: var(--mono); transition: color 0.4s; }
     .ratio-num.safe { color: var(--safe); text-shadow: 0 0 16px rgba(0,255,157,0.35); }
     .ratio-num.warn { color: var(--warn); text-shadow: 0 0 16px rgba(255,204,0,0.35); }
     .ratio-num.risk { color: var(--risk); text-shadow: 0 0 16px rgba(255,51,102,0.35); }
-    .ratio-caption { font-size: 0.82em; color: rgba(255,235,209,0.45); transition: color 0.4s; }
+    .ratio-caption { font-size: 0.8em; transition: color 0.4s; }
     .ratio-caption.safe { color: var(--safe); }
     .ratio-caption.warn { color: var(--warn); }
     .ratio-caption.risk { color: var(--risk); }
 
     /* ── GLOBAL STRIP ── */
-    .global-strip {
-      display: grid; grid-template-columns: repeat(4,1fr); gap: 7px; margin-bottom: 12px;
-    }
-    .gcell {
-      background: rgba(255,107,0,0.06); border: 1px solid rgba(255,107,0,0.15);
-      border-radius: 10px; padding: 9px; text-align: center;
-    }
-    .gcell-label { font-size: 0.65em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: rgba(255,189,112,0.5); margin-bottom: 3px; }
-    .gcell-val { font-size: 0.82em; font-weight: 800; color: var(--gold); font-family: var(--mono); }
+    .global-strip { display: grid; grid-template-columns: repeat(4,1fr); gap: 7px; margin-bottom: 12px; }
+    .gcell { background: rgba(255,107,0,0.06); border: 1px solid rgba(255,107,0,0.15); border-radius: 10px; padding: 9px 6px; text-align: center; }
+    .gcell-label { font-size: 0.62em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: rgba(255,189,112,0.5); margin-bottom: 3px; }
+    .gcell-val { font-size: 0.78em; font-weight: 800; color: var(--gold); font-family: var(--mono); word-break: break-word; }
     @media (max-width: 440px) { .global-strip { grid-template-columns: 1fr 1fr; } }
 
     /* ── SECTION HEADER ── */
-    .section-head {
-      display: flex; align-items: center; gap: 9px; margin: 20px 0 9px; padding: 0 2px;
-    }
-    .section-label {
-      font-size: 0.7em; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.09em; color: rgba(255,235,209,0.38); white-space: nowrap;
-    }
+    .section-head { display: flex; align-items: center; gap: 9px; margin: 20px 0 9px; padding: 0 2px; }
+    .section-label { font-size: 0.7em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: rgba(255,235,209,0.38); white-space: nowrap; }
     .section-line { flex: 1; height: 1px; background: rgba(255,140,0,0.14); }
 
     /* ── CARD ── */
@@ -314,16 +250,12 @@
       transition: border-color 0.2s, box-shadow 0.2s;
     }
     .card:hover { border-color: rgba(255,140,0,0.42); box-shadow: 0 0 18px rgba(255,140,0,0.08); }
-    .card.gold   { border-color: rgba(255,215,0,0.38); background: rgba(255,215,0,0.05); }
+    .card.gold   { border-color: rgba(255,215,0,0.38);  background: rgba(255,215,0,0.05); }
     .card.purple { border-color: rgba(139,92,246,0.35); background: rgba(139,92,246,0.06); }
     .card.red    { border-color: rgba(255,51,102,0.3);  background: rgba(255,51,102,0.04); }
-
     .card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
     .card-title { font-weight: 800; font-size: 0.97em; color: var(--cream); }
-    .badge {
-      font-size: 0.68em; font-weight: 700; padding: 2px 9px; border-radius: 100px;
-      border: 1px solid; white-space: nowrap; flex-shrink: 0;
-    }
+    .badge { font-size: 0.67em; font-weight: 700; padding: 2px 9px; border-radius: 100px; border: 1px solid; white-space: nowrap; flex-shrink: 0; }
     .badge.green  { color: var(--safe);   border-color: rgba(0,255,157,0.32);   background: rgba(0,255,157,0.07); }
     .badge.amber  { color: var(--warn);   border-color: rgba(255,204,0,0.32);   background: rgba(255,204,0,0.07); }
     .badge.purple { color: var(--purple); border-color: rgba(139,92,246,0.32); background: rgba(139,92,246,0.07); }
@@ -332,40 +264,35 @@
     .exp-toggle {
       display: flex; align-items: center; gap: 5px; font-size: 0.76em;
       color: rgba(255,189,112,0.55); cursor: pointer; user-select: none;
-      margin-bottom: 10px; width: fit-content; transition: color 0.15s;
+      margin-bottom: 10px; transition: color 0.15s; min-height: 28px;
     }
     .exp-toggle:hover { color: var(--sun); }
     .exp-toggle svg { transition: transform 0.25s; flex-shrink: 0; }
     .exp-toggle.open svg { transform: rotate(90deg); }
     .exp-body { max-height: 0; overflow: hidden; transition: max-height 0.32s ease; }
-    .exp-body.open { max-height: 500px; }
-    .exp-inner {
-      background: rgba(255,140,0,0.04); border: 1px solid rgba(255,140,0,0.13);
-      border-radius: 9px; padding: 11px 13px; margin-bottom: 10px;
-    }
+    .exp-body.open { max-height: 600px; }
+    .exp-inner { background: rgba(255,140,0,0.04); border: 1px solid rgba(255,140,0,0.13); border-radius: 9px; padding: 11px 13px; margin-bottom: 10px; }
     .exp-inner p { font-size: 0.82em; color: rgba(255,235,209,0.72); line-height: 1.62; margin-bottom: 7px; }
     .exp-inner p:last-child { margin-bottom: 0; }
     .exp-inner strong { color: var(--gold); }
-    .exp-example {
-      margin-top: 8px; padding: 7px 11px; background: rgba(0,0,0,0.22);
-      border-left: 3px solid var(--sun); border-radius: 5px;
-      font-size: 0.78em; color: rgba(255,235,209,0.6); font-family: var(--mono); line-height: 1.6;
-    }
+    .exp-example { margin-top: 8px; padding: 7px 11px; background: rgba(0,0,0,0.22); border-left: 3px solid var(--sun); border-radius: 5px; font-size: 0.78em; color: rgba(255,235,209,0.6); font-family: var(--mono); line-height: 1.6; }
 
     /* ── INPUTS ── */
     .input-row { display: flex; gap: 6px; margin-bottom: 7px; align-items: stretch; }
-    .input-row input { flex: 1; }
+    .input-row input { flex: 1; min-width: 0; }
     .max-btn {
       background: rgba(255,140,0,0.15); border: 1.5px solid rgba(255,140,0,0.35);
       color: var(--sun); font-family: var(--sans); font-weight: 800; font-size: 0.82em;
       padding: 0 14px; border-radius: 9px; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+      min-height: 44px;
     }
     .max-btn:hover { background: rgba(255,140,0,0.28); }
     input[type="number"] {
       width: 100%; background: rgba(17,0,34,0.8); border: 1.5px solid rgba(255,140,0,0.32);
-      color: var(--cream); font-family: var(--sans); font-size: 0.97em; font-weight: 600;
+      color: var(--cream); font-family: var(--sans); font-size: 1em; font-weight: 600;
       padding: 12px 14px; border-radius: 9px; outline: none; display: block;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      transition: border-color 0.2s, box-shadow 0.2s; min-height: 44px;
+      -webkit-appearance: none;
     }
     input[type="number"]:focus { border-color: var(--gold); box-shadow: 0 0 12px rgba(255,215,0,0.18); }
     input[type="number"]::placeholder { color: rgba(255,235,209,0.28); font-weight: 400; }
@@ -375,7 +302,8 @@
     .btn {
       width: 100%; display: flex; align-items: center; justify-content: center; gap: 7px;
       font-family: var(--sans); font-weight: 800; font-size: 0.93em;
-      padding: 13px; border-radius: 10px; border: none; cursor: pointer; transition: all 0.18s;
+      padding: 14px 13px; border-radius: 10px; border: none; cursor: pointer; transition: all 0.18s;
+      min-height: 48px; touch-action: manipulation;
     }
     .btn-orange { background: linear-gradient(135deg, var(--sun), var(--gold)); color: #000; box-shadow: 0 4px 14px rgba(255,140,0,0.28); }
     .btn-orange:hover:not(:disabled) { background: linear-gradient(135deg, var(--gold), #FDE047); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,215,0,0.4); }
@@ -396,32 +324,23 @@
     .note-warn { font-size: 0.78em; padding: 7px 11px; background: rgba(255,204,0,0.08); border: 1px solid rgba(255,204,0,0.2); border-radius: 7px; color: var(--warn); text-align: center; margin-top: 7px; }
     .note-safe { font-size: 0.78em; padding: 7px 11px; background: rgba(0,255,157,0.06); border: 1px solid rgba(0,255,157,0.18); border-radius: 7px; color: var(--safe); text-align: center; margin-top: 7px; }
     .preview-auto { color: rgba(255,189,112,0.7); font-size: 0.8em; text-align: center; margin-bottom: 7px; font-family: var(--mono); min-height: 16px; }
+    .btn-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 7px; }
 
     /* ── STEPS ── */
     .steps { display: flex; flex-direction: column; }
     .step { display: flex; gap: 12px; }
     .step-spine { display: flex; flex-direction: column; align-items: center; }
-    .step-num {
-      width: 26px; height: 26px; border-radius: 50%; background: rgba(255,140,0,0.18);
-      border: 1.5px solid rgba(255,140,0,0.38); color: var(--sun);
-      font-size: 0.78em; font-weight: 800; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-    }
+    .step-num { width: 26px; height: 26px; border-radius: 50%; background: rgba(255,140,0,0.18); border: 1.5px solid rgba(255,140,0,0.38); color: var(--sun); font-size: 0.78em; font-weight: 800; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
     .step-line { width: 1px; flex: 1; min-height: 14px; background: rgba(255,140,0,0.18); }
     .step-content { padding-bottom: 14px; }
     .step-title { font-weight: 700; font-size: 0.88em; color: var(--cream); margin-bottom: 2px; }
     .step-desc { font-size: 0.78em; color: rgba(255,235,209,0.5); line-height: 1.5; }
 
-    /* ── RISK TEXT ── */
+    /* ── RISK RESULT ── */
     #riskResult { margin-top: 9px; text-align: center; font-weight: 700; font-size: 0.88em; min-height: 18px; line-height: 1.5; }
 
     /* ── FOOTER ── */
-    .footer {
-      max-width: 520px; margin: 0 auto; padding: 28px 14px;
-      border-top: 1px solid rgba(255,215,0,0.1);
-      font-size: 0.8em; color: rgba(255,189,112,0.6);
-      position: relative; z-index: 10; text-align: center;
-    }
+    .footer { max-width: 520px; margin: 0 auto; padding: 28px 14px; border-top: 1px solid rgba(255,215,0,0.1); font-size: 0.8em; color: rgba(255,189,112,0.6); position: relative; z-index: 10; text-align: center; }
     .footer h3 { color: var(--gold); margin-bottom: 12px; font-size: 0.92em; }
     .contract { margin-bottom: 9px; text-align: left; }
     .contract .clabel { color: var(--orange); font-weight: 700; font-size: 0.78em; display: block; margin-bottom: 1px; }
@@ -429,28 +348,26 @@
     .contract a:hover { color: var(--gold); }
     .footer-note { margin-top: 18px; color: rgba(255,189,112,0.35); font-size: 0.76em; line-height: 1.5; }
 
-    /* Emergency card hidden by default */
     #emergencyCard { display: none; }
+    #systemHealthWarning { display: none; }
   </style>
 </head>
 <body>
 
 <div id="nebula"></div>
 
-<!-- NAV -->
 <nav class="nav">
   <a class="nav-logo" href="index_vault.html">
     <img src="sundailogo.png" alt="SunDAI" />
     <span>SunDAI</span>
   </a>
-  <div class="nav-links">
+  <div class="nav-center">
     <a class="nav-link active" href="index_vault.html">Vault</a>
     <a class="nav-link" href="liquidations.html">Liquidate</a>
   </div>
   <button class="wallet-btn" id="walletBtn">Connect Wallet</button>
 </nav>
 
-<!-- ORACLE STATUS BAR -->
 <div class="oracle-bar checking" id="oracleBar">
   <div class="oracle-dot"></div>
   <span id="oracleBarText">Checking oracle...</span>
@@ -458,51 +375,45 @@
 
 <main class="page">
 
-  <!-- HERO -->
   <div class="hero">
     <img src="sundailogo.png" class="hero-logo" alt="SunDAI" />
     <h1>SunDAI Vault</h1>
-    <div class="hero-sub">Mint pSunDAI — Backed by PLS — 100% Autonomous</div>
+    <div class="hero-sub">Mint pSunDAI &mdash; Backed by PLS &mdash; 100% Autonomous</div>
     <div class="price-pill">
       <span class="label">PLS / USD</span>
-      <span class="val" id="priceDisplay">—</span>
+      <span class="val" id="priceDisplay">&mdash;</span>
     </div>
   </div>
 
-  <!-- TOASTS -->
   <div class="toast-area" id="toastArea"></div>
 
-  <!-- WHAT IS SUNDAI (collapsed by default) -->
+  <!-- WHAT IS SUNDAI -->
   <div class="intro-banner">
     <div class="intro-header" onclick="toggleIntro()">
       <div class="intro-title">What is SunDAI and how does it work?</div>
-      <div class="intro-chevron" id="introChevron">▼</div>
+      <div class="intro-chevron" id="introChevron">&#9660;</div>
     </div>
     <div class="intro-body" id="introBody">
-      <p>
-        <strong>pSunDAI is a $1-pegged stablecoin backed by PLS</strong> — built entirely on-chain with no owner, no admin keys, and no upgrades ever possible. It gives PulseChain users a stable asset without relying on a bank or company.
-      </p>
-      <p>
-        You lock PLS as collateral at <strong>at least 150% of the value you mint</strong>. This is called a Collateralized Debt Position (CDP). If you deposit $150 of PLS, you can mint up to $100 of pSunDAI. Your collateral stays locked until you repay the pSunDAI.
-      </p>
-      <p>
-        A tiny <strong>0.5% annual stability fee</strong> accrues on your debt — $1000 borrowed becomes $1005 after one year. If PLS price drops and your ratio falls <strong>below 110%</strong>, liquidators can partially repay your debt and claim your PLS at a discount. Keep your ratio healthy to avoid this.
-      </p>
+      <p><strong>pSunDAI is a $1-pegged stablecoin backed by PLS</strong> &mdash; built entirely on-chain with no owner, no admin keys, and no upgrades ever possible. It gives PulseChain users a stable asset without relying on a bank or company.</p>
+      <p>You lock PLS as collateral at <strong>at least 150% of the value you mint</strong>. This is called a Collateralized Debt Position (CDP). If you deposit $150 of PLS, you can mint up to $100 of pSunDAI. Your collateral stays locked until you repay the pSunDAI.</p>
+      <p>A <strong>0.5% annual stability fee</strong> accrues on your debt &mdash; $1,000 borrowed becomes $1,005 after one year. If PLS price drops and your ratio falls <strong>below 110%</strong>, liquidators can partially repay your debt and claim your PLS at a 2&ndash;5% discount.</p>
+      <p><strong>Flash crash protection:</strong> The oracle ignores price drops shorter than 4 hours. A real market drop takes 4+ hours to confirm, then moves the price in 5% steps every 30 minutes. Your vault will not be flash-liquidated.</p>
       <div class="pills">
         <span class="pill">No admin keys</span>
         <span class="pill">150%+ collateral always</span>
-        <span class="pill">Immutable — runs forever</span>
+        <span class="pill">Immutable &mdash; runs forever</span>
         <span class="pill amber">0.5% APY stability fee</span>
         <span class="pill amber">Liquidation below 110%</span>
+        <span class="pill amber">Flash crash immune</span>
       </div>
     </div>
   </div>
 
-  <!-- STEP-BY-STEP GUIDE (collapsed) -->
+  <!-- STEP BY STEP GUIDE -->
   <div class="intro-banner" style="margin-bottom:12px">
     <div class="intro-header" onclick="toggleGuide()">
       <div class="intro-title">Step-by-step: How to use the vault</div>
-      <div class="intro-chevron" id="guideChevron">▼</div>
+      <div class="intro-chevron" id="guideChevron">&#9660;</div>
     </div>
     <div class="intro-body" id="guideBody">
       <div class="steps" style="padding-top:4px">
@@ -510,35 +421,35 @@
           <div class="step-spine"><div class="step-num">1</div><div class="step-line"></div></div>
           <div class="step-content">
             <div class="step-title">Connect your wallet</div>
-            <div class="step-desc">Click "Connect Wallet" top-right. Use MetaMask or Rabby. The app will switch you to PulseChain (chain ID 369) automatically.</div>
+            <div class="step-desc">Click "Connect Wallet" top-right. Use MetaMask or Rabby. The app switches you to PulseChain (chain ID 369) automatically.</div>
           </div>
         </div>
         <div class="step">
           <div class="step-spine"><div class="step-num">2</div><div class="step-line"></div></div>
           <div class="step-content">
             <div class="step-title">Check the oracle status bar</div>
-            <div class="step-desc">The bar just below the nav shows whether the PLS price oracle is fresh. If it says "stale", wake the oracle before transacting to get the most accurate price.</div>
+            <div class="step-desc">The colored bar below the nav shows whether the price oracle is fresh. If it says "stale", wake the oracle before transacting. Transactions use the last accepted price even if stale, but a fresh price is always better.</div>
           </div>
         </div>
         <div class="step">
           <div class="step-spine"><div class="step-num">3</div><div class="step-line"></div></div>
           <div class="step-content">
             <div class="step-title">Open your vault with 1-Click Auto Mint</div>
-            <div class="step-desc">Enter how much USD worth of PLS to deposit. One transaction deposits your PLS and mints pSunDAI at a 155% ratio — safely above the 150% minimum.</div>
+            <div class="step-desc">Enter how much USD worth of PLS to deposit. One transaction deposits your PLS and mints pSunDAI at 155% ratio &mdash; safely above the 150% minimum.</div>
           </div>
         </div>
         <div class="step">
           <div class="step-spine"><div class="step-num">4</div><div class="step-line"></div></div>
           <div class="step-content">
             <div class="step-title">Monitor your collateral ratio</div>
-            <div class="step-desc">Watch the gauge. Stay above 150%. If PLS drops, add more collateral (Deposit PLS) or burn pSunDAI (Repay). Below 110% means anyone can liquidate your vault.</div>
+            <div class="step-desc">Watch the gauge. Stay above 150%. If PLS drops, add collateral (Deposit PLS) or burn pSunDAI (Repay). Below 110% means anyone can liquidate your vault and claim your PLS at a discount.</div>
           </div>
         </div>
         <div class="step">
           <div class="step-spine"><div class="step-num">5</div></div>
           <div class="step-content">
             <div class="step-title">Exit: repay all debt, then withdraw PLS</div>
-            <div class="step-desc">To fully close your vault, repay all pSunDAI debt first, then withdraw all your PLS collateral. Use "Repay & Withdraw Excess" for partial exits.</div>
+            <div class="step-desc">To fully close your vault, repay all pSunDAI debt, then withdraw your PLS. Use "Repay &amp; Withdraw Excess" for partial exits that automatically return freed collateral.</div>
           </div>
         </div>
       </div>
@@ -558,56 +469,53 @@
     <div class="panel-title">Your Vault Position</div>
     <div class="vault-grid">
       <div class="vstat">
-        <div class="vstat-label">Collateral</div>
-        <div class="vstat-val" id="vc">—</div>
-        <div class="vstat-sub" id="vcUsd">—</div>
+        <div class="vstat-label">Collateral (PLS)</div>
+        <div class="vstat-val" id="vc">&mdash;</div>
+        <div class="vstat-sub" id="vcUsd">&mdash;</div>
       </div>
       <div class="vstat">
         <div class="vstat-label">Debt (pSunDAI)</div>
-        <div class="vstat-val" id="vd">—</div>
-        <div class="vstat-sub" id="vdFee">0.5% APY fee accruing</div>
+        <div class="vstat-val" id="vd">&mdash;</div>
+        <div class="vstat-sub" id="vdFee">0.5% APY accruing</div>
       </div>
       <div class="vstat">
         <div class="vstat-label">Available to Mint</div>
-        <div class="vstat-val" id="vm">—</div>
+        <div class="vstat-val" id="vm">&mdash;</div>
         <div class="vstat-sub" id="vmNote">before hitting 150%</div>
       </div>
       <div class="vstat">
         <div class="vstat-label">Collateral Value</div>
-        <div class="vstat-val" id="vcollUsd">—</div>
-        <div class="vstat-sub" id="vcollPls">—</div>
+        <div class="vstat-val" id="vcollUsd">&mdash;</div>
+        <div class="vstat-sub" id="vcollPls">&mdash;</div>
       </div>
     </div>
-    <!-- GAUGE -->
-    <div class="gauge-label-row">
-      <span>Liquidation 110%</span>
-      <span>Safe 200%+</span>
-    </div>
+    <div class="gauge-label-row"><span>Liquidation 110%</span><span>Safe 200%+</span></div>
     <div class="gauge-track">
       <div class="gauge-fill" id="gaugeFill" style="width:0%"></div>
       <div class="gauge-mark"></div>
     </div>
     <div class="ratio-row">
-      <div class="ratio-num safe" id="ratioNum">—</div>
+      <div class="ratio-num safe" id="ratioNum">&mdash;</div>
       <div class="ratio-caption" id="ratioCaption">Connect wallet</div>
     </div>
   </div>
 
   <!-- GLOBAL SYSTEM STATS -->
   <div class="global-strip" id="globalStats" style="display:none">
-    <div class="gcell"><div class="gcell-label">System Collateral</div><div class="gcell-val" id="gColl">—</div></div>
-    <div class="gcell"><div class="gcell-label">Total Minted</div><div class="gcell-val" id="gDebt">—</div></div>
-    <div class="gcell"><div class="gcell-label">System Health</div><div class="gcell-val" id="gHealth">—</div></div>
-    <div class="gcell"><div class="gcell-label">Your Share</div><div class="gcell-val" id="gShare">—</div></div>
+    <div class="gcell"><div class="gcell-label">System Collateral</div><div class="gcell-val" id="gColl">&mdash;</div></div>
+    <div class="gcell"><div class="gcell-label">Total Minted</div><div class="gcell-val" id="gDebt">&mdash;</div></div>
+    <div class="gcell"><div class="gcell-label">System Health</div><div class="gcell-val" id="gHealth">&mdash;</div></div>
+    <div class="gcell"><div class="gcell-label">Your Share</div><div class="gcell-val" id="gShare">&mdash;</div></div>
+  </div>
+
+  <!-- SYSTEM HEALTH WARNING (shown when < 130%) -->
+  <div class="note-warn" id="systemHealthWarning">
+    System health is below 130% &mdash; new minting is temporarily paused by the contract until health recovers. You can still repay debt and withdraw collateral.
   </div>
 
   <!-- ════ OPEN / ADD TO VAULT ════ -->
-  <div class="section-head">
-    <div class="section-label">Open / Add to Vault</div>
-    <div class="section-line"></div>
-  </div>
+  <div class="section-head"><div class="section-label">Open / Add to Vault</div><div class="section-line"></div></div>
 
-  <!-- 1-CLICK AUTO MINT -->
   <div class="card gold">
     <div class="card-head">
       <div class="card-title">1-Click Auto Mint</div>
@@ -620,14 +528,9 @@
     <div class="exp-body">
       <div class="exp-inner">
         <p>The easiest way to start. Enter the USD value of PLS you want to deposit. The protocol deposits your PLS <em>and</em> mints pSunDAI in a <strong>single transaction</strong>.</p>
-        <p>Your vault opens at <strong>155% collateral ratio</strong>. This ratio is set directly in the smart contract code and cannot be changed — it builds in a 5% buffer above the 150% minimum so that rounding in the blockchain math never causes the transaction to revert unexpectedly.</p>
-        <p>To get more pSunDAI from the same collateral (down to exactly 150%), use <strong>Deposit PLS</strong> then <strong>Mint pSunDAI</strong> separately below.</p>
-        <div class="exp-example">
-          Deposit: $155 of PLS<br>
-          Vault holds: $155 PLS collateral<br>
-          You receive: $100 pSunDAI<br>
-          Your ratio: 155% — safely above 150% minimum
-        </div>
+        <p>Your vault opens at <strong>155% collateral ratio</strong>. This ratio is hardcoded in the smart contract &mdash; it cannot be changed. The 5% buffer above the 150% minimum ensures rounding in the blockchain math never causes the transaction to revert.</p>
+        <p>To maximize leverage (mint down to exactly 150%), use <strong>Deposit PLS</strong> then <strong>Mint pSunDAI</strong> separately below.</p>
+        <div class="exp-example">Deposit: $155 of PLS<br>Vault holds: $155 collateral<br>You receive: $100.00 pSunDAI<br>Your ratio: 155% &mdash; safely above 150% minimum</div>
       </div>
     </div>
     <div class="input-row">
@@ -637,10 +540,9 @@
     <button class="btn btn-green" id="oneClickBtn" disabled>
       <div class="spin"></div><span>1-Click Auto Mint (155%)</span>
     </button>
-    <div class="helper">Deposits PLS and mints pSunDAI in one transaction at 155% ratio.</div>
+    <div class="helper">Deposits PLS and mints pSunDAI in one transaction. Opens at 155% ratio (contract-enforced).</div>
   </div>
 
-  <!-- DEPOSIT PLS -->
   <div class="card">
     <div class="card-head">
       <div class="card-title">Deposit PLS</div>
@@ -652,8 +554,8 @@
     </div>
     <div class="exp-body">
       <div class="exp-inner">
-        <p>Use this to add more PLS collateral to an <strong>existing vault</strong>. Depositing raises your ratio and gives you room to mint more pSunDAI — or just makes your vault safer if PLS is dropping.</p>
-        <p>Note: after depositing there is a <strong>5-minute cooldown</strong> before you can withdraw — this protects against flash-loan oracle manipulation.</p>
+        <p>Adds more PLS collateral to your vault. Use this to raise a falling ratio, or to build up collateral before minting more pSunDAI.</p>
+        <p>After depositing, there is a <strong>5-minute withdrawal cooldown</strong> before you can withdraw &mdash; this protects against flash-loan oracle manipulation attacks.</p>
       </div>
     </div>
     <div class="input-row">
@@ -663,10 +565,9 @@
     <button class="btn btn-orange" id="deposit" disabled>
       <div class="spin"></div><span>Deposit PLS</span>
     </button>
-    <div class="helper">Locks PLS into your vault. Triggers 5-min withdrawal cooldown.</div>
+    <div class="helper">Locks PLS into your vault. Triggers 5-minute withdrawal cooldown.</div>
   </div>
 
-  <!-- MINT pSunDAI -->
   <div class="card">
     <div class="card-head">
       <div class="card-title">Mint pSunDAI</div>
@@ -678,15 +579,10 @@
     </div>
     <div class="exp-body">
       <div class="exp-inner">
-        <p>Creates pSunDAI against your existing collateral. The protocol will reject the transaction if minting would drop your ratio <strong>below 150%</strong>.</p>
-        <p>Your "Available to Mint" figure in the vault panel above shows exactly how much you can safely mint right now. Use the Max button to fill it automatically.</p>
-        <p>Note: minting is also blocked if the <strong>overall system health drops below 130%</strong>. This is a protocol-wide safety pause — it has nothing to do with your personal vault. If you see an unexpected revert, check the System Health figure in the stats strip above.</p>
-        <div class="exp-example">
-          Collateral value: $300 | Existing debt: $100<br>
-          Current ratio: 300%<br>
-          Can mint up to $100 more (to reach 150%)<br>
-          New ratio would be: 150%
-        </div>
+        <p>Creates pSunDAI against your existing collateral. The contract rejects minting if it would drop your ratio <strong>below 150%</strong>.</p>
+        <p>Minting is also blocked if overall <strong>system health drops below 130%</strong> &mdash; a safety measure to protect the whole protocol. This is rare but will be shown in the warning above if it occurs.</p>
+        <p>Your "Available to Mint" figure in the vault panel shows exactly how much you can safely mint right now. Use the Max button to fill it automatically.</p>
+        <div class="exp-example">Collateral value: $300 | Existing debt: $100 | Ratio: 300%<br>Max mintable: $100 more (brings ratio to exactly 150%)</div>
       </div>
     </div>
     <div class="input-row">
@@ -697,16 +593,12 @@
     <button class="btn btn-orange" id="mint" disabled>
       <div class="spin"></div><span>Mint pSunDAI</span>
     </button>
-    <div class="helper">Vault must stay above 150% after minting. "Max" fills the safe limit.</div>
+    <div class="helper">Vault must stay above 150% after minting. System health must be above 130%. "Max" fills the safe limit.</div>
   </div>
 
   <!-- ════ REPAY & EXIT ════ -->
-  <div class="section-head">
-    <div class="section-label">Repay & Exit</div>
-    <div class="section-line"></div>
-  </div>
+  <div class="section-head"><div class="section-label">Repay &amp; Exit</div><div class="section-line"></div></div>
 
-  <!-- REPAY (unified smart card) -->
   <div class="card">
     <div class="card-head">
       <div class="card-title">Repay pSunDAI</div>
@@ -718,10 +610,10 @@
     </div>
     <div class="exp-body">
       <div class="exp-inner">
-        <p>Burns pSunDAI to reduce your debt and raise your ratio. Instant — no cooldown. Use this whenever PLS is falling and your ratio approaches 150%, or when you want to exit the vault.</p>
-        <p><strong>Repay to Safe</strong> auto-calculates the exact amount to bring you back to exactly 150%. <strong>Repay &amp; Withdraw</strong> repays your specified amount then automatically returns any freed collateral to your wallet.</p>
-        <p><strong>Important:</strong> If you repay your entire debt using Repay &amp; Withdraw, the contract closes your vault completely and returns <em>all</em> your collateral at once — not just the excess. Use plain Repay if you only want to reduce debt without touching your collateral.</p>
-        <p>Repaying requires two transactions: an <strong>approval</strong> (authorise the vault to spend your pSunDAI) followed by the repayment itself.</p>
+        <p>Burns pSunDAI from your wallet to reduce your debt and raise your ratio. Instant &mdash; no cooldown. Use this whenever PLS is falling and your ratio approaches 150%, or when you want to exit the vault.</p>
+        <p><strong>Repay to Safe</strong> auto-calculates the exact amount to bring you back to exactly 150%.</p>
+        <p><strong>Repay &amp; Withdraw</strong> repays your specified amount then automatically returns any freed collateral above 150% to your wallet. If you repay your <em>entire</em> debt, the contract closes your vault completely and returns all collateral at once.</p>
+        <p>No token approval is needed &mdash; the vault burns pSunDAI directly from your wallet using its vault-level permission. Only one transaction required.</p>
       </div>
     </div>
     <div class="input-row">
@@ -729,28 +621,24 @@
       <button class="max-btn" onclick="fillRepayMax()">Max</button>
     </div>
     <div class="preview" id="prevRepay"></div>
-    <div class="repay-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px">
+    <div class="btn-pair">
       <button class="btn btn-orange" id="repay" disabled>
         <div class="spin"></div><span>Repay</span>
       </button>
       <button class="btn btn-orange" id="repayAuto" disabled>
-        <div class="spin"></div><span>Repay & Withdraw</span>
+        <div class="spin"></div><span>Repay &amp; Withdraw</span>
       </button>
     </div>
-    <button class="btn btn-red" id="repayToSafe" disabled>
+    <button class="btn btn-red" id="repayToSafe" disabled style="margin-bottom:7px">
       <div class="spin"></div><span id="repayToSafeLabel">Repay to Safe (150%)</span>
     </button>
     <div class="preview-auto" id="prevRepayToSafe"></div>
-    <div class="helper">"Repay to Safe" auto-calculates exact amount needed to restore 150% ratio.</div>
+    <div class="helper">"Repay to Safe" auto-calculates exact amount needed to restore 150% ratio. No approval needed for any repay action.</div>
   </div>
 
   <!-- ════ WITHDRAW COLLATERAL ════ -->
-  <div class="section-head">
-    <div class="section-label">Withdraw Collateral</div>
-    <div class="section-line"></div>
-  </div>
+  <div class="section-head"><div class="section-label">Withdraw Collateral</div><div class="section-line"></div></div>
 
-  <!-- WITHDRAW PLS (unified with max-safe) -->
   <div class="card purple">
     <div class="card-head">
       <div class="card-title">Withdraw PLS</div>
@@ -762,14 +650,10 @@
     </div>
     <div class="exp-body">
       <div class="exp-inner">
-        <p>Withdraws PLS from your vault. The protocol only allows withdrawal of collateral that keeps your ratio <strong>above 150%</strong>. So the maximum you can take out is whatever is "excess" above that minimum.</p>
-        <p>There is a <strong>5-minute cooldown after depositing</strong> before you can withdraw — to protect against flash-loan attacks.</p>
-        <p>Use <strong>Withdraw Max Safe</strong> to automatically take all the PLS you can while staying exactly at 150%. Useful for taking profits when PLS pumps.</p>
-        <div class="exp-example">
-          PLS pumps → your ratio rises to 220%<br>
-          Withdraw Max Safe takes the "excess" above 150%<br>
-          Vault stays at 150% — you pocket the gains
-        </div>
+        <p>Withdraws PLS from your vault. The contract only allows withdrawal of collateral in excess of 150% &mdash; you cannot withdraw if it would drop your ratio below that minimum.</p>
+        <p>There is a <strong>5-minute cooldown after depositing</strong> before you can withdraw. This is a security measure against flash-loan attacks.</p>
+        <p>Use <strong>Withdraw Max Safe</strong> to automatically take the maximum PLS you can while staying exactly at 150%. This is how you take profits when PLS pumps.</p>
+        <div class="exp-example">PLS pumps &rarr; your ratio rises to 220%<br>Withdraw Max Safe takes the excess above 150%<br>Vault stays at 150% &mdash; you pocket the gains</div>
       </div>
     </div>
     <div id="withdrawCooldownNote" class="note-warn" style="display:none"></div>
@@ -777,7 +661,7 @@
       <input id="usdOut" type="number" step="0.01" min="0" placeholder="USD value of PLS to withdraw" />
     </div>
     <div class="preview" id="prevWithdraw"></div>
-    <div class="withdraw-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+    <div class="btn-pair">
       <button class="btn btn-purple" id="withdraw" disabled>
         <div class="spin"></div><span>Withdraw</span>
       </button>
@@ -790,35 +674,9 @@
   </div>
 
   <!-- ════ SAFETY & ADVANCED ════ -->
-  <div class="section-head">
-    <div class="section-label">Safety & Advanced</div>
-    <div class="section-line"></div>
-  </div>
+  <div class="section-head"><div class="section-label">Safety &amp; Advanced</div><div class="section-line"></div></div>
 
-  <!-- WAKE ORACLE -->
-  <div class="card">
-    <div class="card-head">
-      <div class="card-title">Oracle Price Feed</div>
-      <div class="badge green" id="oracleCardBadge">Live</div>
-    </div>
-    <div class="exp-toggle" onclick="toggleExp(this)">
-      <svg width="9" height="9" viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9" fill="currentColor"/></svg>
-      What is the oracle and why does it matter?
-    </div>
-    <div class="exp-body">
-      <div class="exp-inner">
-        <p>The oracle is the on-chain price feed that tells the vault the current PLS/USD rate. It aggregates prices across multiple PulseX trading pairs and uses a <strong>stepping mechanism</strong> — prices move at most 5–10% per update — to protect users from flash crashes and manipulation.</p>
-        <p>If the oracle hasn't been updated recently, all vault calculations use a stale price. Press <strong>Wake Oracle</strong> to trigger a fresh price update. There is a 30-minute cooldown between updates.</p>
-        <p>The status bar at the top of the page always shows the current oracle state. You can also wake it here.</p>
-      </div>
-    </div>
-    <div class="preview-auto" id="oracleStatusText">Checking oracle status...</div>
-    <button class="btn btn-orange" id="pokeBtn" disabled>
-      <div class="spin"></div><span>Wake Oracle</span>
-    </button>
-  </div>
-
-  <!-- CHECK MY VAULT RISK -->
+  <!-- CHECK LIQUIDATION RISK -->
   <div class="card">
     <div class="card-head">
       <div class="card-title">Check My Liquidation Risk</div>
@@ -830,13 +688,9 @@
     </div>
     <div class="exp-body">
       <div class="exp-inner">
-        <p>Queries the contract to check whether your vault is currently eligible for liquidation. A vault becomes liquidatable when its collateral ratio falls <strong>below 110%</strong>.</p>
-        <p>Your ratio gauge above gives a live reading — this button is a direct contract-level confirmation. If you see red, repay debt or add collateral immediately.</p>
-        <div class="exp-example">
-          Safe:  ratio above 150% — no action needed<br>
-          Warn:  ratio 110–150% — monitor closely<br>
-          Risk:  ratio below 110% — liquidatable now
-        </div>
+        <p>Queries the contract directly to check whether your vault is currently eligible to be liquidated. A vault becomes liquidatable when its collateral ratio falls <strong>below 110%</strong>.</p>
+        <p>Your ratio gauge above shows a live reading. This button provides a direct contract-level confirmation. If the result is red, repay debt or add collateral immediately.</p>
+        <div class="exp-example">Safe:  ratio above 150% &mdash; no action needed<br>Warning: ratio 110&ndash;150% &mdash; monitor closely<br>At risk: ratio below 110% &mdash; liquidatable now</div>
       </div>
     </div>
     <button class="btn btn-red" id="riskCheckBtn" disabled onclick="checkMyRisk()">
@@ -845,19 +699,17 @@
     <div id="riskResult"></div>
   </div>
 
-  <!-- LIQUIDATION DASHBOARD LINK -->
+  <!-- LIQUIDATION DASHBOARD -->
   <div class="card">
-    <div class="card-head">
-      <div class="card-title">Liquidation Dashboard</div>
-    </div>
+    <div class="card-head"><div class="card-title">Liquidation Dashboard</div></div>
     <div class="exp-toggle" onclick="toggleExp(this)">
       <svg width="9" height="9" viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9" fill="currentColor"/></svg>
       What can I do there?
     </div>
     <div class="exp-body">
       <div class="exp-inner">
-        <p>The dashboard shows all vaults across the system that have fallen <strong>below 110%</strong> and are eligible for liquidation. If you hold pSunDAI, you can repay another user's debt and receive their PLS at a <strong>2–5% discount</strong> (the bonus grows over time, Dutch-auction style).</p>
-        <p>Your own vault's liquidation risk is shown in the ratio gauge above — keep it green and you have nothing to worry about.</p>
+        <p>The dashboard shows all vaults across the system that have fallen <strong>below 110%</strong> and are eligible for liquidation. If you hold pSunDAI, you can repay another user's debt and receive their PLS at a <strong>2&ndash;5% bonus</strong>. The bonus grows over a 3-hour auction window &mdash; earlier liquidators get a smaller bonus but face less competition.</p>
+        <p>Your own vault's liquidation risk is shown in the ratio gauge above.</p>
       </div>
     </div>
     <button class="btn btn-ghost" onclick="window.location.href='liquidations.html?t='+Date.now()">
@@ -865,7 +717,30 @@
     </button>
   </div>
 
-  <!-- EMERGENCY UNLOCK (only shown when applicable) -->
+  <!-- ORACLE CARD -->
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">Oracle Price Feed</div>
+      <div class="badge green" id="oracleCardBadge">Live</div>
+    </div>
+    <div class="exp-toggle" onclick="toggleExp(this)">
+      <svg width="9" height="9" viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9" fill="currentColor"/></svg>
+      What is the oracle and why does it matter?
+    </div>
+    <div class="exp-body">
+      <div class="exp-inner">
+        <p>The oracle is the on-chain price feed that tells the vault the current PLS/USD rate. It takes the median price across <strong>five PulseX trading pairs</strong> (DAI v1/v2, USDC v1/v2, USDT) using a TWAP + spot hybrid calculation.</p>
+        <p>Price changes under <strong>3%</strong> are accepted instantly. Larger moves require a confirmation period before taking effect: <strong>4 hours for price drops</strong> and <strong>1 hour for pumps</strong>. After confirmation, prices step toward the target at <strong>5% per 30 minutes downward</strong> or <strong>10% per 30 minutes upward</strong>. This means a flash crash lasting less than 4 hours cannot liquidate your vault.</p>
+        <p>Manual <code>Wake Oracle</code> triggers a price update. There is a <strong>30-minute cooldown</strong> between pokes. The vault always falls back to the last valid price if the oracle is silent, so you can always repay and withdraw.</p>
+      </div>
+    </div>
+    <div class="preview-auto" id="oracleStatusText">Checking oracle status...</div>
+    <button class="btn btn-orange" id="pokeBtn" disabled>
+      <div class="spin"></div><span>Wake Oracle</span>
+    </button>
+  </div>
+
+  <!-- EMERGENCY UNLOCK -->
   <div class="card red" id="emergencyCard">
     <div class="card-head">
       <div class="card-title">Emergency Unlock</div>
@@ -877,7 +752,7 @@
     </div>
     <div class="exp-body">
       <div class="exp-inner">
-        <p>If you have <strong>zero debt</strong> and your last deposit was over <strong>30 days ago</strong>, you can force-withdraw all PLS. This is a failsafe to prevent accidental permanent lockups in the immutable contract.</p>
+        <p>If you have <strong>zero debt</strong> and your last deposit was over <strong>30 days ago</strong>, you can force-withdraw all PLS. This is a failsafe to prevent funds from being permanently locked in the immutable contract.</p>
         <p>No penalty. No fee. Just a 30-day time delay to prevent abuse.</p>
       </div>
     </div>
@@ -885,12 +760,11 @@
     <button class="btn btn-red" id="emergencyUnlock" disabled>
       <div class="spin"></div><span>Emergency Unlock</span>
     </button>
-    <div class="note-safe">Recovers all PLS after 30 days with zero debt — no penalties.</div>
+    <div class="note-safe">Recovers all PLS after 30 days with zero debt &mdash; no penalties.</div>
   </div>
 
 </main>
 
-<!-- FOOTER -->
 <footer class="footer">
   <h3>Official Contracts (PulseChain)</h3>
   <div class="contract">
@@ -920,16 +794,17 @@
   const ORACLE_ADDR = "0xC19C8201701585D9087F261eaCd3Ee3345251Da3";
   const DECIMALS    = 10n ** 18n;
 
-  // Contract constants (verified against pSunDAIVault_ASA_v5_6.sol)
-  // depositAndAutoMintPLS() hardcodes 155 as the ratio buffer (line 197 of contract)
-  // COLLATERAL_RATIO = 150, LIQUIDATION_RATIO = 110
-  const AUTO_MINT_RATIO  = 155;   // hardcoded in contract, cannot be changed
-  const MIN_ACTION_AMOUNT = 1e14; // 0.0001 PLS minimum per contract require()
+  // Contract constants verified against pSunDAIVault_ASA_v5_6.sol:
+  // COLLATERAL_RATIO = 150, LIQUIDATION_RATIO = 110, MIN_SYSTEM_HEALTH = 130
+  // depositAndAutoMintPLS() hardcodes 155 as the mint ratio (line 197 of vault contract)
+  // WITHDRAW_COOLDOWN = 300 seconds
+  const AUTO_MINT_RATIO = 155;
+  const COOLDOWN_SECS   = 300;
 
   let provider, signer, vault, token, oracle, account;
-  let currentPrice = 0n;
+  let currentPrice    = 0n;
   let currentMintable = 0n;
-  let currentDebt = 0n;
+  let currentDebt     = 0n;
 
   // ── NEBULA ───────────────────────────────────────
   let t=0, mx=0, my=0, tx_=0, ty_=0;
@@ -948,14 +823,12 @@
 
   // ── COLLAPSIBLE SECTIONS ──────────────────────────
   function toggleIntro() {
-    const b=document.getElementById("introBody"), c=document.getElementById("introChevron");
-    b.classList.toggle("open");
-    c.style.transform = b.classList.contains("open") ? "rotate(180deg)" : "";
+    const b=document.getElementById("introBody"),c=document.getElementById("introChevron");
+    b.classList.toggle("open"); c.style.transform=b.classList.contains("open")?"rotate(180deg)":"";
   }
   function toggleGuide() {
-    const b=document.getElementById("guideBody"), c=document.getElementById("guideChevron");
-    b.classList.toggle("open");
-    c.style.transform = b.classList.contains("open") ? "rotate(180deg)" : "";
+    const b=document.getElementById("guideBody"),c=document.getElementById("guideChevron");
+    b.classList.toggle("open"); c.style.transform=b.classList.contains("open")?"rotate(180deg)":"";
   }
   function toggleExp(el) {
     el.classList.toggle("open");
@@ -973,88 +846,61 @@
   function setOracleBar(state, msg, showPoke=false) {
     const bar=document.getElementById("oracleBar");
     bar.className="oracle-bar "+state;
-    document.getElementById("oracleBarText").innerHTML = msg +
-      (showPoke ? ` <button class="poke-btn" onclick="pokeOracle()">Wake Oracle</button>` : "");
+    document.getElementById("oracleBarText").innerHTML=msg+
+      (showPoke?` <button class="poke-btn" onclick="pokeOracle()">Wake Oracle</button>`:"");
   }
 
-  // ── SAFE CALL WITH TIMEOUT ───────────────────────
   function safeCall(p, ms=4000) {
     return Promise.race([p, new Promise((_,r)=>setTimeout(()=>r(new Error("timeout")),ms))]);
   }
 
   // ── ORACLE HEALTH ────────────────────────────────
+  // NOTE: getPriceWithTimestamp() has onlyVault modifier — never call from UI.
+  // Always use peekPriceView() for read-only price/timestamp access.
   async function checkOracleHealth() {
     if (!oracle) return;
     try {
       setOracleBar("checking","Checking oracle...");
-      let p, ts;
-      try { [p,ts]=await oracle.callStatic.getPriceWithTimestamp(); }
-      catch { [p,ts]=await safeCall(oracle.peekPriceView(),3000); }
-      const healthy=await safeCall(oracle.isHealthy(),3000);
-      const age=Math.floor(Date.now()/1000)-Number(ts);
+      const [p,ts] = await safeCall(oracle.peekPriceView(), 4000);
+      const healthy = await safeCall(oracle.isHealthy(), 3000);
+      const age = Math.floor(Date.now()/1000) - Number(ts);
       const cardText  = document.getElementById("oracleStatusText");
       const cardBadge = document.getElementById("oracleCardBadge");
       const pokeBtn   = document.getElementById("pokeBtn");
-
-      // Check poke cooldown using contract view function
-      let canPoke = true;
-      let secsUntilPoke = 0;
-      try {
-        canPoke = await safeCall(oracle.canPoke(), 3000);
-        if (!canPoke) secsUntilPoke = Number(await safeCall(oracle.timeUntilNextPoke(), 3000));
-      } catch {}
-
       if (healthy && age < 86400) {
-        setOracleBar("", `Oracle synced — ${(age/60).toFixed(0)} min ago`);
-        if (cardText)  { cardText.textContent = `Price is fresh — last updated ${(age/60).toFixed(0)} min ago. No action needed.`; cardText.style.color="var(--safe)"; }
+        setOracleBar("", `Oracle synced \u2014 ${(age/60).toFixed(0)} min ago`);
+        if (cardText)  { cardText.textContent=`Price is fresh \u2014 last updated ${(age/60).toFixed(0)} min ago.`; cardText.style.color="var(--safe)"; }
         if (cardBadge) { cardBadge.textContent="Live"; cardBadge.className="badge green"; }
-        if (pokeBtn)   { pokeBtn.disabled = true; pokeBtn.querySelector("span").textContent = "Wake Oracle"; }
+        if (pokeBtn)   pokeBtn.disabled=true;
       } else {
-        if (canPoke) {
-          setOracleBar("stale","Oracle price is stale —",true);
-          if (cardText)  { cardText.textContent = `Oracle price is stale (${(age/60).toFixed(0)} min old) — press Wake Oracle to update.`; cardText.style.color="var(--risk)"; }
-          if (cardBadge) { cardBadge.textContent="Stale"; cardBadge.className="badge amber"; }
-          if (pokeBtn)   { pokeBtn.disabled = false; pokeBtn.querySelector("span").textContent = "Wake Oracle"; }
-        } else {
-          const minsLeft = Math.ceil(secsUntilPoke / 60);
-          setOracleBar("stale",`Oracle stale — poke available in ${minsLeft} min`);
-          if (cardText)  { cardText.textContent = `Oracle is stale but poke cooldown active — available again in ${minsLeft} minute${minsLeft===1?"":"s"}.`; cardText.style.color="var(--warn)"; }
-          if (cardBadge) { cardBadge.textContent="Cooldown"; cardBadge.className="badge amber"; }
-          if (pokeBtn)   { pokeBtn.disabled = true; pokeBtn.querySelector("span").textContent = `Wake Oracle (${minsLeft} min cooldown)`; }
-        }
+        setOracleBar("stale","Oracle price is stale \u2014",true);
+        if (cardText)  { cardText.textContent=`Oracle is stale (${(age/60).toFixed(0)} min old) \u2014 press Wake Oracle to update.`; cardText.style.color="var(--risk)"; }
+        if (cardBadge) { cardBadge.textContent="Stale"; cardBadge.className="badge amber"; }
+        if (pokeBtn)   pokeBtn.disabled=false;
       }
     } catch {
-      setOracleBar("stale","Oracle check failed —",true);
-      const cardText = document.getElementById("oracleStatusText");
-      if (cardText) { cardText.textContent = "Oracle check failed — press Wake Oracle to try again."; cardText.style.color="var(--risk)"; }
-      const pokeBtn = document.getElementById("pokeBtn");
-      if (pokeBtn) { pokeBtn.disabled = false; pokeBtn.querySelector("span").textContent = "Wake Oracle"; }
+      setOracleBar("stale","Oracle check failed \u2014",true);
+      const cardText=document.getElementById("oracleStatusText");
+      if (cardText) { cardText.textContent="Oracle check failed \u2014 press Wake Oracle to try again."; cardText.style.color="var(--risk)"; }
+      const pokeBtn=document.getElementById("pokeBtn");
+      if (pokeBtn) pokeBtn.disabled=false;
     }
   }
 
   async function pokeOracle() {
     if (!signer) return toast("Connect wallet first","err");
-    const pokeBtn = document.getElementById("pokeBtn");
-    const cardText = document.getElementById("oracleStatusText");
+    const pokeBtn   = document.getElementById("pokeBtn");
+    const cardText  = document.getElementById("oracleStatusText");
     try {
-      // Pre-check cooldown before sending tx (saves gas if on cooldown)
-      let canPoke = true;
-      try { canPoke = await safeCall(oracle.canPoke(), 3000); } catch {}
-      if (!canPoke) {
-        let secs = 0;
-        try { secs = Number(await safeCall(oracle.timeUntilNextPoke(), 3000)); } catch {}
-        const mins = Math.ceil(secs / 60);
-        return toast(`Poke cooldown active — wait ${mins} more minute${mins===1?"":"s"}`, "err");
-      }
       setOracleBar("checking","Sending wake-up...");
-      if (cardText) { cardText.textContent="Sending wake-up transaction..."; cardText.style.color="var(--warn)"; }
-      if (pokeBtn) pokeBtn.classList.add("loading");
+      if (cardText)  { cardText.textContent="Sending wake-up transaction..."; cardText.style.color="var(--warn)"; }
+      if (pokeBtn)   pokeBtn.classList.add("loading");
       await (await oracle.connect(signer).poke()).wait();
       toast("Oracle updated successfully");
-      setTimeout(checkOracleHealth,2000);
+      setTimeout(checkOracleHealth, 2000);
     } catch(e) {
       const msg = friendlyErr(e);
-      setOracleBar("stale","Wake failed — "+msg,true);
+      setOracleBar("stale", "Wake failed \u2014 "+msg, true);
       if (cardText) { cardText.textContent="Wake failed: "+msg; cardText.style.color="var(--risk)"; }
       toast(msg,"err");
     } finally {
@@ -1065,15 +911,17 @@
   // ── ERROR MESSAGES ───────────────────────────────
   function friendlyErr(e) {
     const m = e?.reason || e?.data?.message || e?.message || "Transaction failed";
-    if (m.includes("repay all debt") || m.includes("Must repay")) return "You must repay all debt before this action.";
-    if (m.includes("ratio") || m.includes("RATIO"))               return "This would drop your vault below 150% — not allowed.";
-    if (m.includes("System undercollateralized") || m.includes("system") && m.includes("130")) return "The overall system health is below 130% — minting is paused until the system recovers. Your vault is fine; this is a protocol-wide safety pause.";
-    if (m.includes("cooldown") || m.includes("Cooldown"))          return "Withdrawal cooldown active — wait 5 min after depositing.";
-    if (m.includes("Oracle") || m.includes("oracle") || m.includes("price")) return "Oracle price unavailable — try waking the oracle first.";
-    if (m.includes("allowance") || m.includes("approve"))          return "Token approval needed — please approve then retry.";
-    if (m.includes("insufficient") || m.includes("balance"))       return "Insufficient balance.";
-    if (m.includes("user rejected") || m.includes("denied"))       return "Transaction cancelled.";
-    return m.length > 100 ? m.substring(0,100)+"…" : m;
+    if (/repay.*debt|must repay|repay first/i.test(m))   return "You must repay all debt before this action.";
+    if (/ratio|collateral ratio|not enough collateral/i.test(m)) return "This would drop your vault below 150% \u2014 not allowed.";
+    if (/undercollateralized|system health|system under/i.test(m)) return "System health below 130% \u2014 minting is paused until the protocol recovers.";
+    if (/cooldown|active/i.test(m) && /withdraw|unlock/i.test(m)) return "Withdrawal cooldown active \u2014 wait 5 min after depositing.";
+    if (/poke cooldown|wait 30/i.test(m))                return "Oracle poke cooldown \u2014 wait 30 minutes between pokes.";
+    if (/oracle|price|invalid price/i.test(m))           return "Oracle price unavailable \u2014 try waking the oracle first.";
+    if (/invalid repay|zero.*repay/i.test(m))            return "Repay amount exceeds your debt. Use Max to fill the exact amount.";
+    if (/too small/i.test(m))                            return "Amount is below the minimum (0.0001 PLS / pSunDAI).";
+    if (/insufficient|balance/i.test(m))                 return "Insufficient balance for this transaction.";
+    if (/user rejected|denied|cancelled/i.test(m))       return "Transaction cancelled.";
+    return m.length > 120 ? m.substring(0,120)+"\u2026" : m;
   }
 
   // ── LOADING WRAPPER ───────────────────────────────
@@ -1087,8 +935,6 @@
       toast(friendlyErr(e),"err");
     } finally {
       btn.classList.remove("loading");
-      // Selectively re-enable based on vault state (handled by loadVault)
-      // but make sure this specific button is re-enabled
       btn.disabled=false;
     }
   }
@@ -1115,7 +961,6 @@
       if (Number(network.chainId)!==369) {
         try {
           await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:"0x171"}]});
-          // re-get signer after chain switch
           provider=new ethers.BrowserProvider(window.ethereum);
           signer=await provider.getSigner();
         } catch {
@@ -1129,8 +974,8 @@
       oracle = new ethers.Contract(ORACLE_ADDR, OA, provider);
       window.oracle=oracle;
 
-      // Re-fetch account (chain switch may have changed signer)
-      account = await signer.getAddress();
+      // Re-fetch account in case chain switch changed the signer
+      account=await signer.getAddress();
 
       const wb=document.getElementById("walletBtn");
       wb.textContent=account.slice(0,6)+"..."+account.slice(-4);
@@ -1142,13 +987,11 @@
 
       await Promise.all([updatePrice(), loadVault(), checkOracleHealth(), loadGlobalStats()]);
 
-      // Auto-refresh intervals
-      setInterval(updatePrice, 60000);
+      setInterval(updatePrice,       60000);
       setInterval(checkOracleHealth, 30000);
-      setInterval(loadGlobalStats, 90000);
-      setInterval(loadVault, 30000);  // keep vault stats live
+      setInterval(loadGlobalStats,   90000);
+      setInterval(loadVault,         30000);
 
-      // Handle wallet account/chain changes
       window.ethereum.on("accountsChanged", ()=>location.reload());
       window.ethereum.on("chainChanged",    ()=>location.reload());
 
@@ -1160,9 +1003,7 @@
   // ── PRICE ─────────────────────────────────────────
   async function updatePrice() {
     try {
-      let p, ts;
-      try { [p,ts]=await oracle.getPriceWithTimestamp(); }
-      catch { [p,ts]=await oracle.peekPriceView(); }
+      const [p,ts]=await oracle.peekPriceView();
       if (Math.floor(Date.now()/1000)-Number(ts)>86400) throw new Error("stale");
       currentPrice=p;
       document.getElementById("priceDisplay").textContent="$"+(Number(p)/1e18).toFixed(6);
@@ -1181,31 +1022,30 @@
     if (!currentPrice||currentPrice===0n) return 0;
     return Number(ethers.formatEther(plsWei))*Number(ethers.formatEther(currentPrice));
   }
-  function fmt(n, decimals=2) { return Number(n).toLocaleString(undefined,{maximumFractionDigits:decimals,minimumFractionDigits:decimals}); }
+  function fmt(n, d=2) { return Number(n).toLocaleString(undefined,{maximumFractionDigits:d,minimumFractionDigits:d}); }
   function fmtPLS(wei) { return Number(ethers.formatEther(wei)).toLocaleString(undefined,{maximumFractionDigits:0}); }
 
   // ── GLOBAL STATS ──────────────────────────────────
   async function loadGlobalStats() {
     try {
       const [tc,td,h]=await Promise.all([vault.totalCollateral(),vault.totalDebt(),vault.systemHealth()]);
-      const collNum   = Number(ethers.formatEther(tc));
-      const debtNum   = Number(ethers.formatEther(td));
-      // Show total collateral as PLS count; USD value in tooltip/sub
-      document.getElementById("gColl").textContent = fmt(collNum,0) + " PLS";
-      document.getElementById("gColl").title = currentPrice > 0n
-        ? "≈ $" + fmt(collNum * Number(ethers.formatEther(currentPrice)), 0) + " USD"
-        : "";
-      document.getElementById("gDebt").textContent = fmt(debtNum,0) + " pSunDAI";
+      const collNum=Number(ethers.formatEther(tc));
+      const debtNum=Number(ethers.formatEther(td));
+      document.getElementById("gColl").textContent=fmt(collNum,0)+" PLS";
+      document.getElementById("gDebt").textContent=fmt(debtNum,0)+" pSunDAI";
+
       const hEl=document.getElementById("gHealth");
       const hn=Number(h);
       // systemHealth() returns type(uint256).max when totalDebt == 0
-      if (hn > 1e15) {
-        hEl.textContent="No debt";
-        hEl.style.color="var(--safe)";
+      if (hn>1e15) {
+        hEl.textContent="Healthy"; hEl.style.color="var(--safe)";
       } else {
         hEl.textContent=fmt(hn,1)+"%";
         hEl.style.color=hn<130?"var(--risk)":hn<150?"var(--warn)":"var(--safe)";
+        // Show/hide system health warning for minting
+        document.getElementById("systemHealthWarning").style.display=hn<130?"block":"none";
       }
+
       const yi=await vault.vaultInfo(account);
       const yc=Number(ethers.formatEther(yi.collateral));
       document.getElementById("gShare").textContent=yc>0&&collNum>0?fmt((yc/collNum)*100,2)+"%":"0%";
@@ -1221,97 +1061,96 @@
       currentMintable=i.mintable;
       currentDebt=i.debt;
 
-      // Stat boxes
       const collPLS=Number(ethers.formatEther(i.collateral));
       const collUsd=plsToUsd(i.collateral);
       const debtAmt=Number(ethers.formatEther(i.debt));
-      const mintableAmt=Number(ethers.formatEther(i.mintable));
+      const mintAmt=Number(ethers.formatEther(i.mintable));
 
       document.getElementById("vc").textContent=fmtPLS(i.collateral)+" PLS";
-      document.getElementById("vcUsd").textContent="≈ $"+fmt(collUsd)+" USD";
+      document.getElementById("vcUsd").textContent="\u2248 $"+fmt(collUsd)+" USD";
       document.getElementById("vd").textContent=fmt(debtAmt)+" pSunDAI";
       document.getElementById("vdFee").textContent=debtAmt>0?"0.5% APY stability fee accruing":"No debt";
-      document.getElementById("vm").textContent=fmt(mintableAmt)+" pSunDAI";
-      document.getElementById("vmNote").textContent=mintableAmt>0?"available before 150%":"vault at or below 150%";
+      document.getElementById("vm").textContent=fmt(mintAmt)+" pSunDAI";
+      document.getElementById("vmNote").textContent=mintAmt>0?"available before 150%":"vault at or below 150%";
       document.getElementById("vcollUsd").textContent="$"+fmt(collUsd);
       document.getElementById("vcollPls").textContent=fmtPLS(i.collateral)+" PLS";
 
-      // Gauge: maps 110% → 0%, 250% → 100%
+      // Gauge: maps 110% (left) to 250%+ (right)
       const gaugeMin=110, gaugeMax=250;
       const pct=((Math.min(Math.max(ratio,gaugeMin),gaugeMax)-gaugeMin)/(gaugeMax-gaugeMin))*100;
       document.getElementById("gaugeFill").style.width=pct+"%";
 
       // Ratio display
-      const ratioStr = ratio>1e6 ? "No debt" : fmt(ratio,1)+"%";
-      const ratioClass = ratio>1e6 ? "safe" : ratio<150 ? "risk" : ratio<170 ? "warn" : "safe";
+      const ratioStr=ratio>1e6?"No debt":fmt(ratio,1)+"%";
+      const ratioClass=ratio>1e6?"safe":ratio<150?"risk":ratio<170?"warn":"safe";
       const rd=document.getElementById("ratioNum");
-      rd.textContent=ratioStr;
-      rd.className="ratio-num "+ratioClass;
+      rd.textContent=ratioStr; rd.className="ratio-num "+ratioClass;
       const captionMap={
-        safe: ratio>1e6 ? "No debt — vault is open" : "Vault is healthy",
-        warn: "Ratio below 170% — consider topping up collateral or repaying some debt",
-        risk: "Below 150% minimum — add collateral or repay immediately to avoid liquidation!"
+        safe: ratio>1e6?"No debt \u2014 vault is open":"Vault is healthy",
+        warn: "Ratio below 170% \u2014 consider adding collateral or repaying some debt",
+        risk: "Below 150% minimum \u2014 add collateral or repay immediately!"
       };
       const rc=document.getElementById("ratioCaption");
-      rc.textContent=captionMap[ratioClass];
-      rc.className="ratio-caption "+ratioClass;
+      rc.textContent=captionMap[ratioClass]; rc.className="ratio-caption "+ratioClass;
 
-      // Repay to safe button
+      // Repay to safe
       const needed=await vault.repayToHealth(account);
       const rtsBtn=document.getElementById("repayToSafe");
       const rtsLabel=document.getElementById("repayToSafeLabel");
-      const rtsPreview=document.getElementById("prevRepayToSafe");
+      const rtsPrev=document.getElementById("prevRepayToSafe");
       if (needed>0n) {
-        const neededAmt = fmt(Number(ethers.formatEther(needed)),2);
-        rtsLabel.textContent=`Repay to Safe — burn ${neededAmt} pSunDAI`;
-        rtsPreview.textContent=`Repaying ${neededAmt} pSunDAI restores vault to exactly 150%`;
-        rtsPreview.style.color="var(--warn)";
+        const amt=fmt(Number(ethers.formatEther(needed)),2);
+        rtsLabel.textContent=`Repay to Safe \u2014 burn ${amt} pSunDAI`;
+        rtsPrev.textContent=`Repaying ${amt} pSunDAI restores vault to exactly 150%`;
+        rtsPrev.style.color="var(--warn)";
         rtsBtn.disabled=false;
       } else {
         rtsLabel.textContent="Repay to Safe (150%)";
-        rtsPreview.textContent=debtAmt>0?"Already at or above 150% — vault is safe":"No debt — nothing to repay";
-        rtsPreview.style.color="var(--safe)";
+        rtsPrev.textContent=debtAmt>0?"Already at or above 150% \u2014 vault is safe":"No debt \u2014 nothing to repay";
+        rtsPrev.style.color="var(--safe)";
         rtsBtn.disabled=true;
       }
 
       // Withdraw max safe + cooldown
+      // Contract: require(block.timestamp > v.lastDepositTime + 300)
+      // Add 1 second buffer to avoid off-by-one at exact boundary
       const vraw=await vault.vaults(account);
       const now=Math.floor(Date.now()/1000);
       const last=Number(vraw.lastDepositTime);
-      const cooldown=300-(now-last);
-      const cooldownNote=document.getElementById("withdrawCooldownNote");
+      const cooldown=(COOLDOWN_SECS+1)-(now-last);
+      const cdNote=document.getElementById("withdrawCooldownNote");
       const wmBtn=document.getElementById("withdrawMaxSafe");
-      const wmPreview=document.getElementById("prevWithdrawMax");
+      const wmPrev=document.getElementById("prevWithdrawMax");
 
       if (cooldown>0) {
         const minsLeft=Math.ceil(cooldown/60);
-        cooldownNote.style.display="block";
-        cooldownNote.textContent=`Withdrawal cooldown: ${minsLeft} min remaining after your last deposit`;
+        cdNote.style.display="block";
+        cdNote.textContent=`Withdrawal cooldown: ${minsLeft} min remaining after your last deposit`;
         wmBtn.disabled=true;
-        wmPreview.textContent="Waiting for cooldown...";
+        wmPrev.textContent="Waiting for cooldown...";
       } else {
-        cooldownNote.style.display="none";
+        cdNote.style.display="none";
         if (i.debt===0n && i.collateral>0n) {
-          wmPreview.textContent=`Will withdraw all ${fmtPLS(i.collateral)} PLS ($${fmt(collUsd)})`;
-          wmBtn.disabled=false;
+          wmPrev.textContent=`Will withdraw all ${fmtPLS(i.collateral)} PLS ($${fmt(collUsd)})`;
+          wmPrev.style.color="var(--safe)"; wmBtn.disabled=false;
         } else if (i.debt>0n && i.collateral>0n && currentPrice>0n) {
-          // required collateral (wei) to stay at 150%: debt * 1.5 / price
+          // Required collateral at 150%: debt * 150 * 1e18 / (price * 100)
           const reqColl=(i.debt*150n*DECIMALS)/(currentPrice*100n);
           const withdrawable=i.collateral>reqColl?i.collateral-reqColl:0n;
           if (withdrawable>0n) {
-            wmPreview.textContent=`Can safely withdraw ${fmtPLS(withdrawable)} PLS ($${fmt(plsToUsd(withdrawable))})`;
-            wmBtn.disabled=false;
+            wmPrev.textContent=`Can safely withdraw ${fmtPLS(withdrawable)} PLS ($${fmt(plsToUsd(withdrawable))})`;
+            wmPrev.style.color="var(--safe)"; wmBtn.disabled=false;
           } else {
-            wmPreview.textContent="At 150% minimum — repay debt to unlock more";
-            wmBtn.disabled=true;
+            wmPrev.textContent="At 150% minimum \u2014 repay debt to unlock more";
+            wmPrev.style.color="var(--warn)"; wmBtn.disabled=true;
           }
         } else {
-          wmPreview.textContent="No collateral to withdraw";
-          wmBtn.disabled=true;
+          wmPrev.textContent="No collateral to withdraw";
+          wmPrev.style.color="rgba(255,189,112,0.5)"; wmBtn.disabled=true;
         }
       }
-      // Regular withdraw button — enable if has collateral and no cooldown
-      document.getElementById("withdraw").disabled = !(i.collateral>0n && cooldown<=0);
+      // Regular withdraw: enable only if has collateral and cooldown passed
+      document.getElementById("withdraw").disabled=!(i.collateral>0n && cooldown<=0);
 
       // Emergency unlock
       const eCard=document.getElementById("emergencyCard");
@@ -1321,17 +1160,17 @@
         eCard.style.display="block";
         const daysSince=Math.floor((now-last)/86400);
         if (daysSince>=30) {
-          ePrev.textContent=`Ready — recovers ${fmtPLS(i.collateral)} PLS ($${fmt(collUsd)})`;
-          eBtn.disabled=false;
+          ePrev.textContent=`Ready \u2014 recovers ${fmtPLS(i.collateral)} PLS ($${fmt(collUsd)})`;
+          ePrev.style.color="var(--safe)"; eBtn.disabled=false;
         } else {
           ePrev.textContent=`Available in ${30-daysSince} more day${30-daysSince===1?"":"s"}`;
-          eBtn.disabled=true;
+          ePrev.style.color="var(--warn)"; eBtn.disabled=true;
         }
       } else {
         eCard.style.display="none";
       }
 
-      // Enable/disable action buttons based on state
+      // Button states
       document.getElementById("oneClickBtn").disabled=false;
       document.getElementById("deposit").disabled=false;
       document.getElementById("mint").disabled=!(i.mintable>0n);
@@ -1339,24 +1178,23 @@
       document.getElementById("repayAuto").disabled=!(i.debt>0n);
       document.getElementById("riskCheckBtn").disabled=false;
 
-    } catch(e) {
-      console.error("loadVault:",e);
-    }
+    } catch(e) { console.error("loadVault:",e); }
   }
 
-  // ── CHECK MY RISK ─────────────────────────────────
+  // ── CHECK MY RISK ────────────────────────────────
   async function checkMyRisk() {
     await withLoading("riskCheckBtn", async () => {
-      const can = await vault.canLiquidate(account);
-      const info = await vault.vaultInfo(account);
-      const ratio = Number(info.ratio);
-      const el = document.getElementById("riskResult");
+      const [can, info] = await Promise.all([vault.canLiquidate(account), vault.vaultInfo(account)]);
+      const ratio=Number(info.ratio);
+      const el=document.getElementById("riskResult");
       if (can) {
-        el.innerHTML = `<span style="color:var(--risk)">Your vault is liquidatable (ratio ${fmt(ratio,1)}%) — repay debt or add collateral immediately!</span>`;
-      } else if (ratio < 150) {
-        el.innerHTML = `<span style="color:var(--warn)">Ratio is ${fmt(ratio,1)}% — below 150% minimum. Top up to avoid liquidation risk.</span>`;
+        el.innerHTML=`<span style="color:var(--risk)">Your vault is liquidatable (ratio ${fmt(ratio,1)}%) \u2014 repay debt or add collateral immediately!</span>`;
+      } else if (ratio>1e6) {
+        el.innerHTML=`<span style="color:var(--safe)">No debt \u2014 vault cannot be liquidated</span>`;
+      } else if (ratio<150) {
+        el.innerHTML=`<span style="color:var(--warn)">Ratio is ${fmt(ratio,1)}% \u2014 below 150% minimum, top up to stay safe</span>`;
       } else {
-        el.innerHTML = `<span style="color:var(--safe)">Your vault is safe — ratio is ${ratio > 1e6 ? "No debt" : fmt(ratio,1)+"%"}</span>`;
+        el.innerHTML=`<span style="color:var(--safe)">Your vault is safe \u2014 ratio is ${fmt(ratio,1)}%</span>`;
       }
     });
   }
@@ -1373,66 +1211,64 @@
     document.getElementById("prevRepay").textContent=`Full debt: ${fmt(Number(ethers.formatEther(currentDebt)),4)} pSunDAI`;
   }
 
-  // ── LIVE INPUT PREVIEWS ───────────────────────────
+  // ── LIVE PREVIEWS ─────────────────────────────────
   document.getElementById("usdOneClick").addEventListener("input", ()=>{
     const u=parseFloat(document.getElementById("usdOneClick").value)||0;
     if (!u||!currentPrice) return document.getElementById("prevOneClick").textContent="";
     const plsAmt=Number(ethers.formatEther(usdToPLS(u)));
-    // Contract hardcodes 155% for depositAndAutoMintPLS() — cannot be changed
-    const pSunAmt = u / (AUTO_MINT_RATIO / 100);
+    // Contract hardcodes 155: mintAmount = (valueUSD * 100) / 155
+    const pSunAmt=u/(AUTO_MINT_RATIO/100);
     document.getElementById("prevOneClick").textContent=
-      `${fmt(plsAmt,0)} PLS deposited → ${fmt(pSunAmt,2)} pSunDAI minted at 155%`;
-
+      `${fmt(plsAmt,0)} PLS deposited \u2192 ${fmt(pSunAmt,2)} pSunDAI minted at 155%`;
   });
-
   document.getElementById("usdIn").addEventListener("input", ()=>{
     const u=parseFloat(document.getElementById("usdIn").value)||0;
     if (!u||!currentPrice) return document.getElementById("prevDeposit").textContent="";
-    document.getElementById("prevDeposit").textContent=
-      `${fmt(Number(ethers.formatEther(usdToPLS(u))),0)} PLS`;
+    document.getElementById("prevDeposit").textContent=`${fmt(Number(ethers.formatEther(usdToPLS(u))),0)} PLS`;
   });
-
   document.getElementById("usdOut").addEventListener("input", ()=>{
     const u=parseFloat(document.getElementById("usdOut").value)||0;
     if (!u||!currentPrice) return document.getElementById("prevWithdraw").textContent="";
-    document.getElementById("prevWithdraw").textContent=
-      `${fmt(Number(ethers.formatEther(usdToPLS(u))),0)} PLS`;
+    document.getElementById("prevWithdraw").textContent=`${fmt(Number(ethers.formatEther(usdToPLS(u))),0)} PLS`;
   });
-
   document.getElementById("usdRepay").addEventListener("input", ()=>{
     const u=parseFloat(document.getElementById("usdRepay").value)||0;
     document.getElementById("prevRepay").textContent=u>0?`${fmt(u,2)} pSunDAI`:"";
   });
 
   // ── ACTIONS ───────────────────────────────────────
+
+  // 1-Click Auto Mint
   document.getElementById("oneClickBtn").onclick = ()=>withLoading("oneClickBtn", async ()=>{
     const u=parseFloat(document.getElementById("usdOneClick").value);
     if (!u||u<=0) throw new Error("Enter a deposit amount");
-    if (!currentPrice||currentPrice===0n) throw new Error("Oracle price unavailable — wake the oracle first");
+    if (!currentPrice||currentPrice===0n) throw new Error("Oracle price unavailable \u2014 wake the oracle first");
     const plsWei=usdToPLS(u);
-    if (plsWei < BigInt(MIN_ACTION_AMOUNT)) throw new Error("Amount too small — minimum deposit is 0.0001 PLS");
     await (await vault.depositAndAutoMintPLS({value:plsWei})).wait();
-    const minted = u / (AUTO_MINT_RATIO / 100);
+    const minted=u/(AUTO_MINT_RATIO/100);
     toast(`Deposited ${fmt(Number(ethers.formatEther(plsWei)),0)} PLS, minted ${fmt(minted,2)} pSunDAI at 155%`);
     document.getElementById("usdOneClick").value="";
     document.getElementById("prevOneClick").textContent="";
   });
 
+  // Deposit PLS
   document.getElementById("deposit").onclick = ()=>withLoading("deposit", async ()=>{
     const u=parseFloat(document.getElementById("usdIn").value);
     if (!u||u<=0) throw new Error("Enter a deposit amount");
-    if (!currentPrice||currentPrice===0n) throw new Error("Oracle price unavailable — wake the oracle first");
+    if (!currentPrice||currentPrice===0n) throw new Error("Oracle price unavailable \u2014 wake the oracle first");
     const plsWei=usdToPLS(u);
-    if (plsWei < BigInt(MIN_ACTION_AMOUNT)) throw new Error("Amount too small — minimum deposit is 0.0001 PLS");
     await (await vault.depositPLS({value:plsWei})).wait();
     toast(`Deposited ${fmtPLS(plsWei)} PLS into vault`);
     document.getElementById("usdIn").value="";
     document.getElementById("prevDeposit").textContent="";
   });
 
+  // Mint pSunDAI
   document.getElementById("mint").onclick = ()=>withLoading("mint", async ()=>{
     const u=parseFloat(document.getElementById("usdMint").value);
     if (!u||u<=0) throw new Error("Enter an amount to mint");
+    const maxAmt=Number(ethers.formatEther(currentMintable));
+    if (maxAmt>0 && u>maxAmt+0.0001) throw new Error(`Maximum you can mint is ${fmt(maxAmt,4)} pSunDAI`);
     const wei=ethers.parseUnits(String(u),18);
     await (await vault.mint(wei)).wait();
     toast(`Minted ${fmt(u,2)} pSunDAI`);
@@ -1440,45 +1276,47 @@
     document.getElementById("prevMint").textContent="";
   });
 
+  // Repay — NO approval needed (vault burns directly via onlyVault permission)
   document.getElementById("repay").onclick = ()=>withLoading("repay", async ()=>{
     const u=parseFloat(document.getElementById("usdRepay").value);
     if (!u||u<=0) throw new Error("Enter an amount to repay");
-    const debtNum = Number(ethers.formatEther(currentDebt));
-    if (debtNum > 0 && u > debtNum) throw new Error(`Cannot repay more than your debt (${fmt(debtNum,4)} pSunDAI). Use Max to fill exact amount.`);
+    const debtNum=Number(ethers.formatEther(currentDebt));
+    if (debtNum>0 && u>debtNum+0.0001) throw new Error(`Cannot repay more than your debt (${fmt(debtNum,4)} pSunDAI). Use Max.`);
     const wei=ethers.parseUnits(String(u),18);
-    await (await token.approve(VAULT_ADDR,wei)).wait();
     await (await vault.repay(wei)).wait();
     toast(`Repaid ${fmt(u,2)} pSunDAI`);
     document.getElementById("usdRepay").value="";
     document.getElementById("prevRepay").textContent="";
   });
 
+  // Repay & Auto-Withdraw — NO approval needed
   document.getElementById("repayAuto").onclick = ()=>withLoading("repayAuto", async ()=>{
     const u=parseFloat(document.getElementById("usdRepay").value);
     if (!u||u<=0) throw new Error("Enter an amount to repay");
-    const debtNum = Number(ethers.formatEther(currentDebt));
-    if (debtNum > 0 && u > debtNum) throw new Error(`Cannot repay more than your debt (${fmt(debtNum,4)} pSunDAI). Use Max to fill exact amount.`);
+    const debtNum=Number(ethers.formatEther(currentDebt));
+    if (debtNum>0 && u>debtNum+0.0001) throw new Error(`Cannot repay more than your debt (${fmt(debtNum,4)} pSunDAI). Use Max.`);
     const wei=ethers.parseUnits(String(u),18);
-    await (await token.approve(VAULT_ADDR,wei)).wait();
     await (await vault.repayAndAutoWithdraw(wei)).wait();
-    // Note: if this repays ALL debt, the contract returns ALL collateral too
-    toast(`Repaid ${fmt(u,2)} pSunDAI and withdrew freed collateral`);
+    // If full debt repaid: vault closes and ALL collateral returned
+    const isFullRepay=(u>=debtNum-0.0001);
+    toast(isFullRepay
+      ? `Repaid all debt \u2014 vault closed, all collateral returned`
+      : `Repaid ${fmt(u,2)} pSunDAI and withdrew freed collateral`);
     document.getElementById("usdRepay").value="";
     document.getElementById("prevRepay").textContent="";
   });
 
+  // Repay to Safe — NO approval needed
+  // Approves currentDebt (not just `needed`) because interest accrues between the
+  // repayToHealth() view call and when autoRepayToHealth() executes on-chain.
   document.getElementById("repayToSafe").onclick = ()=>withLoading("repayToSafe", async ()=>{
     const needed=await vault.repayToHealth(account);
-    if (needed===0n) throw new Error("Already at or above 150% — no repayment needed");
-    // Approve currentDebt (not just `needed`) because interest accrues between
-    // the repayToHealth() view call and when autoRepayToHealth() executes.
-    // The contract will only burn what's actually needed — excess approval is safe.
-    const approveAmt = currentDebt > needed ? currentDebt : needed;
-    await (await token.approve(VAULT_ADDR, approveAmt)).wait();
+    if (needed===0n) throw new Error("Already at or above 150% \u2014 no repayment needed");
     await (await vault.autoRepayToHealth()).wait();
-    toast(`Repaid ${fmt(Number(ethers.formatEther(needed)),2)} pSunDAI — vault restored to 150%`);
+    toast(`Repaid ${fmt(Number(ethers.formatEther(needed)),2)} pSunDAI \u2014 vault restored to 150%`);
   });
 
+  // Withdraw PLS
   document.getElementById("withdraw").onclick = ()=>withLoading("withdraw", async ()=>{
     const u=parseFloat(document.getElementById("usdOut").value);
     if (!u||u<=0) throw new Error("Enter a withdrawal amount");
@@ -1490,11 +1328,12 @@
     document.getElementById("prevWithdraw").textContent="";
   });
 
+  // Withdraw Max Safe
   document.getElementById("withdrawMaxSafe").onclick = ()=>withLoading("withdrawMaxSafe", async ()=>{
     const info=await vault.vaultInfo(account);
     const vraw=await vault.vaults(account);
-    const cooldown=300-(Math.floor(Date.now()/1000)-Number(vraw.lastDepositTime));
-    if (cooldown>0) throw new Error(`Cooldown active — ${Math.ceil(cooldown/60)} min remaining`);
+    const cooldown=(COOLDOWN_SECS+1)-(Math.floor(Date.now()/1000)-Number(vraw.lastDepositTime));
+    if (cooldown>0) throw new Error(`Cooldown active \u2014 ${Math.ceil(cooldown/60)} min remaining`);
 
     let withdrawable;
     if (info.debt===0n) {
@@ -1504,19 +1343,23 @@
       if (!currentPrice||currentPrice===0n) throw new Error("Oracle price unavailable");
       const reqColl=(info.debt*150n*DECIMALS)/(currentPrice*100n);
       withdrawable=info.collateral>reqColl?info.collateral-reqColl:0n;
-      if (withdrawable===0n) throw new Error("Already at 150% minimum — repay debt to withdraw more");
+      if (withdrawable===0n) throw new Error("Already at 150% minimum \u2014 repay debt to withdraw more");
     }
     await (await vault.withdrawPLS(withdrawable)).wait();
-    toast(`Withdrew ${fmtPLS(withdrawable)} PLS ($${fmt(plsToUsd(withdrawable),2)}) — vault at 150%`);
+    toast(`Withdrew ${fmtPLS(withdrawable)} PLS ($${fmt(plsToUsd(withdrawable),2)}) \u2014 vault at 150%`);
   });
 
+  // Emergency Unlock
   document.getElementById("emergencyUnlock").onclick = ()=>withLoading("emergencyUnlock", async ()=>{
     const info=await vault.vaultInfo(account);
-    if (info.debt>0n) throw new Error("Must have zero debt to use emergency unlock");
+    if (info.debt>0n)         throw new Error("Must have zero debt to use emergency unlock");
     if (info.collateral===0n) throw new Error("No collateral to recover");
     await (await vault.emergencyUnlock()).wait();
-    toast(`Emergency unlock — recovered ${fmtPLS(info.collateral)} PLS`);
+    toast(`Emergency unlock \u2014 recovered ${fmtPLS(info.collateral)} PLS`);
   });
+
+  // Wake Oracle (pokeBtn handler set inline in checkOracleHealth)
+  document.getElementById("pokeBtn").onclick = pokeOracle;
 
   // ── INIT ─────────────────────────────────────────
   document.getElementById("walletBtn").onclick = connectWallet;
