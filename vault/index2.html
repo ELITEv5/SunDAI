@@ -107,13 +107,39 @@
 
     /* ── PAGE ── */
     .page {
-      max-width: 520px; width: 100%; margin: 0 auto;
-      padding: 96px 14px 80px; position: relative; z-index: 10;
+      max-width: 1100px; width: 100%; margin: 0 auto;
+      padding: 96px 20px 80px; position: relative; z-index: 10;
     }
     @media (max-width: 480px) { .page { padding: 90px 12px 70px; } }
 
+    /* Two-column layout on desktop, single column on mobile */
+    .layout { display: block; }
+    .col-left  { width: 100%; }
+    .col-right { width: 100%; }
+
+    @media (min-width: 900px) {
+      .layout {
+        display: grid;
+        grid-template-columns: 340px 1fr;
+        gap: 24px;
+        align-items: start;
+      }
+      /* Left column: sticky vault status panel */
+      .col-left {
+        position: sticky;
+        top: 96px;
+        max-height: calc(100vh - 110px);
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: none;
+      }
+      .col-left::-webkit-scrollbar { display: none; }
+    }
+
     /* ── HERO ── */
     .hero { text-align: center; padding: 16px 0 16px; }
+    @media (min-width: 900px) { .hero { padding: 8px 0 12px; } }
+    @media (min-width: 900px) { .hero-logo { width: 56px; height: 56px; margin-bottom: 8px; } }
     .hero-logo {
       width: 72px; height: 72px; object-fit: contain; display: block; margin: 0 auto 10px;
       animation: glow 4s ease-in-out infinite;
@@ -375,6 +401,7 @@
 
 <main class="page">
 
+  <!-- HERO — full width above columns -->
   <div class="hero">
     <img src="sundailogo.png" class="hero-logo" alt="SunDAI" />
     <h1>SunDAI Vault</h1>
@@ -386,6 +413,12 @@
   </div>
 
   <div class="toast-area" id="toastArea"></div>
+
+  <!-- TWO-COLUMN LAYOUT: left = status, right = actions -->
+  <div class="layout">
+
+  <!-- LEFT COLUMN: vault status, stats, explainers -->
+  <div class="col-left">
 
   <!-- WHAT IS SUNDAI -->
   <div class="intro-banner">
@@ -512,6 +545,11 @@
   <div class="note-warn" id="systemHealthWarning">
     System health is below 130% &mdash; new minting is temporarily paused by the contract until health recovers. You can still repay debt and withdraw collateral.
   </div>
+
+  </div><!-- end col-left -->
+
+  <!-- RIGHT COLUMN: all action cards, scrolls independently -->
+  <div class="col-right">
 
   <!-- ════ OPEN / ADD TO VAULT ════ -->
   <div class="section-head"><div class="section-label">Open / Add to Vault</div><div class="section-line"></div></div>
@@ -762,6 +800,9 @@
     </button>
     <div class="note-safe">Recovers all PLS after 30 days with zero debt &mdash; no penalties.</div>
   </div>
+
+  </div><!-- end col-right -->
+  </div><!-- end layout -->
 
 </main>
 
