@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>SunDAI – Golden Sun Vault</title>
+  <link rel="icon" href="sundailogo.png" type="image/png" />
+  <meta name="description" content="Autonomous 150% PLS-Collateralized Stable Asset on PulseChain." />
+  <meta name="theme-color" content="#FF6B00" />
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="sundailogo.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+
+  <script>
+    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && !navigator.userAgent.includes("MetaMaskMobile")) {
+      const url = location.origin + location.pathname + location.search + location.hash;
+      location.replace(/iPhone|iPad|iPod/i.test(navigator.userAgent)
+        ? "metamask://dapp/" + url.replace(/^https?:\/\//, '')
+        : "https://metamask.app.link/dapp/" + encodeURIComponent(url));
+    }
+  </script>
+  <script src="ethers.umd.min.js"></script>
+
+  <style>
+    /* ─────────────────────────────────────────────────────────
+       TOKENS
+    ───────────────────────────────────────────────────────── */
+    :root {
+      --sun:      #FF8C00;
+      --gold:     #FFD700;
+      --amber:    #FF6B00;
+      --cream:    #FFF5E4;
+      --dim:      rgba(255,245,228,0.55);
+      --bg:       #06001A;
+      --panel:    rgba(12,2,30,0.82);
+      --card:     rgba(255,140,0,0.055);
+      --border:   rgba(255,140,0,0.22);
+      --border-hi:rgba(255,215,0,0.5);
+      --safe:     #00FFA3;
+      --warn:     #FFD000;
+      --risk:     #FF2D55;
+      --purple:   #B57BFF;
+      --mono:     'Space Mono', monospace;
+      --display:  'Outfit', sans-serif;
+      --r:        16px;
+      --r-sm:     10px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg); color: var(--cream);
+      font-family: var(--display); min-height: 100vh; overflow-x: hidden;
+    }
+
+    /* ─────────────────────────────────────────────────────────
+       CANVAS BG
+    ───────────────────────────────────────────────────────── */
+    #bgCanvas {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      opacity: 0; animation: fadeIn 2s ease forwards;
+    }
+    @keyframes fadeIn { to { opacity: 1; } }
+
+    /* ─────────────────────────────────────────────────────────
+       GRAIN OVERLAY
+    ───────────────────────────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+      opacity: 0.6;
+    }
+
+    /* ─────────────────────────────────────────────────────────
+       NAV
+    ───────────────────────────────────────────────────────── */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: 58px;
+      display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
+      background: rgba(6,0,26,0.92); backdrop-filter: blur(28px);
+      border-bottom: 1px solid rgba(255,140,0,0.15);
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; color: var(--cream);
+    }
+    .nav-logo img { height: 28px; width: 28px; object-fit: contain; }
+    .nav-logo-text {
+      font-family: var(--display); font-weight: 900; font-size: 1.1em;
+      letter-spacing: -0.02em;
+      background: linear-gradient(90deg, #FF8C00, #FFD700);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .nav-center { display: flex; gap: 4px; }
+    .nav-link {
+      padding: 6px 16px; border-radius: 8px; font-size: 0.82em; font-weight: 600;
+      text-decoration: none; color: rgba(255,245,228,0.5); transition: all 0.15s;
+      border: 1px solid transparent; letter-spacing: 0.02em;
+    }
+    .nav-link:hover { color: var(--cream); background: rgba(255,140,0,0.1); border-color: rgba(255,140,0,0.2); }
+    .nav-link.active { color: var(--gold); border-color: rgba(255,215,0,0.35); background: rgba(255,215,0,0.07); }
+    .wallet-btn {
+      background: linear-gradient(135deg, rgba(255,107,0,0.18), rgba(255,180,0,0.12));
+      border: 1px solid rgba(255,140,0,0.45); color: var(--cream);
+      font-family: var(--display); font-weight: 700; font-size: 0.82em;
+      padding: 7px 18px; border-radius: 9px; cursor: pointer; transition: all 0.2s;
+      white-space: nowrap; flex-shrink: 0; letter-spacing: 0.02em;
+    }
+    .wallet-btn:hover { background: linear-gradient(135deg, rgba(255,107,0,0.3), rgba(255,180,0,0.22)); border-color: rgba(255,215,0,0.6); }
+    .wallet-btn.connected { border-color: var(--gold); color: var(--gold); background: rgba(255,215,0,0.08); }
+    @media (max-width: 520px) {
+      .nav { padding: 0 14px; }
+      .nav-logo-text { display: none; }
+      .nav-link { padding: 6px 10px; font-size: 0.78em; }
+      .wallet-btn { padding: 6px 12px; font-size: 0.76em; }
+    }
+
+    /* ─────────────────────────────────────────────────────────
+       ORACLE BAR
+    ───────────────────────────────────────────────────────── */
+    .oracle-bar {
+      position: fixed; top: 58px; left: 0; right: 0; z-index: 999;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 5px 16px; font-size: 0.73em; font-weight: 600; font-family: var(--mono);
+      transition: all 0.3s; backdrop-filter: blur(16px);
+      background: rgba(0,30,15,0.96); border-bottom: 1px solid rgba(0,255,163,0.2);
+      color: var(--safe); letter-spacing: 0.03em; min-height: 26px;
+    }
+    .oracle-bar.stale   { background: rgba(28,0,12,0.96); border-color: rgba(255,45,85,0.3); color: var(--risk); }
+    .oracle-bar.checking{ background: rgba(20,15,0,0.96); border-color: rgba(255,208,0,0.2); color: var(--warn); }
+    .oracle-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+    .oracle-bar.stale .oracle-dot { animation: blink 1s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.1} }
+    .poke-btn {
+      background: rgba(255,45,85,0.15); border: 1px solid rgba(255,45,85,0.4);
+      color: var(--risk); font-size: 0.95em; font-weight: 700; padding: 1px 10px;
+      border-radius: 4px; cursor: pointer; transition: all 0.15s; font-family: var(--mono);
+    }
+    .poke-btn:hover { background: rgba(255,45,85,0.28); }
+
+    /* ─────────────────────────────────────────────────────────
+       LAYOUT
+    ───────────────────────────────────────────────────────── */
+    .shell {
+      position: relative; z-index: 10;
+      max-width: 1200px; margin: 0 auto;
+      padding: 84px 20px 80px;
+    }
+    @media (max-width: 520px) { .shell { padding: 82px 12px 60px; } }
+
+    /* Desktop: sidebar + main */
+    @media (min-width: 900px) {
+      .shell { display: grid; grid-template-columns: 360px 1fr; grid-template-rows: auto 1fr; column-gap: 28px; }
+      .shell-hero   { grid-column: 1 / -1; }
+      .shell-left   { grid-column: 1; grid-row: 2; }
+      .shell-right  { grid-column: 2; grid-row: 2; }
+      .sidebar-inner {
+        position: sticky; top: 88px;
+        max-height: calc(100vh - 100px); overflow-y: auto; overflow-x: hidden;
+        scrollbar-width: none; padding-right: 2px;
+      }
+      .sidebar-inner::-webkit-scrollbar { display: none; }
+    }
+
+    /* ─────────────────────────────────────────────────────────
+       HERO
+    ───────────────────────────────────────────────────────── */
+    .hero {
+      text-align: center; padding: 24px 0 20px;
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+    }
+    @media (min-width: 900px) { .hero { padding: 12px 0 20px; } }
+
+    .hero-logo-wrap {
+      position: relative; width: 72px; height: 72px;
+    }
+    @media (min-width: 900px) { .hero-logo-wrap { width: 52px; height: 52px; } }
+
+    .hero-logo-wrap::before {
+      content: ''; position: absolute; inset: -12px;
+      background: radial-gradient(circle, rgba(255,140,0,0.35) 0%, transparent 70%);
+      border-radius: 50%; animation: pulse-ring 3s ease-in-out infinite;
+    }
+    @keyframes pulse-ring {
+      0%,100% { transform: scale(0.9); opacity: 0.5; }
+      50%      { transform: scale(1.15); opacity: 1; }
+    }
+    .hero-logo { width: 100%; height: 100%; object-fit: contain; position: relative; z-index: 1;
+      filter: drop-shadow(0 0 14px rgba(255,160,40,0.5)); }
+
+    .hero-title {
+      font-size: clamp(2em, 6vw, 3em); font-weight: 900; letter-spacing: -0.03em;
+      line-height: 1;
+      background: linear-gradient(135deg, #FF8C00 0%, #FFD700 45%, #FFF5E4 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    @media (min-width: 900px) { .hero-title { font-size: 2em; } }
+
+    .hero-sub {
+      color: var(--dim); font-size: 0.88em; font-weight: 400; letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .price-pill {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: rgba(255,215,0,0.07); border: 1px solid rgba(255,215,0,0.2);
+      padding: 8px 20px; border-radius: 100px;
+      font-family: var(--mono);
+    }
+    .price-pill .plabel { color: var(--dim); font-size: 0.72em; letter-spacing: 0.06em; text-transform: uppercase; }
+    .price-pill .pval   { color: var(--gold); font-weight: 700; font-size: 1em; }
+
+    /* ─────────────────────────────────────────────────────────
+       TOAST
+    ───────────────────────────────────────────────────────── */
+    .toast-area { min-height: 32px; text-align: center; margin: 4px 0; }
+    .toast {
+      display: inline-block; font-size: 0.82em; font-weight: 600;
+      padding: 7px 18px; border-radius: 8px; animation: toastIn 0.22s ease;
+      font-family: var(--mono); max-width: 95vw; word-break: break-word;
+    }
+    @keyframes toastIn { from { opacity:0; transform:translateY(-6px); } }
+    .toast.ok  { background: rgba(0,255,163,0.09); border: 1px solid rgba(0,255,163,0.25); color: var(--safe); }
+    .toast.err { background: rgba(255,45,85,0.09);  border: 1px solid rgba(255,45,85,0.25);  color: var(--risk); }
+
+    /* ─────────────────────────────────────────────────────────
+       CONNECT CTA
+    ───────────────────────────────────────────────────────── */
+    .connect-cta {
+      border: 1px dashed rgba(255,140,0,0.28); border-radius: var(--r);
+      padding: 28px 20px; text-align: center; margin-bottom: 14px;
+      background: rgba(255,100,0,0.04);
+    }
+    .connect-cta p { color: var(--dim); font-size: 0.88em; margin-bottom: 16px; line-height: 1.55; }
+
+    /* ─────────────────────────────────────────────────────────
+       VAULT HEALTH PANEL (sidebar)
+    ───────────────────────────────────────────────────────── */
+    .vault-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 20px;
+      margin-bottom: 14px;
+      backdrop-filter: blur(24px);
+      box-shadow: 0 0 0 1px rgba(255,140,0,0.06) inset, 0 16px 48px rgba(0,0,0,0.5);
+      position: relative; overflow: hidden;
+    }
+    .vault-panel::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,215,0,0.4), transparent);
+    }
+    .panel-label {
+      font-size: 0.62em; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.12em; color: rgba(255,215,0,0.4); margin-bottom: 16px;
+      font-family: var(--mono);
+    }
+
+    .vault-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+    .vstat {
+      background: rgba(255,100,0,0.07); border: 1px solid rgba(255,100,0,0.13);
+      border-radius: 10px; padding: 11px 13px;
+    }
+    .vstat-label { font-size: 0.66em; color: rgba(255,189,112,0.6); margin-bottom: 4px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+    .vstat-val { font-size: 0.96em; font-weight: 700; font-family: var(--mono); color: var(--gold); word-break: break-all; }
+    .vstat-sub { font-size: 0.64em; color: rgba(255,245,228,0.35); margin-top: 2px; font-family: var(--mono); }
+    .vstat-val.safe { color: var(--safe); }
+    .vstat-val.warn { color: var(--warn); }
+    .vstat-val.risk { color: var(--risk); }
+
+    /* ── RATIO GAUGE ── */
+    .gauge-lbl-row {
+      display: flex; justify-content: space-between;
+      font-family: var(--mono); font-size: 0.63em; color: rgba(255,245,228,0.28);
+      margin-bottom: 6px; letter-spacing: 0.03em;
+    }
+    .gauge-track {
+      height: 6px; border-radius: 100px; background: rgba(255,255,255,0.05);
+      position: relative; overflow: visible;
+    }
+    .gauge-fill {
+      height: 100%; border-radius: 100px; transition: width 0.8s cubic-bezier(.4,0,.2,1);
+      background: linear-gradient(90deg, var(--risk) 0%, var(--warn) 30%, var(--safe) 70%);
+    }
+    /* 150% mark: (150-110)/(250-110) = 28.57% */
+    .gauge-mark {
+      position: absolute; top: -5px; bottom: -5px; width: 2px;
+      background: rgba(255,255,255,0.3); border-radius: 2px; left: 28.57%;
+    }
+    .gauge-mark::after {
+      content: '150%'; position: absolute; top: 12px; left: 50%;
+      transform: translateX(-50%); font-size: 0.6em; color: rgba(255,255,255,0.3);
+      font-family: var(--mono); white-space: nowrap;
+    }
+    .ratio-display {
+      display: flex; align-items: baseline; justify-content: center; gap: 10px; margin-top: 16px;
+    }
+    .ratio-num {
+      font-size: 2.6em; font-weight: 900; font-family: var(--mono);
+      letter-spacing: -0.04em; transition: color 0.4s, text-shadow 0.4s;
+    }
+    .ratio-num.safe { color: var(--safe); text-shadow: 0 0 24px rgba(0,255,163,0.4); }
+    .ratio-num.warn { color: var(--warn); text-shadow: 0 0 24px rgba(255,208,0,0.4); }
+    .ratio-num.risk { color: var(--risk); text-shadow: 0 0 24px rgba(255,45,85,0.4); animation: pulse-risk 1.5s ease infinite; }
+    @keyframes pulse-risk { 0%,100%{opacity:1} 50%{opacity:0.7} }
+    .ratio-caption { font-size: 0.78em; color: var(--dim); transition: color 0.4s; font-weight: 400; }
+    .ratio-caption.safe { color: var(--safe); }
+    .ratio-caption.warn { color: var(--warn); }
+    .ratio-caption.risk { color: var(--risk); }
+
+    /* ── GLOBAL STATS ── */
+    .global-strip {
+      display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; margin-bottom: 14px;
+    }
+    @media (min-width: 900px) { .global-strip { grid-template-columns: repeat(2,1fr); } }
+    @media (max-width: 520px) { .global-strip { grid-template-columns: repeat(2,1fr); } }
+    .gcell {
+      background: rgba(255,100,0,0.05); border: 1px solid rgba(255,100,0,0.12);
+      border-radius: 10px; padding: 10px; text-align: center;
+    }
+    .gcell-label { font-size: 0.6em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,189,112,0.45); margin-bottom: 4px; }
+    .gcell-val { font-size: 0.82em; font-weight: 700; color: var(--gold); font-family: var(--mono); }
+
+    /* ── COLLAPSIBLE BANNERS ── */
+    .banner {
+      border: 1px solid rgba(255,107,0,0.2); border-radius: var(--r);
+      overflow: hidden; margin-bottom: 10px;
+      background: rgba(255,90,0,0.04);
+    }
+    .banner-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px; cursor: pointer; user-select: none; min-height: 44px;
+      transition: background 0.15s;
+    }
+    .banner-head:hover { background: rgba(255,140,0,0.06); }
+    .banner-title { font-weight: 700; color: var(--sun); font-size: 0.88em; letter-spacing: 0.01em; }
+    .banner-chevron { color: rgba(255,215,0,0.5); font-size: 0.8em; transition: transform 0.3s; flex-shrink: 0; margin-left: 8px; }
+    .banner-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; padding: 0 16px; }
+    .banner-body.open { max-height: 1000px; padding: 0 16px 16px; }
+    .banner-body p { font-size: 0.83em; color: rgba(255,245,228,0.72); line-height: 1.7; margin-bottom: 8px; font-weight: 400; }
+    .banner-body p:last-child { margin-bottom: 0; }
+    .banner-body strong { color: var(--gold); font-weight: 700; }
+
+    .step-list { display: flex; flex-direction: column; padding-top: 4px; }
+    .step { display: flex; gap: 12px; }
+    .step-spine { display: flex; flex-direction: column; align-items: center; }
+    .step-num {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: rgba(255,140,0,0.15); border: 1.5px solid rgba(255,140,0,0.35);
+      color: var(--sun); font-size: 0.72em; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      font-family: var(--mono);
+    }
+    .step-line { width: 1px; flex: 1; min-height: 12px; background: rgba(255,140,0,0.16); }
+    .step-content { padding-bottom: 12px; }
+    .step-title { font-weight: 700; font-size: 0.85em; color: var(--cream); margin-bottom: 2px; }
+    .step-desc { font-size: 0.76em; color: rgba(255,245,228,0.48); line-height: 1.5; }
+
+    .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .pill {
+      font-size: 0.7em; font-weight: 700; padding: 3px 10px; border-radius: 100px;
+      background: rgba(0,255,163,0.07); border: 1px solid rgba(0,255,163,0.2); color: var(--safe);
+      letter-spacing: 0.02em;
+    }
+    .pill.amber { background: rgba(255,140,0,0.09); border-color: rgba(255,140,0,0.25); color: var(--sun); }
+
+    /* ─────────────────────────────────────────────────────────
+       SECTION HEADERS
+    ───────────────────────────────────────────────────────── */
+    .section-head {
+      display: flex; align-items: center; gap: 10px;
+      margin: 22px 0 10px; padding: 0 2px;
+    }
+    .section-label {
+      font-size: 0.65em; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.12em; color: rgba(255,215,0,0.4); white-space: nowrap;
+      font-family: var(--mono);
+    }
+    .section-line { flex: 1; height: 1px; background: rgba(255,140,0,0.12); }
+
+    /* ─────────────────────────────────────────────────────────
+       ACTION CARDS
+    ───────────────────────────────────────────────────────── */
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 18px; margin-bottom: 10px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      position: relative; overflow: hidden;
+    }
+    .card::before {
+      content: ''; position: absolute; top: 0; left: -100%; width: 60%;
+      height: 1px; background: linear-gradient(90deg, transparent, rgba(255,215,0,0.3), transparent);
+      transition: left 0.5s ease;
+    }
+    .card:hover { border-color: rgba(255,140,0,0.4); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+    .card:hover::before { left: 140%; }
+
+    .card.gold   { border-color: rgba(255,215,0,0.32);  background: rgba(255,215,0,0.04); }
+    .card.purple { border-color: rgba(181,123,255,0.3); background: rgba(181,123,255,0.04); }
+    .card.red    { border-color: rgba(255,45,85,0.28);  background: rgba(255,45,85,0.04); }
+
+    .card-head {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 12px;
+    }
+    .card-title { font-weight: 700; font-size: 0.95em; color: var(--cream); letter-spacing: -0.01em; }
+    .badge {
+      font-size: 0.63em; font-weight: 700; padding: 2px 9px; border-radius: 100px;
+      border: 1px solid; white-space: nowrap; flex-shrink: 0; letter-spacing: 0.04em;
+      text-transform: uppercase; font-family: var(--mono);
+    }
+    .badge.green  { color: var(--safe); border-color: rgba(0,255,163,0.3); background: rgba(0,255,163,0.07); }
+    .badge.amber  { color: var(--warn); border-color: rgba(255,208,0,0.3); background: rgba(255,208,0,0.07); }
+    .badge.purple { color: var(--purple); border-color: rgba(181,123,255,0.3); background: rgba(181,123,255,0.07); }
+
+    /* ── EXPLAINER ── */
+    .exp-toggle {
+      display: flex; align-items: center; gap: 5px; font-size: 0.73em;
+      color: rgba(255,189,112,0.45); cursor: pointer; user-select: none;
+      margin-bottom: 12px; transition: color 0.15s; width: fit-content; min-height: 24px;
+    }
+    .exp-toggle:hover { color: var(--sun); }
+    .exp-toggle svg { transition: transform 0.25s; flex-shrink: 0; }
+    .exp-toggle.open svg { transform: rotate(90deg); }
+    .exp-body { max-height: 0; overflow: hidden; transition: max-height 0.32s ease; }
+    .exp-body.open { max-height: 600px; }
+    .exp-inner {
+      background: rgba(255,140,0,0.04); border: 1px solid rgba(255,140,0,0.11);
+      border-radius: var(--r-sm); padding: 12px 14px; margin-bottom: 12px;
+    }
+    .exp-inner p { font-size: 0.8em; color: rgba(255,245,228,0.68); line-height: 1.65; margin-bottom: 7px; font-weight: 400; }
+    .exp-inner p:last-child { margin-bottom: 0; }
+    .exp-inner strong { color: var(--gold); font-weight: 700; }
+    .exp-example {
+      margin-top: 8px; padding: 8px 12px; background: rgba(0,0,0,0.28);
+      border-left: 2px solid var(--sun); border-radius: 6px;
+      font-size: 0.76em; color: rgba(255,245,228,0.55); font-family: var(--mono); line-height: 1.65;
+    }
+
+    /* ── INPUTS ── */
+    .input-row { display: flex; gap: 7px; margin-bottom: 7px; align-items: stretch; }
+    .input-row input { flex: 1; min-width: 0; }
+    .max-btn {
+      background: rgba(255,140,0,0.12); border: 1px solid rgba(255,140,0,0.3);
+      color: var(--sun); font-family: var(--mono); font-weight: 700; font-size: 0.76em;
+      padding: 0 14px; border-radius: var(--r-sm); cursor: pointer; transition: all 0.15s; white-space: nowrap;
+      letter-spacing: 0.04em;
+    }
+    .max-btn:hover { background: rgba(255,140,0,0.24); border-color: rgba(255,140,0,0.55); }
+    input[type="number"] {
+      width: 100%; background: rgba(10,2,28,0.85); border: 1px solid rgba(255,140,0,0.28);
+      color: var(--cream); font-family: var(--display); font-size: 0.97em; font-weight: 600;
+      padding: 12px 14px; border-radius: var(--r-sm); outline: none; display: block;
+      transition: border-color 0.2s, box-shadow 0.2s; -webkit-appearance: none;
+    }
+    input[type="number"]:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255,215,0,0.1); }
+    input[type="number"]::placeholder { color: rgba(255,245,228,0.22); font-weight: 400; }
+    .preview {
+      font-size: 0.76em; color: rgba(255,189,112,0.7); text-align: center; min-height: 16px;
+      margin-bottom: 8px; font-family: var(--mono); letter-spacing: 0.02em;
+    }
+
+    /* ── BUTTONS ── */
+    .btn {
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+      font-family: var(--display); font-weight: 700; font-size: 0.92em;
+      padding: 14px; border-radius: var(--r-sm); border: none; cursor: pointer; transition: all 0.18s;
+      letter-spacing: 0.01em; position: relative; overflow: hidden;
+    }
+    .btn::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.07) 0%, transparent 60%);
+      border-radius: inherit; pointer-events: none;
+    }
+    .btn-orange { background: linear-gradient(135deg, #FF7400, #FFBE00); color: #0a0012; box-shadow: 0 4px 20px rgba(255,120,0,0.3); }
+    .btn-orange:hover:not(:disabled) { background: linear-gradient(135deg, #FFBE00, #FFE44D); transform: translateY(-2px); box-shadow: 0 8px 28px rgba(255,200,0,0.4); }
+    .btn-green  { background: linear-gradient(135deg, #00C47A, #00FFA3); color: #0a0012; box-shadow: 0 4px 20px rgba(0,200,120,0.25); }
+    .btn-green:hover:not(:disabled)  { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,255,163,0.35); }
+    .btn-purple { background: linear-gradient(135deg, #7C3AED, #B57BFF); color: #fff; box-shadow: 0 4px 20px rgba(124,58,237,0.3); }
+    .btn-purple:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(181,123,255,0.4); }
+    .btn-red    { background: linear-gradient(135deg, #C0143C, #FF2D55); color: #fff; box-shadow: 0 4px 20px rgba(192,20,60,0.3); }
+    .btn-red:hover:not(:disabled)    { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(255,45,85,0.4); }
+    .btn-ghost  { background: transparent; border: 1px solid rgba(255,140,0,0.35); color: var(--sun); }
+    .btn-ghost:hover:not(:disabled)  { background: rgba(255,140,0,0.08); border-color: rgba(255,140,0,0.6); }
+    .btn:disabled { background: rgba(30,12,50,0.9) !important; color: rgba(255,255,255,0.2) !important; cursor: not-allowed; transform: none !important; box-shadow: none !important; border-color: transparent !important; }
+    .btn::after { display: none; }
+    .btn .spin { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.2); border-top-color: currentColor; border-radius: 50%; animation: spin 0.65s linear infinite; display: none; flex-shrink: 0; }
+    .btn.loading .spin { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .btn + .helper { margin-top: 8px; }
+    .helper { font-size: 0.72em; color: rgba(255,245,228,0.32); text-align: center; line-height: 1.5; }
+    .note-warn { font-size: 0.76em; padding: 8px 12px; background: rgba(255,208,0,0.07); border: 1px solid rgba(255,208,0,0.18); border-radius: 8px; color: var(--warn); text-align: center; margin-top: 8px; }
+    .note-safe { font-size: 0.76em; padding: 8px 12px; background: rgba(0,255,163,0.06); border: 1px solid rgba(0,255,163,0.15); border-radius: 8px; color: var(--safe); text-align: center; margin-top: 8px; }
+    .preview-auto { color: rgba(255,189,112,0.65); font-size: 0.76em; text-align: center; margin-bottom: 8px; font-family: var(--mono); min-height: 16px; }
+    .btn-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 8px; }
+
+    /* ── RISK RESULT ── */
+    #riskResult { margin-top: 10px; text-align: center; font-weight: 600; font-size: 0.85em; min-height: 18px; line-height: 1.5; }
+
+    /* ─────────────────────────────────────────────────────────
+       FOOTER
+    ───────────────────────────────────────────────────────── */
+    .footer {
+      margin-top: 40px; padding: 32px 0 0;
+      border-top: 1px solid rgba(255,215,0,0.08);
+      font-size: 0.78em; color: rgba(255,189,112,0.5); position: relative; z-index: 10;
+    }
+    @media (min-width: 900px) {
+      .footer { grid-column: 1 / -1; }
+    }
+    .footer h3 { color: rgba(255,215,0,0.7); margin-bottom: 14px; font-size: 0.88em; letter-spacing: 0.06em; text-transform: uppercase; font-family: var(--mono); }
+    .footer-contracts { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+    .contract { }
+    .contract .clabel { color: var(--amber); font-weight: 700; font-size: 0.78em; display: block; margin-bottom: 2px; letter-spacing: 0.04em; text-transform: uppercase; }
+    .contract a { color: rgba(255,245,228,0.6); font-family: var(--mono); font-size: 0.72em; word-break: break-all; text-decoration: none; }
+    .contract a:hover { color: var(--gold); }
+    .footer-note { color: rgba(255,189,112,0.3); font-size: 0.74em; line-height: 1.6; }
+
+    /* hidden states */
+    #emergencyCard    { display: none; }
+    #sysHealthWarn    { display: none; }
+  </style>
+</head>
+<body>
+
+<!-- CANVAS BACKGROUND -->
+<canvas id="bgCanvas"></canvas>
+
+<!-- NAV -->
+<nav class="nav">
+  <a class="nav-logo" href="index_vault.html">
+    <img src="sundailogo.png" alt="SunDAI" />
+    <span class="nav-logo-text">SunDAI</span>
+  </a>
+  <div class="nav-center">
+    <a class="nav-link active" href="index_vault.html">Vault</a>
+    <a class="nav-link" href="liquidations.html">Liquidate</a>
+  </div>
+  <button class="wallet-btn" id="walletBtn">Connect Wallet</button>
+</nav>
+
+<!-- ORACLE STATUS BAR -->
+<div class="oracle-bar checking" id="oracleBar">
+  <div class="oracle-dot"></div>
+  <span id="oracleBarText">Checking oracle...</span>
+</div>
+
+<!-- MAIN SHELL -->
+<div class="shell">
+
+  <!-- HERO — full width row -->
+  <div class="shell-hero">
+    <div class="hero">
+      <div class="hero-logo-wrap">
+        <img src="sundailogo.png" class="hero-logo" alt="SunDAI" />
+      </div>
+      <div>
+        <div class="hero-title">SunDAI Vault</div>
+        <div class="hero-sub">Mint pSunDAI &nbsp;&bull;&nbsp; Backed by PLS &nbsp;&bull;&nbsp; Immutable</div>
+      </div>
+      <div class="price-pill">
+        <span class="plabel">PLS / USD</span>
+        <span class="pval" id="priceDisplay">&mdash;</span>
+      </div>
+    </div>
+    <div class="toast-area" id="toastArea"></div>
+  </div>
+
+  <!-- LEFT SIDEBAR -->
+  <div class="shell-left">
+    <div class="sidebar-inner">
+
+      <!-- WHAT IS SUNDAI -->
+      <div class="banner">
+        <div class="banner-head" onclick="toggleBanner('intro')">
+          <div class="banner-title">What is SunDAI?</div>
+          <div class="banner-chevron" id="introChev">&#9660;</div>
+        </div>
+        <div class="banner-body" id="introBody">
+          <p><strong>pSunDAI is a $1-pegged stablecoin backed by PLS</strong> &mdash; built on-chain with no owner, no admin keys, and no upgrades ever possible.</p>
+          <p>You lock PLS as collateral at <strong>at least 150%</strong> of the value you mint. A <strong>0.5% annual stability fee</strong> accrues on your debt. If PLS drops and your ratio falls <strong>below 110%</strong>, liquidators can claim your PLS at a 2&ndash;5% discount.</p>
+          <p><strong>Flash crash protected:</strong> The oracle ignores price drops shorter than 4 hours. Real drops step in 5% increments every 30 min after a 4-hour confirmation. No flash liquidations possible.</p>
+          <div class="pills">
+            <span class="pill">No admin keys</span>
+            <span class="pill">Immutable forever</span>
+            <span class="pill amber">0.5% APY fee</span>
+            <span class="pill amber">Liquidation &lt;110%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- HOW TO USE -->
+      <div class="banner" style="margin-bottom:14px">
+        <div class="banner-head" onclick="toggleBanner('guide')">
+          <div class="banner-title">How to use this vault</div>
+          <div class="banner-chevron" id="guideChev">&#9660;</div>
+        </div>
+        <div class="banner-body" id="guideBody">
+          <div class="step-list">
+            <div class="step">
+              <div class="step-spine"><div class="step-num">1</div><div class="step-line"></div></div>
+              <div class="step-content">
+                <div class="step-title">Connect your wallet</div>
+                <div class="step-desc">Click "Connect Wallet" top-right. MetaMask or Rabby. Auto-switches to PulseChain (chain ID 369).</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-spine"><div class="step-num">2</div><div class="step-line"></div></div>
+              <div class="step-content">
+                <div class="step-title">Check the oracle bar</div>
+                <div class="step-desc">The bar below the nav shows oracle freshness. If stale, wake it for the most current PLS price.</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-spine"><div class="step-num">3</div><div class="step-line"></div></div>
+              <div class="step-content">
+                <div class="step-title">Open vault with 1-Click Auto Mint</div>
+                <div class="step-desc">Enter USD value. One tx deposits PLS and mints pSunDAI at 155% ratio &mdash; above the 150% minimum.</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-spine"><div class="step-num">4</div><div class="step-line"></div></div>
+              <div class="step-content">
+                <div class="step-title">Monitor your ratio</div>
+                <div class="step-desc">Stay above 150%. If PLS drops, add collateral or repay. Below 110% = liquidatable.</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-spine"><div class="step-num">5</div></div>
+              <div class="step-content">
+                <div class="step-title">Exit: repay all debt, then withdraw</div>
+                <div class="step-desc">Repay all pSunDAI, then withdraw PLS. "Repay &amp; Withdraw" handles partial exits automatically.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRE-CONNECT -->
+      <div class="connect-cta" id="connectCta">
+        <p>Connect your wallet to view your vault position and manage your pSunDAI.</p>
+        <button class="btn btn-orange" style="max-width:220px;margin:0 auto" onclick="connectWallet()">
+          <span>Connect Wallet</span>
+        </button>
+      </div>
+
+      <!-- VAULT HEALTH PANEL -->
+      <div class="vault-panel" id="vaultPanel" style="display:none">
+        <div class="panel-label">Your Vault Position</div>
+        <div class="vault-grid">
+          <div class="vstat">
+            <div class="vstat-label">Collateral</div>
+            <div class="vstat-val" id="vc">&mdash;</div>
+            <div class="vstat-sub" id="vcUsd">&mdash;</div>
+          </div>
+          <div class="vstat">
+            <div class="vstat-label">Debt</div>
+            <div class="vstat-val" id="vd">&mdash;</div>
+            <div class="vstat-sub" id="vdFee">0.5% APY accruing</div>
+          </div>
+          <div class="vstat">
+            <div class="vstat-label">Can Mint</div>
+            <div class="vstat-val" id="vm">&mdash;</div>
+            <div class="vstat-sub" id="vmNote">before 150%</div>
+          </div>
+          <div class="vstat">
+            <div class="vstat-label">Coll. Value</div>
+            <div class="vstat-val" id="vcollUsd">&mdash;</div>
+            <div class="vstat-sub" id="vcollPls">&mdash;</div>
+          </div>
+        </div>
+        <div class="gauge-lbl-row"><span>Liquidation 110%</span><span>Safe 200%+</span></div>
+        <div class="gauge-track">
+          <div class="gauge-fill" id="gaugeFill" style="width:0%"></div>
+          <div class="gauge-mark"></div>
+        </div>
+        <div class="ratio-display">
+          <div class="ratio-num safe" id="ratioNum">&mdash;</div>
+          <div class="ratio-caption" id="ratioCaption">Connect wallet</div>
+        </div>
+      </div>
+
+      <!-- GLOBAL STATS -->
+      <div class="global-strip" id="globalStats" style="display:none">
+        <div class="gcell"><div class="gcell-label">System Coll.</div><div class="gcell-val" id="gColl">&mdash;</div></div>
+        <div class="gcell"><div class="gcell-label">Total Minted</div><div class="gcell-val" id="gDebt">&mdash;</div></div>
+        <div class="gcell"><div class="gcell-label">Sys. Health</div><div class="gcell-val" id="gHealth">&mdash;</div></div>
+        <div class="gcell"><div class="gcell-label">Your Share</div><div class="gcell-val" id="gShare">&mdash;</div></div>
+      </div>
+
+      <!-- SYSTEM HEALTH NOTE (manual mint only blocked, 1-click always works) -->
+      <div class="note-warn" id="sysHealthWarn">
+        System health below 130% &mdash; manual Mint is paused. <strong>1-Click Auto Mint still works.</strong>
+      </div>
+
+    </div><!-- end sidebar-inner -->
+  </div><!-- end shell-left -->
+
+  <!-- RIGHT — ACTION CARDS -->
+  <div class="shell-right">
+
+    <!-- ════ OPEN / ADD TO VAULT ════ -->
+    <div class="section-head"><div class="section-label">Open / Add to Vault</div><div class="section-line"></div></div>
+
+    <!-- 1-CLICK AUTO MINT -->
+    <div class="card gold">
+      <div class="card-head">
+        <div class="card-title">1-Click Auto Mint</div>
+        <div class="badge green">Recommended &mdash; Always Available</div>
+      </div>
+      <div class="exp-toggle" onclick="toggleExp(this)">
+        <svg width="9" height="9" viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9" fill="currentColor"/></svg>
+        How does this work?
+      </div>
+      <div class="exp-body">
+        <div class="exp-inner">
+          <p>The easiest way to start. Enter the USD value of PLS you want to deposit. The contract deposits your PLS <em>and</em> mints pSunDAI in a <strong>single transaction</strong>. Always available &mdash; no system health restriction.</p>
+          <p>Your vault opens at <strong>155% collateral ratio</strong>. This is hardcoded in the contract &mdash; the 5% buffer above the 150% minimum ensures rounding in the blockchain math never causes a revert. To mint at exactly 150%, use Deposit + Mint separately below.</p>
+          <div class="exp-example">Deposit $155 of PLS &rarr; receive $100.00 pSunDAI &rarr; ratio: 155%</div>
+        </div>
+      </div>
+      <div class="input-row">
+        <input id="usdOneClick" type="number" step="0.01" min="0" placeholder="USD value to deposit" />
+      </div>
+      <div class="preview" id="prevOneClick"></div>
+      <button class="btn btn-green" id="oneClickBtn" disabled>
+        <div class="spin"></div><span>1-Click Auto Mint (155%)</span>
+      </button>
+      <div class="helper">Deposits PLS + mints pSunDAI in one tx. Opens at 155% (hardcoded in contract). Always works.</div>
+    </div>
+
+    <!-- DEPOSIT PLS -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Deposit PLS</div>
+        <div class="badge amber">Adds Collateral</div>
+      </div>
+      <div class="exp-toggle" onclick="toggleExp(this)">
+        <svg width="9" height="9" viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9" fill="currentColor"/></svg>
+        When would I use this?
+      </div>
+      <div class="exp-body">
+        <div class="exp-inner">
+          <p>Adds more PLS to your vault. Raises your ratio and creates room to mint more pSunDAI. Also use this to top up a falling ratio before it hits 150%.</p>
+          <p>After depositing, there is a <strong>5-minute withdrawal cooldown</strong> &mdash; a security measure against flash-loan attacks.</p>
+        </div>
+      </div>
+      <div class="input-row">
+        <input id="usdIn" type="number" step="0.01" min="0" placeholder="USD value of PLS to deposit" />
+      </div>
+      <div class="preview" id="prevDeposit"></div>
+      <button class="btn btn-orange" id="deposit" disabled>
+        <div class="spin"></div><span>Deposit PLS</span>
+      </button>
+      <div class="helper">Locks PLS as collateral. Starts 5-min withdrawal cooldown.</div>
+    </div>
+
+    <!-- MINT pSunDAI -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Mint pSunDAI</div>
+        <div class="badge amber">Increases Debt</div>
+      </div>
+      <div class="exp-toggle" onclick="toggleExp(this)">
+        <svg width="9" height="9" viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9" fill="currentColor"/></svg>
+        What are the limits?
+      </div>
+      <div class="exp-body">
+        <div class="exp-inner">
+          <p>Mints pSunDAI against your existing collateral down to exactly <strong>150%</strong> &mdash; slightly more than 1-Click. Blocked if it would drop your ratio below 150%, or if system health falls below 130% (rare). Use "Max" to auto-fill the safe limit.</p>
+          <div class="exp-example">Collateral $300 | Debt $100 | Ratio 300% &rarr; can mint $100 more (to 150%)</div>
+        </div>
+      </div>
+      <div class="input-row">
+        <input id="usdMint" type="number" step="0.01" min="0" placeholder="pSunDAI amount to mint" />
+        <button class="max-btn" onclick="fillMintMax()">Max</button>
+      </div>
+      <div class="preview" id="prevMint"></div>
+      <button class="btn btn-orange" id="mint" disabled>
+        <div class="spin"></div><span>Mint pSunDAI</span>
+      </button>
+      <div class="helper">Must stay above 150% ratio. "Max" fills the exact safe limit.</div>
+    </div>
+
+    <!-- ════ REPAY & EXIT ════ -->
+    <div class="section-head"><div class="section-label">Repay &amp; Exit</div><div class="section-line"></div></div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Repay pSunDAI</div>
+        <div class="badge green">Reduces Debt</div>
+      </div>
+      <div class="exp-toggle" onclick="toggleExp(this)">
+        <svg width="9" height="9" viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9" fill="currentColor"/></svg>
+        When should I repay?
+      </div>
+      <div class="exp-body">
+        <div class="exp-inner">
+          <p>Burns pSunDAI to reduce debt and raise your ratio instantly. No cooldown. Use when PLS is falling and your ratio approaches 150%, or when exiting your vault.</p>
+          <p><strong>Repay to Safe</strong> auto-calculates the exact amount to restore 150%. <strong>Repay &amp; Withdraw</strong> repays and returns freed collateral above 150% in one tx. If you repay your <em>entire</em> debt, the contract closes your vault and returns all collateral at once.</p>
+          <p>No token approval needed &mdash; the vault burns pSunDAI directly using its vault-level permission. Single transaction.</p>
+        </div>
+      </div>
+      <div class="input-row">
+        <input id="usdRepay" type="number" step="0.01" min="0" placeholder="pSunDAI amount to repay" />
+        <button class="max-btn" onclick="fillRepayMax()">Max</button>
+      </div>
+      <div class="preview" id="prevRepay"></div>
+      <div class="btn-pair">
+        <button class="btn btn-orange" id="repay" disabled>
+          <div class="spin"></div><span>Repay</span>
+        </button>
+        <button class="btn btn-orange" id="repayAuto" disabled>
+          <div class="spin"></div><span>Repay &amp; Withdraw</span>
+        </button>
+      </div>
+      <button class="btn btn-red" id="repayToSafe" disabled style="margin-bottom:8px">
+        <div class="spin"></div><span id="repayToSafeLabel">Repay to Safe (150%)</span>
+      </button>
+      <div class="preview-auto" id="prevRepayToSafe"></div>
+      <div class="helper">No approval needed for any repay action. "Repay to Safe" auto-calculates the exact amount.</div>
+    </div>
+
+    <!-- ════ WITHDRAW ════ -->
+    <div class="section-head"><div class="section-label">Withdraw Collateral</div><div class="section-line"></div></div>
+
+    <div class="card purple">
+      <div class="card-head">
+        <div class="card-title">Withdraw PLS</div>
+        <div class="badge purple">Takes Collateral</div>
+      </div>
+      <div class="exp-toggle" onclick="toggleExp(this)">
+        <svg width="9" height="9" viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9" fill="currentColor"/></svg>
+        What limits my withdrawal?
+      </div>
+      <div class="exp-body">
+        <div class="exp-inner">
+          <p>Withdraws PLS from your vault. Only collateral above 150% can be taken. There is a <strong>5-min cooldown after depositing</strong>.</p>
+          <p><strong>Withdraw Max Safe</strong> auto-calculates and takes the maximum possible while keeping your vault exactly at 150%. This is how you take profits when PLS pumps.</p>
+          <div class="exp-example">PLS pumps &rarr; ratio rises to 220% &rarr; Withdraw Max Safe takes the excess &rarr; vault stays at 150%</div>
+        </div>
+      </div>
+      <div id="withdrawCooldownNote" class="note-warn" style="display:none"></div>
+      <div class="input-row">
+        <input id="usdOut" type="number" step="0.01" min="0" placeholder="USD value of PLS to withdraw" />
+      </div>
+      <div class="preview" id="prevWithdraw"></div>
+      <div class="btn-pair">
+        <button class="btn btn-purple" id="withdraw" disabled>
+          <div class="spin"></div><span>Withdraw</span>
+        </button>
+        <button class="btn btn-purple" id="withdrawMaxSafe" disabled>
+          <div class="spin"></div><span>Withdraw Max Safe</span>
+        </button>
+      </div>
+      <div class="preview-auto" id="prevWithdrawMax"></div>
+      <div class="helper">"Withdraw Max Safe" takes maximum PLS while keeping vault at exactly 150%.</div>
+    </div>
+
+    <!-- ════ SAFETY ════ -->
+    <div class="section-head"><div class="section-label">Safety &amp; Advanced</div><div class="section-line"></div></div>
+
+    <!-- LIQUIDATION RISK CHECK -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Check My Liquidation Risk</div>
+        <div class="badge amber">Safety Check</div>
+      </div>
+      <div class="exp-toggle" onclick="toggleExp(this)">
+        <svg width="9" height="9" viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9" fill="currentColor"/></svg>
+        What does this check?
+      </div>
+      <div class="exp-body">
+        <div class="exp-inner">
+          <p>Queries the contract directly to confirm whether your vault is currently liquidatable (ratio below 110%). The gauge above gives a live reading &mdash; this is a contract-level confirmation.</p>
+          <div class="exp-example">Safe: &gt;150% &mdash; no action needed<br>Warning: 110&ndash;150% &mdash; top up soon<br>At risk: &lt;110% &mdash; liquidatable now</div>
+        </div>
+      </div>
+      <button class="btn btn-red" id="riskCheckBtn" disabled onclick="checkMyRisk()">
+        <div class="spin"></div><span>Check My Liquidation Risk</span>
+      </button>
+      <div id="riskResult"></div>
+    </div>
+
+    <!-- LIQUIDATION DASHBOARD -->
+    <div class="card">
+      <div class="card-head"><div class="card-title">Liquidation Dashboard</div></div>
+      <div class="exp-toggle" onclick="toggleExp(this)">
+        <svg width="9" height="9" viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9" fill="currentColor"/></svg>
+        What can I do there?
+      </div>
+      <div class="exp-body">
+        <div class="exp-inner">
+          <p>View all vaults below 110% across the system. If you hold pSunDAI, you can repay another user's debt and receive their PLS at a <strong>2&ndash;5% bonus</strong> (grows over a 3-hour auction window).</p>
+        </div>
+      </div>
+      <button class="btn btn-ghost" onclick="window.location.href='liquidations.html?t='+Date.now()">
+        <span>View Liquidation Dashboard</span>
+      </button>
+    </div>
+
+    <!-- ORACLE CARD -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Oracle Price Feed</div>
+        <div class="badge green" id="oracleCardBadge">Live</div>
+      </div>
+      <div class="exp-toggle" onclick="toggleExp(this)">
+        <svg width="9" height="9" viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9" fill="currentColor"/></svg>
+        What is the oracle?
+      </div>
+      <div class="exp-body">
+        <div class="exp-inner">
+          <p>The oracle feeds PLS/USD price from <strong>5 PulseX pairs</strong> (DAI v1/v2, USDC v1/v2, USDT) using a TWAP + spot median. Price changes under <strong>3%</strong> accept instantly. Larger moves require <strong>4 hours to confirm</strong> downward or <strong>1 hour</strong> upward, then step in 5% or 10% increments every 30 min.</p>
+          <p>Manual poke has a <strong>30-minute cooldown</strong>. The vault always uses the last valid price as fallback, so repay and withdraw always work.</p>
+        </div>
+      </div>
+      <div class="preview-auto" id="oracleStatusText">Checking oracle status...</div>
+      <button class="btn btn-orange" id="pokeBtn" disabled>
+        <div class="spin"></div><span>Wake Oracle</span>
+      </button>
+    </div>
+
+    <!-- EMERGENCY UNLOCK -->
+    <div class="card red" id="emergencyCard">
+      <div class="card-head">
+        <div class="card-title">Emergency Unlock</div>
+        <div class="badge amber">Last Resort</div>
+      </div>
+      <div class="exp-toggle" onclick="toggleExp(this)">
+        <svg width="9" height="9" viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9" fill="currentColor"/></svg>
+        When can I use this?
+      </div>
+      <div class="exp-body">
+        <div class="exp-inner">
+          <p>If you have <strong>zero debt</strong> and last deposited <strong>30+ days ago</strong>, you can force-withdraw all PLS. A failsafe to prevent permanent lockups in the immutable contract. No penalty, no fee.</p>
+        </div>
+      </div>
+      <div class="preview-auto" id="prevEmergency"></div>
+      <button class="btn btn-red" id="emergencyUnlock" disabled>
+        <div class="spin"></div><span>Emergency Unlock</span>
+      </button>
+      <div class="note-safe">Recovers all PLS after 30 days with zero debt &mdash; no penalties.</div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <h3>Official Contracts &mdash; PulseChain</h3>
+      <div class="footer-contracts">
+        <div class="contract">
+          <span class="clabel">pSunDAI Token</span>
+          <a href="https://scan.pulsechain.com/address/0x5529c1cb179b2c256501031adCDAfC22D9c6d236" target="_blank">0x5529c1cb179b2c256501031adCDAfC22D9c6d236</a>
+        </div>
+        <div class="contract">
+          <span class="clabel">Vault</span>
+          <a href="https://scan.pulsechain.com/address/0x789472Ef7fa74cB8898Ed38cAa5d18f4D49EcC6d" target="_blank">0x789472Ef7fa74cB8898Ed38cAa5d18f4D49EcC6d</a>
+        </div>
+        <div class="contract">
+          <span class="clabel">Oracle</span>
+          <a href="https://scan.pulsechain.com/address/0xC19C8201701585D9087F261eaCd3Ee3345251Da3" target="_blank">0xC19C8201701585D9087F261eaCd3Ee3345251Da3</a>
+        </div>
+      </div>
+      <div class="footer-note">SunDAI is ownerless, immutable software. No admin. No upgrades. No reversals. Use at your own risk.</div>
+    </footer>
+
+  </div><!-- end shell-right -->
+</div><!-- end shell -->
+
+<script>
+  /* ──────────────────────────────────────────────────
+     CANVAS BACKGROUND — solar plasma
+  ────────────────────────────────────────────────── */
+  (function() {
+    const cv = document.getElementById('bgCanvas');
+    const ctx = cv.getContext('2d');
+    let W, H, mx = 0.5, my = 0.5, tmx = 0.5, tmy = 0.5, t = 0;
+
+    function resize() {
+      W = cv.width  = window.innerWidth;
+      H = cv.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    window.addEventListener('mousemove', e => { tmx = e.clientX/W; tmy = e.clientY/H; });
+    window.addEventListener('deviceorientation', e => {
+      if (e.gamma && e.beta) { tmx = (e.gamma/90)+0.5; tmy = (e.beta/90)+0.5; }
+    });
+
+    const orbs = [
+      { ox:0.2, oy:0.15, r:0.52, sx:0.6, sy:0.7, cr:'rgba(255,90,0,',   base:0.12 },
+      { ox:0.8, oy:0.8,  r:0.5,  sx:0.5, sy:0.6, cr:'rgba(255,180,0,',  base:0.10 },
+      { ox:0.5, oy:0.5,  r:0.6,  sx:0.4, sy:0.4, cr:'rgba(120,0,200,',  base:0.13 },
+      { ox:0.1, oy:0.9,  r:0.35, sx:0.8, sy:0.9, cr:'rgba(200,80,0,',   base:0.07 },
+    ];
+
+    function draw() {
+      t += 0.003;
+      mx += (tmx - mx) * 0.04;
+      my += (tmy - my) * 0.04;
+      ctx.clearRect(0, 0, W, H);
+      orbs.forEach((o, i) => {
+        const x = (o.ox + Math.sin(t * o.sx + i) * 0.2 + (mx - 0.5) * 0.12) * W;
+        const y = (o.oy + Math.cos(t * o.sy + i) * 0.18 + (my - 0.5) * 0.1) * H;
+        const r = o.r * Math.min(W, H);
+        const alpha = o.base + Math.sin(t * 0.8 + i * 1.3) * 0.04;
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+        g.addColorStop(0, o.cr + alpha + ')');
+        g.addColorStop(1, o.cr + '0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, W, H);
+      });
+      requestAnimationFrame(draw);
+    }
+    draw();
+    cv.style.opacity = '0';
+    setTimeout(() => { cv.style.transition = 'opacity 2s ease'; cv.style.opacity = '1'; }, 100);
+  })();
+
+  /* ──────────────────────────────────────────────────
+     CONSTANTS (verified against pSunDAIVault_ASA_v5_6.sol)
+     - COLLATERAL_RATIO = 150
+     - LIQUIDATION_RATIO = 110
+     - MIN_SYSTEM_HEALTH = 130
+     - depositAndAutoMintPLS() hardcodes 155 (no system health check)
+     - mint() requires systemHealth >= 130
+     - WITHDRAW_COOLDOWN = 300 seconds
+     - All repay functions burn directly — no token approval needed
+  ────────────────────────────────────────────────── */
+  const ethers = window.ethers;
+  if (!ethers?.Contract) alert("Ethers.js failed to load — please refresh.");
+
+  const VAULT_ADDR  = "0x789472Ef7fa74cB8898Ed38cAa5d18f4D49EcC6d";
+  const TOKEN_ADDR  = "0x5529c1cb179b2c256501031adCDAfC22D9c6d236";
+  const ORACLE_ADDR = "0xC19C8201701585D9087F261eaCd3Ee3345251Da3";
+  const DECIMALS    = 10n ** 18n;
+  const AUTO_MINT_RATIO = 155;  // hardcoded in contract
+  const COOLDOWN_SECS   = 300;  // 5 minutes
+
+  let provider, signer, vault, token, oracle, account;
+  let currentPrice    = 0n;
+  let currentMintable = 0n;
+  let currentDebt     = 0n;
+
+  /* ── UI HELPERS ─────────────────────────────────── */
+  function toggleBanner(id) {
+    const body = document.getElementById(id + 'Body');
+    const chev = document.getElementById(id + 'Chev');
+    body.classList.toggle('open');
+    chev.style.transform = body.classList.contains('open') ? 'rotate(180deg)' : '';
+  }
+  function toggleExp(el) {
+    el.classList.toggle('open');
+    el.nextElementSibling.classList.toggle('open');
+  }
+  function toast(msg, type = 'ok') {
+    const a = document.getElementById('toastArea');
+    a.innerHTML = `<div class="toast ${type}">${msg}</div>`;
+    setTimeout(() => { if (a.firstChild) a.innerHTML = ''; }, type === 'ok' ? 5000 : 10000);
+  }
+  function setOracleBar(state, msg, showPoke = false) {
+    const bar = document.getElementById('oracleBar');
+    bar.className = 'oracle-bar ' + state;
+    document.getElementById('oracleBarText').innerHTML = msg +
+      (showPoke ? ` <button class="poke-btn" onclick="pokeOracle()">Wake Oracle</button>` : '');
+  }
+  function safeCall(p, ms = 4000) {
+    return Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error('timeout')), ms))]);
+  }
+  function fmt(n, d = 2) { return Number(n).toLocaleString(undefined, { maximumFractionDigits: d, minimumFractionDigits: d }); }
+  function fmtPLS(wei) { return Number(ethers.formatEther(wei)).toLocaleString(undefined, { maximumFractionDigits: 0 }); }
+  function friendlyErr(e) {
+    const m = e?.reason || e?.data?.message || e?.message || 'Transaction failed';
+    if (/repay.*debt|must repay|repay first/i.test(m))         return 'You must repay all debt before this action.';
+    if (/ratio|collateral ratio|not enough collateral/i.test(m)) return 'This would drop your vault below 150% \u2014 not allowed.';
+    if (/undercollateralized|system health/i.test(m))           return 'System health below 130% \u2014 use 1-Click Auto Mint instead (always works).';
+    if (/cooldown|active/i.test(m) && /withdraw|unlock/i.test(m)) return 'Withdrawal cooldown active \u2014 wait 5 min after depositing.';
+    if (/poke cooldown|wait 30/i.test(m))                       return 'Oracle poke cooldown \u2014 wait 30 minutes between pokes.';
+    if (/oracle|price|invalid price/i.test(m))                  return 'Oracle price unavailable \u2014 try waking the oracle first.';
+    if (/invalid repay|zero.*repay/i.test(m))                   return 'Repay amount exceeds your debt. Use Max to fill the exact amount.';
+    if (/too small/i.test(m))                                   return 'Amount is below the minimum (0.0001 PLS / pSunDAI).';
+    if (/insufficient|balance/i.test(m))                        return 'Insufficient balance for this transaction.';
+    if (/user rejected|denied|cancelled/i.test(m))              return 'Transaction cancelled.';
+    return m.length > 120 ? m.substring(0, 120) + '\u2026' : m;
+  }
+
+  /* ── ORACLE ─────────────────────────────────────── */
+  // NOTE: getPriceWithTimestamp() has onlyVault modifier — never call from UI.
+  // Always use peekPriceView() for read-only price/timestamp access.
+  async function checkOracleHealth() {
+    if (!oracle) return;
+    try {
+      setOracleBar('checking', 'Checking oracle...');
+      const [p, ts] = await safeCall(oracle.peekPriceView(), 4000);
+      const healthy = await safeCall(oracle.isHealthy(), 3000);
+      const age = Math.floor(Date.now() / 1000) - Number(ts);
+      const cardText  = document.getElementById('oracleStatusText');
+      const cardBadge = document.getElementById('oracleCardBadge');
+      const pokeBtn   = document.getElementById('pokeBtn');
+      if (healthy && age < 86400) {
+        setOracleBar('', `Oracle synced \u2014 ${(age / 60).toFixed(0)} min ago`);
+        if (cardText)  { cardText.textContent = `Fresh \u2014 updated ${(age / 60).toFixed(0)} min ago`; cardText.style.color = 'var(--safe)'; }
+        if (cardBadge) { cardBadge.textContent = 'Live'; cardBadge.className = 'badge green'; }
+        if (pokeBtn)   pokeBtn.disabled = true;
+      } else {
+        setOracleBar('stale', 'Oracle price is stale \u2014', true);
+        if (cardText)  { cardText.textContent = `Stale (${(age / 60).toFixed(0)} min old) \u2014 press Wake Oracle`; cardText.style.color = 'var(--risk)'; }
+        if (cardBadge) { cardBadge.textContent = 'Stale'; cardBadge.className = 'badge amber'; }
+        if (pokeBtn)   pokeBtn.disabled = false;
+      }
+    } catch {
+      setOracleBar('stale', 'Oracle check failed \u2014', true);
+      const cardText = document.getElementById('oracleStatusText');
+      if (cardText) { cardText.textContent = 'Oracle check failed \u2014 press Wake Oracle'; cardText.style.color = 'var(--risk)'; }
+      const pb = document.getElementById('pokeBtn');
+      if (pb) pb.disabled = false;
+    }
+  }
+
+  async function pokeOracle() {
+    if (!signer) return toast('Connect wallet first', 'err');
+    const pokeBtn  = document.getElementById('pokeBtn');
+    const cardText = document.getElementById('oracleStatusText');
+    try {
+      setOracleBar('checking', 'Sending wake-up...');
+      if (cardText)  { cardText.textContent = 'Sending wake-up transaction...'; cardText.style.color = 'var(--warn)'; }
+      if (pokeBtn)   pokeBtn.classList.add('loading');
+      await (await oracle.connect(signer).poke()).wait();
+      toast('Oracle updated');
+      setTimeout(checkOracleHealth, 2000);
+    } catch (e) {
+      const msg = friendlyErr(e);
+      setOracleBar('stale', 'Wake failed \u2014 ' + msg, true);
+      if (cardText) { cardText.textContent = 'Wake failed: ' + msg; cardText.style.color = 'var(--risk)'; }
+      toast(msg, 'err');
+    } finally {
+      if (pokeBtn) pokeBtn.classList.remove('loading');
+    }
+  }
+
+  /* ── LOADING WRAPPER ────────────────────────────── */
+  async function withLoading(btnId, fn) {
+    const btn = document.getElementById(btnId);
+    btn.classList.add('loading'); btn.disabled = true;
+    try { await fn(); await loadVault(); }
+    catch (e) { toast(friendlyErr(e), 'err'); }
+    finally { btn.classList.remove('loading'); btn.disabled = false; }
+  }
+
+  /* ── ABIs ───────────────────────────────────────── */
+  async function loadABIs() {
+    return Promise.all([
+      fetch('vault-abi.json').then(r => r.json()),
+      fetch('token-abi.json').then(r => r.json()),
+      fetch('oracle-abi.json').then(r => r.json()),
+    ]);
+  }
+
+  /* ── CONNECT ────────────────────────────────────── */
+  async function connectWallet() {
+    try {
+      if (!window.ethereum) return alert('Please install MetaMask or a Web3 wallet.');
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
+      provider = new ethers.BrowserProvider(window.ethereum);
+      signer   = await provider.getSigner();
+      account  = await signer.getAddress();
+
+      const network = await provider.getNetwork();
+      if (Number(network.chainId) !== 369) {
+        try {
+          await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x171' }] });
+          provider = new ethers.BrowserProvider(window.ethereum);
+          signer   = await provider.getSigner();
+        } catch { return alert('Please switch to PulseChain (chain ID 369) in your wallet.'); }
+      }
+
+      const [VA, TA, OA] = await loadABIs();
+      vault  = new ethers.Contract(VAULT_ADDR,  VA, signer);
+      token  = new ethers.Contract(TOKEN_ADDR,  TA, signer);
+      oracle = new ethers.Contract(ORACLE_ADDR, OA, provider);
+      window.oracle = oracle;
+
+      account = await signer.getAddress(); // re-fetch after possible chain switch
+
+      const wb = document.getElementById('walletBtn');
+      wb.textContent = account.slice(0, 6) + '...' + account.slice(-4);
+      wb.classList.add('connected');
+
+      document.getElementById('connectCta').style.display = 'none';
+      document.getElementById('vaultPanel').style.display = 'block';
+      document.getElementById('globalStats').style.display = 'grid';
+
+      await Promise.all([updatePrice(), loadVault(), checkOracleHealth(), loadGlobalStats()]);
+
+      setInterval(updatePrice,       60000);
+      setInterval(checkOracleHealth, 30000);
+      setInterval(loadGlobalStats,   90000);
+      setInterval(loadVault,         30000);
+
+      window.ethereum.on('accountsChanged', () => location.reload());
+      window.ethereum.on('chainChanged',    () => location.reload());
+    } catch (e) { toast(friendlyErr(e), 'err'); }
+  }
+
+  /* ── PRICE ──────────────────────────────────────── */
+  async function updatePrice() {
+    try {
+      const [p, ts] = await oracle.peekPriceView();
+      if (Math.floor(Date.now() / 1000) - Number(ts) > 86400) throw new Error('stale');
+      currentPrice = p;
+      document.getElementById('priceDisplay').textContent = '$' + (Number(p) / 1e18).toFixed(6);
+    } catch {
+      document.getElementById('priceDisplay').textContent = 'Oracle offline';
+      currentPrice = 0n;
+    }
+  }
+
+  /* ── CONVERSIONS ────────────────────────────────── */
+  function usdToPLS(usd) {
+    if (!currentPrice || currentPrice === 0n) return 0n;
+    return (ethers.parseUnits(String(usd), 18) * DECIMALS) / currentPrice;
+  }
+  function plsToUsd(plsWei) {
+    if (!currentPrice || currentPrice === 0n) return 0;
+    return Number(ethers.formatEther(plsWei)) * Number(ethers.formatEther(currentPrice));
+  }
+
+  /* ── GLOBAL STATS ───────────────────────────────── */
+  async function loadGlobalStats() {
+    try {
+      const [tc, td, h] = await Promise.all([vault.totalCollateral(), vault.totalDebt(), vault.systemHealth()]);
+      const collNum = Number(ethers.formatEther(tc));
+      const debtNum = Number(ethers.formatEther(td));
+      document.getElementById('gColl').textContent = fmt(collNum, 0) + ' PLS';
+      document.getElementById('gDebt').textContent = fmt(debtNum, 0) + ' pSunDAI';
+      const hEl = document.getElementById('gHealth');
+      const hn  = Number(h);
+      // systemHealth() returns type(uint256).max when totalDebt == 0
+      if (hn > 1e15) {
+        hEl.textContent = 'Healthy'; hEl.style.color = 'var(--safe)';
+        document.getElementById('sysHealthWarn').style.display = 'none';
+      } else {
+        hEl.textContent = fmt(hn, 1) + '%';
+        hEl.style.color = hn < 130 ? 'var(--risk)' : hn < 150 ? 'var(--warn)' : 'var(--safe)';
+        // Manual mint() blocked below 130%, but depositAndAutoMintPLS() always works
+        document.getElementById('sysHealthWarn').style.display = hn < 130 ? 'block' : 'none';
+      }
+      const yi  = await vault.vaultInfo(account);
+      const yc  = Number(ethers.formatEther(yi.collateral));
+      document.getElementById('gShare').textContent = yc > 0 && collNum > 0 ? fmt((yc / collNum) * 100, 2) + '%' : '0%';
+    } catch {}
+  }
+
+  /* ── LOAD VAULT ─────────────────────────────────── */
+  async function loadVault() {
+    if (!vault || !account) return;
+    try {
+      const i = await vault.vaultInfo(account);
+      const ratio = Number(i.ratio);
+      currentMintable = i.mintable;
+      currentDebt     = i.debt;
+
+      const collUsd = plsToUsd(i.collateral);
+      const debtAmt = Number(ethers.formatEther(i.debt));
+      const mintAmt = Number(ethers.formatEther(i.mintable));
+
+      document.getElementById('vc').textContent = fmtPLS(i.collateral) + ' PLS';
+      document.getElementById('vcUsd').textContent = '\u2248 $' + fmt(collUsd);
+      document.getElementById('vd').textContent = fmt(debtAmt) + ' pSunDAI';
+      document.getElementById('vdFee').textContent = debtAmt > 0 ? '0.5% APY accruing' : 'No debt';
+      document.getElementById('vm').textContent = fmt(mintAmt) + ' pSunDAI';
+      document.getElementById('vmNote').textContent = mintAmt > 0 ? 'before 150%' : 'at or below 150%';
+      document.getElementById('vcollUsd').textContent = '$' + fmt(collUsd);
+      document.getElementById('vcollPls').textContent = fmtPLS(i.collateral) + ' PLS';
+
+      // Gauge: 110% = 0%, 250% = 100%
+      const gaugeMin = 110, gaugeMax = 250;
+      const pct = ((Math.min(Math.max(ratio, gaugeMin), gaugeMax) - gaugeMin) / (gaugeMax - gaugeMin)) * 100;
+      document.getElementById('gaugeFill').style.width = pct + '%';
+
+      const ratioStr   = ratio > 1e6 ? 'No debt' : fmt(ratio, 1) + '%';
+      const ratioClass = ratio > 1e6 ? 'safe' : ratio < 150 ? 'risk' : ratio < 170 ? 'warn' : 'safe';
+      const captionMap = {
+        safe: ratio > 1e6 ? 'No debt \u2014 vault open' : 'Vault is healthy',
+        warn: 'Ratio below 170% \u2014 consider topping up',
+        risk: 'Below 150% \u2014 repay or add collateral now!',
+      };
+      const rd = document.getElementById('ratioNum');
+      rd.textContent = ratioStr; rd.className = 'ratio-num ' + ratioClass;
+      const rc = document.getElementById('ratioCaption');
+      rc.textContent = captionMap[ratioClass]; rc.className = 'ratio-caption ' + ratioClass;
+
+      // Repay to safe
+      const needed = await vault.repayToHealth(account);
+      const rtsBtn   = document.getElementById('repayToSafe');
+      const rtsLabel = document.getElementById('repayToSafeLabel');
+      const rtsPrev  = document.getElementById('prevRepayToSafe');
+      if (needed > 0n) {
+        const amt = fmt(Number(ethers.formatEther(needed)), 2);
+        rtsLabel.textContent = `Repay to Safe \u2014 burn ${amt} pSunDAI`;
+        rtsPrev.textContent  = `Repaying ${amt} pSunDAI restores vault to exactly 150%`;
+        rtsPrev.style.color  = 'var(--warn)';
+        rtsBtn.disabled = false;
+      } else {
+        rtsLabel.textContent = 'Repay to Safe (150%)';
+        rtsPrev.textContent  = debtAmt > 0 ? 'Already at or above 150%' : 'No debt \u2014 nothing to repay';
+        rtsPrev.style.color  = 'var(--safe)';
+        rtsBtn.disabled = true;
+      }
+
+      // Withdraw max safe + cooldown (strictly >300s per contract)
+      const vraw    = await vault.vaults(account);
+      const now     = Math.floor(Date.now() / 1000);
+      const last    = Number(vraw.lastDepositTime);
+      const cooldown = (COOLDOWN_SECS + 1) - (now - last); // +1 for off-by-one safety
+      const cdNote  = document.getElementById('withdrawCooldownNote');
+      const wmBtn   = document.getElementById('withdrawMaxSafe');
+      const wmPrev  = document.getElementById('prevWithdrawMax');
+
+      if (cooldown > 0) {
+        const minsLeft = Math.ceil(cooldown / 60);
+        cdNote.style.display = 'block';
+        cdNote.textContent   = `Withdrawal cooldown: ${minsLeft} min remaining after your last deposit`;
+        wmBtn.disabled = true;
+        wmPrev.textContent   = 'Waiting for cooldown...';
+      } else {
+        cdNote.style.display = 'none';
+        if (i.debt === 0n && i.collateral > 0n) {
+          wmPrev.textContent = `Will withdraw all ${fmtPLS(i.collateral)} PLS ($${fmt(collUsd)})`;
+          wmPrev.style.color = 'var(--safe)'; wmBtn.disabled = false;
+        } else if (i.debt > 0n && i.collateral > 0n && currentPrice > 0n) {
+          const reqColl    = (i.debt * 150n * DECIMALS) / (currentPrice * 100n);
+          const withdrawable = i.collateral > reqColl ? i.collateral - reqColl : 0n;
+          if (withdrawable > 0n) {
+            wmPrev.textContent = `Can withdraw ${fmtPLS(withdrawable)} PLS ($${fmt(plsToUsd(withdrawable))}) safely`;
+            wmPrev.style.color = 'var(--safe)'; wmBtn.disabled = false;
+          } else {
+            wmPrev.textContent = 'At 150% minimum \u2014 repay debt to unlock more';
+            wmPrev.style.color = 'var(--warn)'; wmBtn.disabled = true;
+          }
+        } else {
+          wmPrev.textContent = 'No collateral to withdraw';
+          wmPrev.style.color = 'var(--dim)'; wmBtn.disabled = true;
+        }
+      }
+      document.getElementById('withdraw').disabled = !(i.collateral > 0n && cooldown <= 0);
+
+      // Emergency unlock
+      const eCard = document.getElementById('emergencyCard');
+      const eBtn  = document.getElementById('emergencyUnlock');
+      const ePrev = document.getElementById('prevEmergency');
+      if (i.debt === 0n && i.collateral > 0n) {
+        eCard.style.display = 'block';
+        const daysSince = Math.floor((now - last) / 86400);
+        if (daysSince >= 30) {
+          ePrev.textContent = `Ready \u2014 recovers ${fmtPLS(i.collateral)} PLS ($${fmt(collUsd)})`;
+          ePrev.style.color = 'var(--safe)'; eBtn.disabled = false;
+        } else {
+          ePrev.textContent = `Available in ${30 - daysSince} more day${30 - daysSince === 1 ? '' : 's'}`;
+          ePrev.style.color = 'var(--warn)'; eBtn.disabled = true;
+        }
+      } else {
+        eCard.style.display = 'none';
+      }
+
+      // Enable buttons
+      document.getElementById('oneClickBtn').disabled = false;
+      document.getElementById('deposit').disabled     = false;
+      document.getElementById('mint').disabled        = !(i.mintable > 0n);
+      document.getElementById('repay').disabled       = !(i.debt > 0n);
+      document.getElementById('repayAuto').disabled   = !(i.debt > 0n);
+      document.getElementById('riskCheckBtn').disabled = false;
+
+    } catch (e) { console.error('loadVault:', e); }
+  }
+
+  /* ── CHECK MY RISK ──────────────────────────────── */
+  async function checkMyRisk() {
+    await withLoading('riskCheckBtn', async () => {
+      const [can, info] = await Promise.all([vault.canLiquidate(account), vault.vaultInfo(account)]);
+      const ratio = Number(info.ratio);
+      const el    = document.getElementById('riskResult');
+      if (can) {
+        el.innerHTML = `<span style="color:var(--risk)">Liquidatable (ratio ${fmt(ratio, 1)}%) \u2014 repay or add collateral immediately!</span>`;
+      } else if (ratio > 1e6) {
+        el.innerHTML = `<span style="color:var(--safe)">No debt \u2014 vault cannot be liquidated</span>`;
+      } else if (ratio < 150) {
+        el.innerHTML = `<span style="color:var(--warn)">Ratio ${fmt(ratio, 1)}% \u2014 below 150% minimum, top up now</span>`;
+      } else {
+        el.innerHTML = `<span style="color:var(--safe)">Vault is safe \u2014 ratio ${fmt(ratio, 1)}%</span>`;
+      }
+    });
+  }
+
+  /* ── MAX FILL ───────────────────────────────────── */
+  function fillMintMax() {
+    if (currentMintable <= 0n) return;
+    document.getElementById('usdMint').value = Number(ethers.formatEther(currentMintable)).toFixed(4);
+    document.getElementById('prevMint').textContent = `Max: ${fmt(Number(ethers.formatEther(currentMintable)), 4)} pSunDAI`;
+  }
+  function fillRepayMax() {
+    if (currentDebt <= 0n) return;
+    document.getElementById('usdRepay').value = Number(ethers.formatEther(currentDebt)).toFixed(4);
+    document.getElementById('prevRepay').textContent = `Full debt: ${fmt(Number(ethers.formatEther(currentDebt)), 4)} pSunDAI`;
+  }
+
+  /* ── LIVE PREVIEWS ──────────────────────────────── */
+  document.getElementById('usdOneClick').addEventListener('input', () => {
+    const u = parseFloat(document.getElementById('usdOneClick').value) || 0;
+    if (!u || !currentPrice) return document.getElementById('prevOneClick').textContent = '';
+    const plsAmt  = Number(ethers.formatEther(usdToPLS(u)));
+    const pSunAmt = u / (AUTO_MINT_RATIO / 100); // contract: (valueUSD * 100) / 155
+    document.getElementById('prevOneClick').textContent =
+      `${fmt(plsAmt, 0)} PLS \u2192 ${fmt(pSunAmt, 2)} pSunDAI at 155%`;
+  });
+  document.getElementById('usdIn').addEventListener('input', () => {
+    const u = parseFloat(document.getElementById('usdIn').value) || 0;
+    if (!u || !currentPrice) return document.getElementById('prevDeposit').textContent = '';
+    document.getElementById('prevDeposit').textContent = `${fmt(Number(ethers.formatEther(usdToPLS(u))), 0)} PLS`;
+  });
+  document.getElementById('usdOut').addEventListener('input', () => {
+    const u = parseFloat(document.getElementById('usdOut').value) || 0;
+    if (!u || !currentPrice) return document.getElementById('prevWithdraw').textContent = '';
+    document.getElementById('prevWithdraw').textContent = `${fmt(Number(ethers.formatEther(usdToPLS(u))), 0)} PLS`;
+  });
+  document.getElementById('usdRepay').addEventListener('input', () => {
+    const u = parseFloat(document.getElementById('usdRepay').value) || 0;
+    document.getElementById('prevRepay').textContent = u > 0 ? `${fmt(u, 2)} pSunDAI` : '';
+  });
+
+  /* ── ACTIONS ────────────────────────────────────── */
+
+  // 1-Click Auto Mint — no system health check in contract, always available
+  document.getElementById('oneClickBtn').onclick = () => withLoading('oneClickBtn', async () => {
+    const u = parseFloat(document.getElementById('usdOneClick').value);
+    if (!u || u <= 0) throw new Error('Enter a deposit amount');
+    if (!currentPrice || currentPrice === 0n) throw new Error('Oracle price unavailable \u2014 wake the oracle first');
+    const plsWei = usdToPLS(u);
+    await (await vault.depositAndAutoMintPLS({ value: plsWei })).wait();
+    const minted = u / (AUTO_MINT_RATIO / 100);
+    toast(`Deposited ${fmt(Number(ethers.formatEther(plsWei)), 0)} PLS, minted ${fmt(minted, 2)} pSunDAI at 155%`);
+    document.getElementById('usdOneClick').value = '';
+    document.getElementById('prevOneClick').textContent = '';
+  });
+
+  // Deposit PLS
+  document.getElementById('deposit').onclick = () => withLoading('deposit', async () => {
+    const u = parseFloat(document.getElementById('usdIn').value);
+    if (!u || u <= 0) throw new Error('Enter a deposit amount');
+    if (!currentPrice || currentPrice === 0n) throw new Error('Oracle price unavailable \u2014 wake the oracle first');
+    const plsWei = usdToPLS(u);
+    await (await vault.depositPLS({ value: plsWei })).wait();
+    toast(`Deposited ${fmtPLS(plsWei)} PLS`);
+    document.getElementById('usdIn').value = '';
+    document.getElementById('prevDeposit').textContent = '';
+  });
+
+  // Mint pSunDAI (manual — requires systemHealth >= 130)
+  document.getElementById('mint').onclick = () => withLoading('mint', async () => {
+    const u = parseFloat(document.getElementById('usdMint').value);
+    if (!u || u <= 0) throw new Error('Enter an amount to mint');
+    const maxAmt = Number(ethers.formatEther(currentMintable));
+    if (maxAmt > 0 && u > maxAmt + 0.0001) throw new Error(`Max you can mint is ${fmt(maxAmt, 4)} pSunDAI`);
+    await (await vault.mint(ethers.parseUnits(String(u), 18))).wait();
+    toast(`Minted ${fmt(u, 2)} pSunDAI`);
+    document.getElementById('usdMint').value = '';
+    document.getElementById('prevMint').textContent = '';
+  });
+
+  // Repay — NO approval needed (vault burns directly via onlyVault)
+  document.getElementById('repay').onclick = () => withLoading('repay', async () => {
+    const u = parseFloat(document.getElementById('usdRepay').value);
+    if (!u || u <= 0) throw new Error('Enter an amount to repay');
+    const debtNum = Number(ethers.formatEther(currentDebt));
+    if (debtNum > 0 && u > debtNum + 0.0001) throw new Error(`Cannot repay more than your debt (${fmt(debtNum, 4)} pSunDAI). Use Max.`);
+    await (await vault.repay(ethers.parseUnits(String(u), 18))).wait();
+    toast(`Repaid ${fmt(u, 2)} pSunDAI`);
+    document.getElementById('usdRepay').value = '';
+    document.getElementById('prevRepay').textContent = '';
+  });
+
+  // Repay & Auto-Withdraw — NO approval needed
+  document.getElementById('repayAuto').onclick = () => withLoading('repayAuto', async () => {
+    const u = parseFloat(document.getElementById('usdRepay').value);
+    if (!u || u <= 0) throw new Error('Enter an amount to repay');
+    const debtNum = Number(ethers.formatEther(currentDebt));
+    if (debtNum > 0 && u > debtNum + 0.0001) throw new Error(`Cannot repay more than your debt (${fmt(debtNum, 4)} pSunDAI). Use Max.`);
+    await (await vault.repayAndAutoWithdraw(ethers.parseUnits(String(u), 18))).wait();
+    const isFullRepay = (u >= debtNum - 0.0001);
+    toast(isFullRepay
+      ? 'Repaid all debt \u2014 vault closed, all collateral returned'
+      : `Repaid ${fmt(u, 2)} pSunDAI and withdrew freed collateral`);
+    document.getElementById('usdRepay').value = '';
+    document.getElementById('prevRepay').textContent = '';
+  });
+
+  // Repay to Safe — NO approval needed
+  document.getElementById('repayToSafe').onclick = () => withLoading('repayToSafe', async () => {
+    const needed = await vault.repayToHealth(account);
+    if (needed === 0n) throw new Error('Already at or above 150% \u2014 no repayment needed');
+    await (await vault.autoRepayToHealth()).wait();
+    toast(`Repaid ${fmt(Number(ethers.formatEther(needed)), 2)} pSunDAI \u2014 vault restored to 150%`);
+  });
+
+  // Withdraw PLS
+  document.getElementById('withdraw').onclick = () => withLoading('withdraw', async () => {
+    const u = parseFloat(document.getElementById('usdOut').value);
+    if (!u || u <= 0) throw new Error('Enter a withdrawal amount');
+    if (!currentPrice || currentPrice === 0n) throw new Error('Oracle price unavailable');
+    const plsWei = usdToPLS(u);
+    await (await vault.withdrawPLS(plsWei)).wait();
+    toast(`Withdrew ${fmtPLS(plsWei)} PLS ($${fmt(u, 2)})`);
+    document.getElementById('usdOut').value = '';
+    document.getElementById('prevWithdraw').textContent = '';
+  });
+
+  // Withdraw Max Safe
+  document.getElementById('withdrawMaxSafe').onclick = () => withLoading('withdrawMaxSafe', async () => {
+    const info     = await vault.vaultInfo(account);
+    const vraw     = await vault.vaults(account);
+    const cooldown = (COOLDOWN_SECS + 1) - (Math.floor(Date.now() / 1000) - Number(vraw.lastDepositTime));
+    if (cooldown > 0) throw new Error(`Cooldown active \u2014 ${Math.ceil(cooldown / 60)} min remaining`);
+    let withdrawable;
+    if (info.debt === 0n) {
+      if (info.collateral === 0n) throw new Error('No collateral in vault');
+      withdrawable = info.collateral;
+    } else {
+      if (!currentPrice || currentPrice === 0n) throw new Error('Oracle price unavailable');
+      const reqColl  = (info.debt * 150n * DECIMALS) / (currentPrice * 100n);
+      withdrawable = info.collateral > reqColl ? info.collateral - reqColl : 0n;
+      if (withdrawable === 0n) throw new Error('Already at 150% minimum \u2014 repay debt to withdraw more');
+    }
+    await (await vault.withdrawPLS(withdrawable)).wait();
+    toast(`Withdrew ${fmtPLS(withdrawable)} PLS ($${fmt(plsToUsd(withdrawable), 2)}) \u2014 vault at 150%`);
+  });
+
+  // Emergency Unlock
+  document.getElementById('emergencyUnlock').onclick = () => withLoading('emergencyUnlock', async () => {
+    const info = await vault.vaultInfo(account);
+    if (info.debt > 0n)          throw new Error('Must have zero debt to use emergency unlock');
+    if (info.collateral === 0n)  throw new Error('No collateral to recover');
+    await (await vault.emergencyUnlock()).wait();
+    toast(`Emergency unlock \u2014 recovered ${fmtPLS(info.collateral)} PLS`);
+  });
+
+  document.getElementById('pokeBtn').onclick = pokeOracle;
+  document.getElementById('walletBtn').onclick = connectWallet;
+  window.addEventListener('load', connectWallet);
+</script>
+</body>
+</html>
