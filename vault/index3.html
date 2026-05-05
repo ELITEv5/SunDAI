@@ -1389,53 +1389,79 @@
     });
   }
 
-  // ── QUICK-ACTION HANDLERS (inline panel in vault gauge) ────────
-  // These execute directly from the pre-filled inputs in the vault panel.
-  // No approval needed for repay — vault burns pSunDAI via onlyVault permission.
+  // ── QUICK-ACTION HANDLERS (inline panel in vault gauge) ────
+  // Errors write INLINE below the relevant button — not top-of-page toast.
+  // No approval needed for repay — vault burns pSunDAI via onlyVault.
+
+  function qaSetMsg(id, msg, color) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = msg;
+    el.style.color = color || "var(--risk)";
+  }
+
   async function doQuickRepay() {
-    const btn = document.getElementById("qaRepayBtn");
+    const btn  = document.getElementById("qaRepayBtn");
+    const prev = "qaRepayPreview";
     const u = parseFloat(document.getElementById("qaRepayInput").value);
-    if (!u || u <= 0) return toast("Enter an amount to repay", "err");
+
+    if (!u || u <= 0)             { qaSetMsg(prev, "Enter an amount to repay"); return; }
     const debtNum = Number(ethers.formatEther(currentDebt));
-    if (debtNum > 0 && u > debtNum + 0.0001)
-      return toast("Cannot repay more than your debt (" + fmt(debtNum, 4) + " pSunDAI)", "err");
-    // Pre-flight: check pSunDAI wallet balance before sending — prevents silent revert
+    if (debtNum > 0 && u > debtNum + 0.0001) {
+      qaSetMsg(prev, "Cannot repay more than your debt (" + fmt(debtNum, 4) + " pSunDAI)");
+      return;
+    }
+
+    // Pre-flight: read wallet balance before tx — OZ _burn reverts silently if insufficient
     try {
       const walBal = await token.balanceOf(account);
       const walNum = Number(ethers.formatEther(walBal));
       if (walNum < u - 0.0001) {
-        return toast(
-          "You only have " + fmt(walNum, 4) + " pSunDAI in your wallet but need " + fmt(u, 4) + ". "
-          + "Buy more on PulseX, or use Deposit PLS to add collateral instead.",
-          "err"
+        qaSetMsg(prev,
+          "Wallet: " + fmt(walNum, 4) + " pSunDAI — need " + fmt(u, 4)
+          + ". Buy more on PulseX, or use Deposit PLS below."
         );
+        return;
       }
-    } catch { /* balance check failed — let the tx proceed and catch the real error */ }
+    } catch { /* balance check failed — attempt tx and let contract error surface */ }
 
     btn.classList.add("loading"); btn.disabled = true;
+    qaSetMsg(prev, "Sending transaction...", "var(--warn)");
     try {
       await (await vault.repay(ethers.parseUnits(String(u), 18))).wait();
-      toast("Repaid " + fmt(u, 4) + " pSunDAI \u2014 vault ratio restored");
+      qaSetMsg(prev, "✔ Repaid — ratio restored", "var(--safe)");
+      toast("Repaid " + fmt(u, 4) + " pSunDAI — vault ratio restored");
       await loadVault();
-    } catch(e) { toast(friendlyErr(e), "err"); }
-    finally { btn.classList.remove("loading"); btn.disabled = false; }
+    } catch(e) {
+      qaSetMsg(prev, friendlyErr(e));
+    } finally {
+      btn.classList.remove("loading"); btn.disabled = false;
+    }
   }
 
   async function doQuickDeposit() {
-    const btn = document.getElementById("qaDepositBtn");
+    const btn  = document.getElementById("qaDepositBtn");
+    const prev = "qaDepositPreview";
     const u = parseFloat(document.getElementById("qaDepositInput").value);
-    if (!u || u <= 0) return toast("Enter a deposit amount", "err");
-    if (!currentPrice || currentPrice === 0n) return toast("Oracle price unavailable — wake the oracle first", "err");
+
+    if (!u || u <= 0) { qaSetMsg(prev, "Enter a USD amount"); return; }
+    if (!currentPrice || currentPrice === 0n) {
+      qaSetMsg(prev, "Oracle price unavailable — wake the oracle first"); return;
+    }
+
     btn.classList.add("loading"); btn.disabled = true;
+    qaSetMsg(prev, "Sending transaction...", "var(--warn)");
     try {
       await (await vault.depositPLS({ value: usdToPLS(u) })).wait();
-      toast("Deposited " + fmt(Number(ethers.formatEther(usdToPLS(u))), 0) + " PLS — vault ratio improved");
+      qaSetMsg(prev, "✔ Deposited — ratio improved", "var(--safe)");
+      toast("Deposited " + fmt(Number(ethers.formatEther(usdToPLS(u))), 0) + " PLS — ratio improved");
       await loadVault();
-    } catch(e) { toast(friendlyErr(e), "err"); }
-    finally { btn.classList.remove("loading"); btn.disabled = false; }
+    } catch(e) {
+      qaSetMsg(prev, friendlyErr(e));
+    } finally {
+      btn.classList.remove("loading"); btn.disabled = false;
+    }
   }
-
-  // Direct action functions — called from health action bar buttons
   // These bypass the button disabled state and call the action directly
   async function doRepayToSafe() {
     await withLoading("repayToSafe", async () => {
