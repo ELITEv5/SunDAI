@@ -516,12 +516,12 @@
 <canvas id="bg-canvas"></canvas>
 
 <nav class="nav">
-  <a class="nav-brand" href="index_vault.html">
+  <a class="nav-brand" href="index.html">
     <img src="sundailogo.png" alt="SunDAI"/>
     <span class="nav-brand-text">SunDAI</span>
   </a>
   <div class="nav-links">
-    <a class="nav-link active" href="index_vault.html">Vault</a>
+    <a class="nav-link active" href="index.html">Vault</a>
     <a class="nav-link" href="liquidations.html">Liquidate</a>
   </div>
   <button class="wallet-btn" id="walletBtn">Connect Wallet</button>
@@ -1328,10 +1328,12 @@
           const reqDebtFor170 = (i.collateral * currentPrice * 100n) / (170n * DECIMALS);
           const repayTo170 = i.debt > reqDebtFor170 ? i.debt - reqDebtFor170 : 0n;
           if (repayTo170 > 0n) {
-            const r170 = fmt(Number(ethers.formatEther(repayTo170)), 4);
+            const r170num = Number(ethers.formatEther(repayTo170));
+            const r170display = fmt(r170num, 4);       // locale-formatted for display
+            const r170safe    = r170num.toFixed(4);    // decimal point always, for onclick
             rows.push(`<div class="ha-row">
-              <div class="ha-text">Repay <strong>${r170} pSunDAI</strong> to bring ratio back to 170%.</div>
-              <button class="ha-btn warn" onclick="fillRepayAndScroll('${r170}')">Fill &amp; Repay</button>
+              <div class="ha-text">Repay <strong>${r170display} pSunDAI</strong> to bring ratio back to 170%.</div>
+              <button class="ha-btn warn" onclick="fillRepayAndScroll('${r170safe}')">Fill &amp; Repay</button>
             </div>`);
           }
           // BigInt deposit-to-170%: collateral needed = (debt * 170 * 1e18) / (price * 100)
@@ -1340,6 +1342,7 @@
           if (depositNeeded170 > 0n) {
             const dNum170 = Number(ethers.formatEther(depositNeeded170));
             const dUsd170 = dNum170 * haPriceNum;
+            // dUsd170.toFixed(4) always uses decimal point — safe for onclick + parseFloat
             rows.push(`<div class="ha-row">
               <div class="ha-text">Or deposit <strong>$${fmt(dUsd170, 2)} of PLS</strong> to bring ratio to 170%.</div>
               <button class="ha-btn warn" onclick="fillDepositAndScroll('${dUsd170.toFixed(4)}')">Fill &amp; Deposit</button>
@@ -1362,7 +1365,8 @@
             ? i.debt - (i.collateral * currentPrice * 100n) / (150n * DECIMALS)
             : 0n;
           if (repayNeededBig > 0n) {
-            const rAmt = fmt(Number(ethers.formatEther(repayNeededBig)), 4);
+            const rAmtNum     = Number(ethers.formatEther(repayNeededBig));
+            const rAmt         = fmt(rAmtNum, 4);   // locale-formatted for display only
             rows.push(`<div class="ha-row">
               <div class="ha-text">Repay <strong>${rAmt} pSunDAI</strong> to restore exactly 150%.</div>
               <button class="ha-btn risk" onclick="doRepayToSafe()">Repay to Safe</button>
@@ -1737,8 +1741,12 @@
   document.getElementById("repayToSafe").onclick=()=>withLoading("repayToSafe",async()=>{
     const needed=await vault.repayToHealth(account);
     if(needed===0n) throw new Error("Already at or above 150% \u2014 no repayment needed");
+    // Balance check: same as all other repay paths — OZ _burn reverts silently if insufficient
+    const walBal=await token.balanceOf(account); const walNum=Number(ethers.formatEther(walBal));
+    const neededNum=Number(ethers.formatEther(needed));
+    if(walNum<neededNum-0.0001) throw new Error(`Not enough pSunDAI in wallet. Need ${fmt(neededNum,4)} but have ${fmt(walNum,4)}. Buy more on PulseX or deposit PLS instead.`);
     await (await vault.autoRepayToHealth()).wait();
-    toast(`Repaid ${fmt(Number(ethers.formatEther(needed)),2)} pSunDAI \u2014 vault at 150%`);
+    toast(`Repaid ${fmt(neededNum,4)} pSunDAI \u2014 vault restored to 150%`);
   });
 
   document.getElementById("withdraw").onclick=()=>withLoading("withdraw",async()=>{
