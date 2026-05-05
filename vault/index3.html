@@ -1111,28 +1111,26 @@
         haEl.classList.add("warn");
         haTitle.textContent = "Approaching minimum — action recommended";
         const rows = [];
-        // Option A: how much pSunDAI to repay
-        if (haPriceNum > 0) {
-          const repayNum = Math.max(0, haDebtNum - (haCollNum * haPriceNum * 100) / 150);
-          // Repay to get to exactly 170% safety buffer
-          const targetDebt170 = (haCollNum * haPriceNum * 100) / 170;
-          const repayTo170 = Math.max(0, haDebtNum - targetDebt170);
-          if (repayTo170 > 0.001) {
+        // BigInt repay-to-170%: max debt at 170% = (collateral * price * 100) / (170 * 1e18)
+        if (currentPrice > 0n) {
+          const reqDebtFor170 = (i.collateral * currentPrice * 100n) / (170n * DECIMALS);
+          const repayTo170 = i.debt > reqDebtFor170 ? i.debt - reqDebtFor170 : 0n;
+          if (repayTo170 > 0n) {
+            const r170 = fmt(Number(ethers.formatEther(repayTo170)), 4);
             rows.push(`<div class="ha-row">
-              <div class="ha-text">Repay <strong>${fmt(repayTo170, 2)} pSunDAI</strong> to bring ratio back to 170%.</div>
-              <button class="ha-btn warn" onclick="fillRepayAndScroll(${repayTo170.toFixed(4)})">Fill &amp; Repay</button>
+              <div class="ha-text">Repay <strong>${r170} pSunDAI</strong> to bring ratio back to 170%.</div>
+              <button class="ha-btn warn" onclick="fillRepayAndScroll('${r170}')">Fill &amp; Repay</button>
             </div>`);
           }
-        }
-        // Option B: how much PLS to deposit to reach 170%
-        if (haPriceNum > 0) {
-          const reqCollFor170 = (haDebtNum * 170) / (haPriceNum * 100);
-          const depositNeeded170 = Math.max(0, reqCollFor170 - haCollNum);
-          const depositUsd170 = depositNeeded170 * haPriceNum;
-          if (depositUsd170 > 0.01) {
+          // BigInt deposit-to-170%: collateral needed = (debt * 170 * 1e18) / (price * 100)
+          const reqCollFor170 = (i.debt * 170n * DECIMALS) / (currentPrice * 100n);
+          const depositNeeded170 = reqCollFor170 > i.collateral ? reqCollFor170 - i.collateral : 0n;
+          if (depositNeeded170 > 0n) {
+            const dNum170 = Number(ethers.formatEther(depositNeeded170));
+            const dUsd170 = dNum170 * haPriceNum;
             rows.push(`<div class="ha-row">
-              <div class="ha-text">Or deposit <strong>$${fmt(depositUsd170, 2)} of PLS</strong> to bring ratio to 170%.</div>
-              <button class="ha-btn warn" onclick="fillDepositAndScroll(${depositUsd170.toFixed(4)})">Fill &amp; Deposit</button>
+              <div class="ha-text">Or deposit <strong>$${fmt(dUsd170, 2)} of PLS</strong> to bring ratio to 170%.</div>
+              <button class="ha-btn warn" onclick="fillDepositAndScroll('${dUsd170.toFixed(4)}')">Fill &amp; Deposit</button>
             </div>`);
           }
         }
@@ -1140,26 +1138,33 @@
 
       } else {
         // Below 150% — danger
+        // All amounts use on-chain `needed` (fetched below) — same BigInt math as contract
         haEl.classList.add("risk");
-        haTitle.textContent = "Below minimum ratio — immediate action required";
+        haTitle.textContent = "Below minimum ratio \u2014 immediate action required";
         const rows = [];
-        // Use on-chain repayToHealth value (already fetched below, re-compute here)
-        if (haPriceNum > 0) {
-          const repayNum = Math.max(0, haDebtNum - (haCollNum * haPriceNum * 100) / 150);
-          if (repayNum > 0.0001) {
+        // repayToHealth() on-chain result — fetched below and stored in `needed`
+        // We can't use it here yet so we compute with same BigInt formula as contract:
+        //   repayNeeded = debt - (collateral * price * 100) / (COLLATERAL_RATIO * 1e18)
+        if (currentPrice > 0n) {
+          const repayNeededBig = i.debt > (i.collateral * currentPrice * 100n) / (150n * DECIMALS)
+            ? i.debt - (i.collateral * currentPrice * 100n) / (150n * DECIMALS)
+            : 0n;
+          if (repayNeededBig > 0n) {
+            const rAmt = fmt(Number(ethers.formatEther(repayNeededBig)), 4);
             rows.push(`<div class="ha-row">
-              <div class="ha-text">Repay <strong>${fmt(repayNum, 4)} pSunDAI</strong> to restore exactly 150% — use Repay to Safe.</div>
-              <button class="ha-btn risk" onclick="document.getElementById('repayToSafe').click()">Repay to Safe</button>
+              <div class="ha-text">Repay <strong>${rAmt} pSunDAI</strong> to restore exactly 150%.</div>
+              <button class="ha-btn risk" onclick="doRepayToSafe()">Repay to Safe</button>
             </div>`);
           }
-          // Also show deposit option
-          const reqCollFor150 = (haDebtNum * 150) / (haPriceNum * 100);
-          const depositNeeded = Math.max(0, reqCollFor150 - haCollNum);
-          const depositUsd = depositNeeded * haPriceNum;
-          if (depositUsd > 0.01) {
+          // BigInt deposit: (debt * 150 * 1e18) / (price * 100) - collateral
+          const reqCollFor150 = (i.debt * 150n * DECIMALS) / (currentPrice * 100n);
+          const depositNeededBig = reqCollFor150 > i.collateral ? reqCollFor150 - i.collateral : 0n;
+          if (depositNeededBig > 0n) {
+            const dNum = Number(ethers.formatEther(depositNeededBig));
+            const dUsd = dNum * haPriceNum;
             rows.push(`<div class="ha-row">
-              <div class="ha-text">Or deposit <strong>$${fmt(depositUsd, 2)} of PLS</strong> to restore exactly 150%.</div>
-              <button class="ha-btn risk" onclick="fillDepositAndScroll(${depositUsd.toFixed(4)})">Fill &amp; Deposit</button>
+              <div class="ha-text">Or deposit <strong>$${fmt(dUsd, 2)} of PLS</strong> to restore exactly 150%.</div>
+              <button class="ha-btn risk" onclick="fillDepositAndScroll('${dUsd.toFixed(4)}')">Fill &amp; Deposit</button>
             </div>`);
           }
         }
@@ -1167,10 +1172,11 @@
       }
       // ── END HEALTH ACTION BAR ─────────────────────────────────
 
-      const needed=await vault.repayToHealth(account);
+      // Fetch on-chain repay amount — authoritative value for repayToSafe button
+      const needed = await vault.repayToHealth(account);
       const rtsBtn=document.getElementById("repayToSafe"), rtsLabel=document.getElementById("repayToSafeLabel"), rtsPrev=document.getElementById("prevRepayToSafe");
       if (needed>0n) {
-        const amt=fmt(Number(ethers.formatEther(needed)),2); rtsLabel.textContent=`Repay to Safe \u2014 burn ${amt} pSunDAI`; rtsPrev.textContent=`Repaying ${amt} pSunDAI restores vault to 150%`; rtsPrev.style.color="var(--warn)"; rtsBtn.disabled=false;
+        const amt=fmt(Number(ethers.formatEther(needed)),4); rtsLabel.textContent=`Repay to Safe \u2014 burn ${amt} pSunDAI`; rtsPrev.textContent=`Repaying ${amt} pSunDAI restores vault to exactly 150%`; rtsPrev.style.color="var(--warn)"; rtsBtn.disabled=false;
       } else { rtsLabel.textContent="Repay to Safe (150%)"; rtsPrev.textContent=debtAmt>0?"Already at or above 150%":"No debt"; rtsPrev.style.color="var(--safe)"; rtsBtn.disabled=true; }
 
       const vraw=await vault.vaults(account), now=Math.floor(Date.now()/1000), last=Number(vraw.lastDepositTime);
@@ -1211,6 +1217,37 @@
       else if (ratio>1e6) el.innerHTML=`<span style="color:var(--safe)">No debt \u2014 cannot be liquidated</span>`;
       else if (ratio<150) el.innerHTML=`<span style="color:var(--warn)">Ratio ${fmt(ratio,1)}% \u2014 below 150%, top up</span>`;
       else el.innerHTML=`<span style="color:var(--safe)">Safe \u2014 ratio is ${fmt(ratio,1)}%</span>`;
+    });
+  }
+
+  // Direct action functions — called from health action bar buttons
+  // These bypass the button disabled state and call the action directly
+  async function doRepayToSafe() {
+    await withLoading("repayToSafe", async () => {
+      const needed = await vault.repayToHealth(account);
+      if (needed === 0n) throw new Error("Already at or above 150% \u2014 no repayment needed");
+      await (await vault.autoRepayToHealth()).wait();
+      toast("Repaid " + fmt(Number(ethers.formatEther(needed)), 4) + " pSunDAI \u2014 vault restored to 150%");
+    });
+  }
+  async function doWithdrawMax() {
+    await withLoading("withdrawMaxSafe", async () => {
+      const info = await vault.vaultInfo(account);
+      const vraw = await vault.vaults(account);
+      const cooldown = (COOLDOWN_SECS + 1) - (Math.floor(Date.now() / 1000) - Number(vraw.lastDepositTime));
+      if (cooldown > 0) throw new Error("Cooldown active \u2014 " + Math.ceil(cooldown / 60) + " min remaining");
+      let withdrawable;
+      if (info.debt === 0n) {
+        if (info.collateral === 0n) throw new Error("No collateral in vault");
+        withdrawable = info.collateral;
+      } else {
+        if (!currentPrice || currentPrice === 0n) throw new Error("Oracle price unavailable");
+        const reqColl = (info.debt * 150n * DECIMALS) / (currentPrice * 100n);
+        withdrawable = info.collateral > reqColl ? info.collateral - reqColl : 0n;
+        if (withdrawable === 0n) throw new Error("Already at 150% minimum \u2014 repay debt to withdraw more");
+      }
+      await (await vault.withdrawPLS(withdrawable)).wait();
+      toast("Withdrew " + fmtPLS(withdrawable) + " PLS \u2014 vault at 150%");
     });
   }
 
