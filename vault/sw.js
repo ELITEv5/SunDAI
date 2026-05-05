@@ -1,7 +1,8 @@
-const CACHE = "sundai-v12";
+const CACHE = "sundai-v13";
 
 const FILES = [
   "./",
+  "./index_vault.html",
   "./index.html",
   "./liquidations.html",
   "./manifest.json",
@@ -22,7 +23,6 @@ self.addEventListener("install", e => {
 });
 
 self.addEventListener("activate", e => {
-  // Clean up old caches
   e.waitUntil(
     caches.keys().then(keys =>
       Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
@@ -32,11 +32,10 @@ self.addEventListener("activate", e => {
 
 self.addEventListener("fetch", e => {
   if (e.request.mode === "navigate") {
-    // Strip query string for cache lookup so ?t=timestamp doesn't cause misses
+    // Strip query string so ?t=timestamp cache-busting doesn't cause misses
     const url = new URL(e.request.url);
     url.search = "";
     const cleanRequest = new Request(url.toString());
-
     e.respondWith(
       caches.match(cleanRequest)
         .then(r => r || fetch(e.request))
