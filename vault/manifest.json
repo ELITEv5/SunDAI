@@ -2,7 +2,7 @@
   "name": "SunDAI",
   "short_name": "SunDAI",
   "description": "Autonomous 150% PLS-Collateralized Stable Asset on PulseChain",
-  "start_url": "./index_vault.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0a001f",
