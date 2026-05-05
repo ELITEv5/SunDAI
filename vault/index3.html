@@ -622,7 +622,7 @@
         <div class="vstat"><div class="vstat-label">Collateral</div><div class="vstat-val" id="vc">&mdash;</div><div class="vstat-sub" id="vcUsd">&mdash;</div></div>
         <div class="vstat"><div class="vstat-label">Debt</div><div class="vstat-val" id="vd">&mdash;</div><div class="vstat-sub" id="vdFee">0.5% APY accruing</div></div>
         <div class="vstat"><div class="vstat-label">Can Mint</div><div class="vstat-val" id="vm">&mdash;</div><div class="vstat-sub" id="vmNote">before 150%</div></div>
-        <div class="vstat"><div class="vstat-label">Coll. Value</div><div class="vstat-val" id="vcollUsd">&mdash;</div><div class="vstat-sub" id="vcollPls">&mdash;</div></div>
+        <div class="vstat"><div class="vstat-label">Liq. Price</div><div class="vstat-val" id="vcollUsd">&mdash;</div><div class="vstat-sub" id="vcollPls">PLS/USD triggers liq.</div></div>
       </div>
       <div class="gauge-label-row"><span>Liq. 110%</span><span>Safe 200%+</span></div>
       <div class="gauge-track">
@@ -705,7 +705,7 @@
       <div class="input-row"><input id="usdOneClick" type="number" step="0.01" min="0" placeholder="USD value to deposit"/></div>
       <div class="preview" id="prevOneClick"></div>
       <button class="btn btn-green" id="oneClickBtn" disabled><div class="spin"></div><span>1-Click Auto Mint (155%)</span></button>
-      <div class="helper">Deposits PLS + mints pSunDAI in one transaction at 155% (contract-enforced). Works at all times.</div>
+      <div class="helper">Deposits PLS + mints pSunDAI in one transaction at 155% (hardcoded in contract). No system health restriction.</div>
     </div>
 
     <div class="card-pair">
@@ -747,8 +747,7 @@
       <div class="exp-body"><div class="exp-inner">
         <p>Burns pSunDAI from your wallet to reduce debt and raise ratio. Instant &mdash; no cooldown. Use when PLS is falling and ratio approaches 150%, or to exit the vault.</p>
         <p><strong>Repay &amp; Withdraw</strong> repays your amount then auto-returns freed collateral above 150%. If you repay your <em>entire</em> debt, the contract closes the vault and returns all collateral.</p>
-        <p><strong>Repay to Safe</strong> auto-calculates the exact pSunDAI needed to restore 150%.</p>
-        <p>No token approval needed &mdash; the vault burns pSunDAI directly. One transaction.</p>
+        <p>No token approval needed &mdash; the vault burns pSunDAI directly from your wallet using vault-level permission. Single transaction.</p>
       </div></div>
       <div class="input-row">
         <input id="usdRepay" type="number" step="0.01" min="0" placeholder="pSunDAI to repay"/>
@@ -1072,8 +1071,13 @@
       document.getElementById("gColl").textContent=fmt(cn,0)+" PLS";
       document.getElementById("gDebt").textContent=fmt(dn,0)+" pSunDAI";
       const hEl=document.getElementById("gHealth"), hn=Number(h);
-      if (hn>1e15) { hEl.textContent="Healthy"; hEl.style.color="var(--safe)"; }
-      else { hEl.textContent=fmt(hn,1)+"%"; hEl.style.color=hn<130?"var(--risk)":hn<150?"var(--warn)":"var(--safe)"; document.getElementById("systemHealthWarning").style.display=hn<130?"block":"none"; }
+      if (hn>1e15) {
+        hEl.textContent="Healthy"; hEl.style.color="var(--safe)";
+        document.getElementById("systemHealthWarning").style.display="none";
+      } else {
+        hEl.textContent=fmt(hn,1)+"%"; hEl.style.color=hn<130?"var(--risk)":hn<150?"var(--warn)":"var(--safe)";
+        document.getElementById("systemHealthWarning").style.display=hn<130?"block":"none";
+      }
       const yi=await vault.vaultInfo(account);
       const yc=Number(ethers.formatEther(yi.collateral));
       document.getElementById("gShare").textContent=yc>0&&cn>0?fmt((yc/cn)*100,2)+"%":"0%";
@@ -1092,8 +1096,25 @@
       document.getElementById("vdFee").textContent=debtAmt>0?"0.5% APY accruing":"No debt";
       document.getElementById("vm").textContent=fmt(mintAmt)+" pSunDAI";
       document.getElementById("vmNote").textContent=mintAmt>0?"before hitting 150%":"at 150% limit";
-      document.getElementById("vcollUsd").textContent="$"+fmt(collUsd);
-      document.getElementById("vcollPls").textContent=fmtPLS(i.collateral)+" PLS";
+      // Liquidation price: the PLS/USD price at which ratio hits 110%
+      // Formula: (debt * 110 * 1e18) / (collateral * 100) — verified against LIQUIDATION_RATIO = 110
+      if (i.debt > 0n && i.collateral > 0n) {
+        const liqPriceWei = (i.debt * 110n * DECIMALS) / (i.collateral * 100n);
+        const liqPrice = Number(ethers.formatEther(liqPriceWei));
+        const liqEl = document.getElementById("vcollUsd");
+        liqEl.textContent = "$" + liqPrice.toFixed(6);
+        // Color-code: how close is current price to liquidation?
+        if (currentPrice > 0n) {
+          const curPrice = Number(ethers.formatEther(currentPrice));
+          const margin = ((curPrice - liqPrice) / curPrice) * 100;
+          liqEl.className = "vstat-val" + (margin < 10 ? " risk" : margin < 25 ? " warn" : " safe");
+        }
+        document.getElementById("vcollPls").textContent = "current: $" + (Number(ethers.formatEther(currentPrice)) || 0).toFixed(6);
+      } else {
+        document.getElementById("vcollUsd").textContent = i.collateral > 0n ? "No debt" : "—";
+        document.getElementById("vcollUsd").className = "vstat-val safe";
+        document.getElementById("vcollPls").textContent = "no liquidation risk";
+      }
 
       const gaugeMin=110, gaugeMax=250;
       const pct=((Math.min(Math.max(ratio,gaugeMin),gaugeMax)-gaugeMin)/(gaugeMax-gaugeMin))*100;
@@ -1116,8 +1137,7 @@
       haEl.className = "health-action"; // reset
       haRows.innerHTML = "";
 
-      const haDebtNum  = Number(ethers.formatEther(i.debt));
-      const haCollNum  = Number(ethers.formatEther(i.collateral));
+      // haPriceNum: float USD price for display only — all ratio math uses BigInt above
       const haPriceNum = currentPrice > 0n ? Number(ethers.formatEther(currentPrice)) : 0;
 
       if (i.collateral === 0n && i.debt === 0n) {
@@ -1134,11 +1154,6 @@
         haRows.innerHTML = mintableNum > 0
           ? `<div class="ha-row"><div class="ha-text">You can mint up to <strong>${fmt(mintableNum, 2)} pSunDAI</strong> against your collateral before hitting 150%.</div></div>`
           : `<div class="ha-row"><div class="ha-text">Deposit more PLS to mint pSunDAI.</div></div>`;
-
-      } else if (ratio > 1e6) {
-        // Should not happen with debt > 0, but guard anyway
-        haEl.classList.add("good");
-        haTitle.textContent = "Vault healthy";
 
       } else if (ratio >= 170) {
         // Healthy — show upside: what they can withdraw or mint
@@ -1160,7 +1175,7 @@
             const wUsd = wNum * haPriceNum;
             rows.push(`<div class="ha-row">
               <div class="ha-text">Can withdraw <strong>${fmt(wNum, 0)} PLS (~$${fmt(wUsd, 2)})</strong> while staying at 150%.</div>
-              <button class="ha-btn warn" onclick="document.getElementById('withdrawMaxSafe').click()">Withdraw Max</button>
+              <button class="ha-btn warn" onclick="doWithdrawMax()">Withdraw Max</button>
             </div>`);
           }
         }
@@ -1382,10 +1397,19 @@
     await withLoading("riskCheckBtn", async () => {
       const [can,info]=await Promise.all([vault.canLiquidate(account),vault.vaultInfo(account)]);
       const ratio=Number(info.ratio), el=document.getElementById("riskResult");
-      if (can) el.innerHTML=`<span style="color:var(--risk)">Liquidatable (ratio ${fmt(ratio,1)}%) \u2014 act immediately!</span>`;
-      else if (ratio>1e6) el.innerHTML=`<span style="color:var(--safe)">No debt \u2014 cannot be liquidated</span>`;
-      else if (ratio<150) el.innerHTML=`<span style="color:var(--warn)">Ratio ${fmt(ratio,1)}% \u2014 below 150%, top up</span>`;
-      else el.innerHTML=`<span style="color:var(--safe)">Safe \u2014 ratio is ${fmt(ratio,1)}%</span>`;
+      if (can) {
+        el.innerHTML=`<span style="color:var(--risk)">Liquidatable at ratio ${fmt(ratio,1)}% — repay debt or deposit PLS immediately</span>`;
+      } else if (ratio>1e6) {
+        el.innerHTML=`<span style="color:var(--safe)">No debt — vault cannot be liquidated</span>`;
+      } else if (ratio<110) {
+        el.innerHTML=`<span style="color:var(--risk)">Ratio ${fmt(ratio,1)}% — at or below liquidation threshold. Act now.</span>`;
+      } else if (ratio<150) {
+        el.innerHTML=`<span style="color:var(--warn)">Ratio ${fmt(ratio,1)}% — below 150% minimum, add collateral or repay</span>`;
+      } else if (ratio<170) {
+        el.innerHTML=`<span style="color:var(--warn)">Ratio ${fmt(ratio,1)}% — approaching minimum, consider topping up</span>`;
+      } else {
+        el.innerHTML=`<span style="color:var(--safe)">Vault is safe — ratio is ${fmt(ratio,1)}%</span>`;
+      }
     });
   }
 
@@ -1429,7 +1453,7 @@
     qaSetMsg(prev, "Sending transaction...", "var(--warn)");
     try {
       await (await vault.repay(ethers.parseUnits(String(u), 18))).wait();
-      qaSetMsg(prev, "✔ Repaid — ratio restored", "var(--safe)");
+      qaSetMsg(prev, "Repaid — ratio restored", "var(--safe)");
       toast("Repaid " + fmt(u, 4) + " pSunDAI — vault ratio restored");
       await loadVault();
     } catch(e) {
@@ -1453,7 +1477,7 @@
     qaSetMsg(prev, "Sending transaction...", "var(--warn)");
     try {
       await (await vault.depositPLS({ value: usdToPLS(u) })).wait();
-      qaSetMsg(prev, "✔ Deposited — ratio improved", "var(--safe)");
+      qaSetMsg(prev, "Deposited — ratio improved", "var(--safe)");
       toast("Deposited " + fmt(Number(ethers.formatEther(usdToPLS(u))), 0) + " PLS — ratio improved");
       await loadVault();
     } catch(e) {
@@ -1510,8 +1534,10 @@
     document.getElementById("usdMint").focus();
   }
   function fillRepayAndScroll(amount) {
-    document.getElementById("usdRepay").value = Number(amount).toFixed(4);
-    document.getElementById("prevRepay").textContent = fmt(Number(amount), 4) + " pSunDAI";
+    // Use parseFloat to handle both "0.84" and "0,84" locale formats safely
+    const n = parseFloat(String(amount).replace(",", ".")) || 0;
+    document.getElementById("usdRepay").value = n.toFixed(4);
+    document.getElementById("prevRepay").textContent = n.toFixed(4) + " pSunDAI";
     document.getElementById("usdRepay").scrollIntoView({ behavior: "smooth", block: "center" });
     document.getElementById("usdRepay").focus();
   }
