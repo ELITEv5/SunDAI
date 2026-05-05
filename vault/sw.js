@@ -2,7 +2,7 @@ const CACHE = "sundai-v13";
 
 const FILES = [
   "./",
-  "./index_vault.html",
+  "./index3.html",
   "./index.html",
   "./liquidations.html",
   "./manifest.json",
