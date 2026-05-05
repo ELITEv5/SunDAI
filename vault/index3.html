@@ -234,6 +234,53 @@
     .vstat-val.risk { color: var(--risk); }
 
     /* Ratio gauge */
+    /* ─── HEALTH ACTION BAR ───────────────────────── */
+    .health-action {
+      margin-top: 16px; border-radius: 12px; padding: 14px 16px;
+      display: none;
+    }
+    .health-action.warn {
+      display: block;
+      background: rgba(255,208,0,0.07); border: 1px solid rgba(255,208,0,0.25);
+    }
+    .health-action.risk {
+      display: block;
+      background: rgba(255,45,85,0.07); border: 1px solid rgba(255,45,85,0.3);
+      animation: borderPulse 2s ease infinite;
+    }
+    @keyframes borderPulse {
+      0%,100% { border-color: rgba(255,45,85,0.3); }
+      50%      { border-color: rgba(255,45,85,0.65); }
+    }
+    .health-action.good {
+      display: block;
+      background: rgba(0,255,163,0.05); border: 1px solid rgba(0,255,163,0.18);
+    }
+    .ha-title {
+      font-size: 0.68em; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.1em; margin-bottom: 10px; font-family: var(--mono);
+    }
+    .health-action.warn .ha-title { color: var(--warn); }
+    .health-action.risk .ha-title { color: var(--risk); }
+    .health-action.good .ha-title { color: var(--safe); }
+    .ha-rows { display: flex; flex-direction: column; gap: 8px; }
+    .ha-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; flex-wrap: wrap;
+    }
+    .ha-text { font-size: 0.8em; color: rgba(255,245,228,0.72); line-height: 1.4; flex: 1; min-width: 0; }
+    .ha-text strong { color: var(--cream); font-weight: 700; font-family: var(--mono); }
+    .ha-btn {
+      background: transparent; border: 1px solid; border-radius: 7px;
+      font-family: var(--display); font-weight: 700; font-size: 0.76em;
+      padding: 6px 13px; cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
+    }
+    .ha-btn.warn { color: var(--warn); border-color: rgba(255,208,0,0.4); }
+    .ha-btn.warn:hover { background: rgba(255,208,0,0.12); border-color: var(--warn); }
+    .ha-btn.risk { color: var(--risk); border-color: rgba(255,45,85,0.4); }
+    .ha-btn.risk:hover { background: rgba(255,45,85,0.12); border-color: var(--risk); }
+    .ha-divider { height: 1px; background: rgba(255,255,255,0.06); }
+
     .gauge-label-row { display: flex; justify-content: space-between; font-size: 0.62em; color: var(--dim); margin-bottom: 6px; font-family: var(--mono); letter-spacing: 0.02em; }
     .gauge-track { height: 6px; border-radius: 100px; background: rgba(255,255,255,0.05); position: relative; overflow: visible; }
     .gauge-fill { height: 100%; border-radius: 100px; transition: width 0.8s cubic-bezier(.4,0,.2,1); background: linear-gradient(90deg, var(--risk) 0%, var(--warn) 30%, var(--safe) 70%); }
@@ -556,6 +603,12 @@
       <div class="ratio-display">
         <div class="ratio-num safe" id="ratioNum">&mdash;</div>
         <div class="ratio-caption" id="ratioCaption">Connect wallet</div>
+      </div>
+
+      <!-- SMART ACTION BAR: tells user exactly what to do -->
+      <div class="health-action" id="healthAction">
+        <div class="ha-title" id="healthActionTitle">Vault Status</div>
+        <div class="ha-rows" id="healthActionRows"></div>
       </div>
     </div>
 
@@ -989,6 +1042,131 @@
       const captionMap={safe:ratio>1e6?"No debt \u2014 vault is open":"Vault is healthy",warn:"Below 170% \u2014 consider adding collateral",risk:"Below 150% \u2014 repay or add collateral now!"};
       const rc=document.getElementById("ratioCaption"); rc.textContent=captionMap[ratioClass]; rc.className="ratio-caption "+ratioClass;
 
+      // ── SMART HEALTH ACTION BAR ──────────────────────────────────
+      // Shows the user exactly what to do to get back to 150%.
+      // Math verified against pSunDAIVault_ASA_v5_6.sol:
+      //   repayNeeded  = debt - (collateral * price * 100) / (150 * 1e18)
+      //   depositNeeded = (debt * 150 * 1e18) / (100 * price) - collateral  [in PLS wei]
+      const haEl    = document.getElementById("healthAction");
+      const haTitle = document.getElementById("healthActionTitle");
+      const haRows  = document.getElementById("healthActionRows");
+      haEl.className = "health-action"; // reset
+      haRows.innerHTML = "";
+
+      const haDebtNum  = Number(ethers.formatEther(i.debt));
+      const haCollNum  = Number(ethers.formatEther(i.collateral));
+      const haPriceNum = currentPrice > 0n ? Number(ethers.formatEther(currentPrice)) : 0;
+
+      if (i.collateral === 0n && i.debt === 0n) {
+        // No vault open yet
+        haEl.classList.add("good");
+        haTitle.textContent = "No vault open";
+        haRows.innerHTML = `<div class="ha-row"><div class="ha-text">Use <strong>1-Click Auto Mint</strong> above to open a vault in one transaction.</div></div>`;
+
+      } else if (i.debt === 0n) {
+        // Collateral but no debt — vault open, no debt
+        haEl.classList.add("good");
+        haTitle.textContent = "Vault open — no debt";
+        const mintableNum = Number(ethers.formatEther(i.mintable));
+        haRows.innerHTML = mintableNum > 0
+          ? `<div class="ha-row"><div class="ha-text">You can mint up to <strong>${fmt(mintableNum, 2)} pSunDAI</strong> against your collateral before hitting 150%.</div></div>`
+          : `<div class="ha-row"><div class="ha-text">Deposit more PLS to mint pSunDAI.</div></div>`;
+
+      } else if (ratio > 1e6) {
+        // Should not happen with debt > 0, but guard anyway
+        haEl.classList.add("good");
+        haTitle.textContent = "Vault healthy";
+
+      } else if (ratio >= 170) {
+        // Healthy — show upside: what they can withdraw or mint
+        haEl.classList.add("good");
+        haTitle.textContent = "Vault healthy";
+        const rows = [];
+        const mintableNum = Number(ethers.formatEther(i.mintable));
+        if (mintableNum > 0.01) {
+          rows.push(`<div class="ha-row">
+            <div class="ha-text">Can mint <strong>${fmt(mintableNum, 2)} more pSunDAI</strong> before hitting 150%.</div>
+            <button class="ha-btn warn" onclick="fillMintMaxAndScroll()">Mint Max</button>
+          </div>`);
+        }
+        if (currentPrice > 0n) {
+          const reqColl = (i.debt * 150n * DECIMALS) / (currentPrice * 100n);
+          const withdrawable = i.collateral > reqColl ? i.collateral - reqColl : 0n;
+          if (withdrawable > 0n) {
+            const wNum = Number(ethers.formatEther(withdrawable));
+            const wUsd = wNum * haPriceNum;
+            rows.push(`<div class="ha-row">
+              <div class="ha-text">Can withdraw <strong>${fmt(wNum, 0)} PLS (~$${fmt(wUsd, 2)})</strong> while staying at 150%.</div>
+              <button class="ha-btn warn" onclick="document.getElementById('withdrawMaxSafe').click()">Withdraw Max</button>
+            </div>`);
+          }
+        }
+        if (rows.length === 0) {
+          rows.push(`<div class="ha-row"><div class="ha-text">Vault is at minimum safe ratio. Repay debt or add collateral to create headroom.</div></div>`);
+        }
+        haRows.innerHTML = rows.join('<div class="ha-divider" style="margin:2px 0"></div>');
+
+      } else if (ratio >= 150) {
+        // Warning zone: below 170% but above 150%
+        haEl.classList.add("warn");
+        haTitle.textContent = "Approaching minimum — action recommended";
+        const rows = [];
+        // Option A: how much pSunDAI to repay
+        if (haPriceNum > 0) {
+          const repayNum = Math.max(0, haDebtNum - (haCollNum * haPriceNum * 100) / 150);
+          // Repay to get to exactly 170% safety buffer
+          const targetDebt170 = (haCollNum * haPriceNum * 100) / 170;
+          const repayTo170 = Math.max(0, haDebtNum - targetDebt170);
+          if (repayTo170 > 0.001) {
+            rows.push(`<div class="ha-row">
+              <div class="ha-text">Repay <strong>${fmt(repayTo170, 2)} pSunDAI</strong> to bring ratio back to 170%.</div>
+              <button class="ha-btn warn" onclick="fillRepayAndScroll(${repayTo170.toFixed(4)})">Fill &amp; Repay</button>
+            </div>`);
+          }
+        }
+        // Option B: how much PLS to deposit to reach 170%
+        if (haPriceNum > 0) {
+          const reqCollFor170 = (haDebtNum * 170) / (haPriceNum * 100);
+          const depositNeeded170 = Math.max(0, reqCollFor170 - haCollNum);
+          const depositUsd170 = depositNeeded170 * haPriceNum;
+          if (depositUsd170 > 0.01) {
+            rows.push(`<div class="ha-row">
+              <div class="ha-text">Or deposit <strong>$${fmt(depositUsd170, 2)} of PLS</strong> to bring ratio to 170%.</div>
+              <button class="ha-btn warn" onclick="fillDepositAndScroll(${depositUsd170.toFixed(4)})">Fill &amp; Deposit</button>
+            </div>`);
+          }
+        }
+        haRows.innerHTML = rows.join('<div class="ha-divider" style="margin:2px 0"></div>');
+
+      } else {
+        // Below 150% — danger
+        haEl.classList.add("risk");
+        haTitle.textContent = "Below minimum ratio — immediate action required";
+        const rows = [];
+        // Use on-chain repayToHealth value (already fetched below, re-compute here)
+        if (haPriceNum > 0) {
+          const repayNum = Math.max(0, haDebtNum - (haCollNum * haPriceNum * 100) / 150);
+          if (repayNum > 0.0001) {
+            rows.push(`<div class="ha-row">
+              <div class="ha-text">Repay <strong>${fmt(repayNum, 4)} pSunDAI</strong> to restore exactly 150% — use Repay to Safe.</div>
+              <button class="ha-btn risk" onclick="document.getElementById('repayToSafe').click()">Repay to Safe</button>
+            </div>`);
+          }
+          // Also show deposit option
+          const reqCollFor150 = (haDebtNum * 150) / (haPriceNum * 100);
+          const depositNeeded = Math.max(0, reqCollFor150 - haCollNum);
+          const depositUsd = depositNeeded * haPriceNum;
+          if (depositUsd > 0.01) {
+            rows.push(`<div class="ha-row">
+              <div class="ha-text">Or deposit <strong>$${fmt(depositUsd, 2)} of PLS</strong> to restore exactly 150%.</div>
+              <button class="ha-btn risk" onclick="fillDepositAndScroll(${depositUsd.toFixed(4)})">Fill &amp; Deposit</button>
+            </div>`);
+          }
+        }
+        haRows.innerHTML = rows.join('<div class="ha-divider" style="margin:2px 0"></div>');
+      }
+      // ── END HEALTH ACTION BAR ─────────────────────────────────
+
       const needed=await vault.repayToHealth(account);
       const rtsBtn=document.getElementById("repayToSafe"), rtsLabel=document.getElementById("repayToSafeLabel"), rtsPrev=document.getElementById("prevRepayToSafe");
       if (needed>0n) {
@@ -1034,6 +1212,27 @@
       else if (ratio<150) el.innerHTML=`<span style="color:var(--warn)">Ratio ${fmt(ratio,1)}% \u2014 below 150%, top up</span>`;
       else el.innerHTML=`<span style="color:var(--safe)">Safe \u2014 ratio is ${fmt(ratio,1)}%</span>`;
     });
+  }
+
+  // Fill and scroll helpers — called from health action bar buttons
+  function fillMintMaxAndScroll() {
+    fillMintMax();
+    document.getElementById("usdMint").scrollIntoView({ behavior: "smooth", block: "center" });
+    document.getElementById("usdMint").focus();
+  }
+  function fillRepayAndScroll(amount) {
+    document.getElementById("usdRepay").value = Number(amount).toFixed(4);
+    document.getElementById("prevRepay").textContent = fmt(Number(amount), 4) + " pSunDAI";
+    document.getElementById("usdRepay").scrollIntoView({ behavior: "smooth", block: "center" });
+    document.getElementById("usdRepay").focus();
+  }
+  function fillDepositAndScroll(usdAmount) {
+    document.getElementById("usdIn").value = Number(usdAmount).toFixed(4);
+    document.getElementById("prevDeposit").textContent = currentPrice > 0n
+      ? fmt(Number(ethers.formatEther(usdToPLS(usdAmount))), 0) + " PLS"
+      : "";
+    document.getElementById("usdIn").scrollIntoView({ behavior: "smooth", block: "center" });
+    document.getElementById("usdIn").focus();
   }
 
   function fillMintMax() { if(currentMintable<=0n) return; document.getElementById("usdMint").value=Number(ethers.formatEther(currentMintable)).toFixed(4); document.getElementById("prevMint").textContent=`Max: ${fmt(Number(ethers.formatEther(currentMintable)),4)} pSunDAI`; }
