@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>SunDAI — Golden Sun Vault</title>
   <link rel="icon" href="sundailogo.png" type="image/png"/>
@@ -12,17 +12,12 @@
   <link rel="apple-touch-icon" href="sundailogo.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Fonts loaded with display=swap so page renders immediately offline.
+       System font stack provides instant fallback for PWA / slow connections. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
 
-  <script>
-    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && !navigator.userAgent.includes("MetaMaskMobile")) {
-      const url = location.origin + location.pathname + location.search + location.hash;
-      location.replace(/iPhone|iPad|iPod/i.test(navigator.userAgent)
-        ? "metamask://dapp/" + url.replace(/^https?:\/\//, '')
-        : "https://metamask.app.link/dapp/" + encodeURIComponent(url));
-    }
-  </script>
   <script src="ethers.umd.min.js"></script>
 
   <style>
@@ -39,9 +34,9 @@
       --safe:    #00FFB2;
       --warn:    #FFD000;
       --risk:    #FF2D55;
-      --mono:    'IBM Plex Mono', monospace;
-      --head:    'DM Serif Display', serif;
-      --body:    'Outfit', sans-serif;
+      --mono:    'IBM Plex Mono', 'Courier New', monospace;
+      --head:    'DM Serif Display', Georgia, serif;
+      --body:    'Outfit', system-ui, -apple-system, sans-serif;
       --r:       12px;
     }
 
@@ -429,9 +424,14 @@
     input[type="number"] {
       width: 100%; background: rgba(5,0,15,0.8);
       border: 1px solid rgba(255,140,0,0.28); color: var(--cream);
-      font-family: var(--body); font-size: 0.95em; font-weight: 500;
+      font-family: var(--body); font-size: 1em; font-weight: 500;
       padding: 12px 14px; border-radius: 9px; outline: none; display: block;
       transition: border-color 0.2s, box-shadow 0.2s; min-height: 44px; -webkit-appearance: none;
+    }
+    @media (max-width: 520px) {
+      /* 16px minimum prevents iOS Safari auto-zoom on input focus */
+      input[type="number"] { font-size: 16px; }
+      .qa-input-row input { font-size: 16px; }
     }
     input[type="number"]:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255,215,0,0.1); }
     input[type="number"]::placeholder { color: rgba(255,245,228,0.2); font-weight: 400; }
@@ -945,7 +945,7 @@
   function safeCall(p, ms=4000) { return Promise.race([p, new Promise((_,r)=>setTimeout(()=>r(new Error("timeout")),ms))]); }
 
   async function checkOracleHealth() {
-    if (!oracle) return;
+    if (!oracle) { setTimeout(checkOracleHealth, 1000); return; } // wait for oracle to be ready
     // The oracle ALWAYS provides a valid price.
     // peekPriceView() never truly fails: if lastUpdate > 24h it auto-uses spot median.
     // isHealthy() = updated within 10 min (MAX_PRICE_AGE * 2 = 600s) — internal only.
@@ -1067,27 +1067,122 @@
     return Promise.all([fetch("vault-abi.json").then(r=>r.json()),fetch("token-abi.json").then(r=>r.json()),fetch("oracle-abi.json").then(r=>r.json())]);
   }
 
-  async function connectWallet() {
+  // ── WALLET CONNECTION ─────────────────────────────────────
+  // Called ONLY when user clicks Connect Wallet.
+  // On load we silently check if already connected (no prompt).
+
+  async function tryAutoReconnect() {
+    // eth_accounts returns existing permissions — no prompt, no pop-up.
+    // If the user previously connected, we can restore silently.
+    if (!window.ethereum) return;
     try {
-      if (!window.ethereum) return alert("Please install MetaMask or a Web3 wallet.");
-      await window.ethereum.request({method:"eth_requestAccounts"});
-      provider=new ethers.BrowserProvider(window.ethereum); signer=await provider.getSigner(); account=await signer.getAddress();
-      const network=await provider.getNetwork();
-      if (Number(network.chainId)!==369) {
-        try { await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:"0x171"}]}); provider=new ethers.BrowserProvider(window.ethereum); signer=await provider.getSigner(); }
-        catch { return alert("Please switch to PulseChain (chain ID 369) in your wallet."); }
+      const accounts = await window.ethereum.request({ method: "eth_accounts" });
+      if (accounts && accounts.length > 0) await initWallet();
+    } catch { /* no prior connection — wait for user to click Connect */ }
+  }
+
+  async function connectWallet() {
+    // On mobile without window.ethereum, offer WalletConnect or MetaMask install
+    if (!window.ethereum) {
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      if (isMobile) {
+        const url = location.origin + location.pathname + location.search + location.hash;
+        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        const deepLink = isIOS
+          ? "metamask://dapp/" + url.replace(/^https?:\/\//, "")
+          : "https://metamask.app.link/dapp/" + encodeURIComponent(url);
+        const appStore = isIOS
+          ? "https://apps.apple.com/us/app/metamask-blockchain-wallet/id1438144202"
+          : "https://play.google.com/store/apps/details?id=io.metamask";
+        // Try to open MetaMask; show install page after 1.5s if it didn't open
+        const fallback = setTimeout(() => {
+          toast("MetaMask not found. Install it to connect.", "err");
+          window.open(appStore, "_blank");
+        }, 1500);
+        window.addEventListener("blur", () => clearTimeout(fallback), { once: true });
+        location.href = deepLink;
+      } else {
+        toast("No Web3 wallet found. Install MetaMask or Rabby.", "err");
       }
-      const [VA,TA,OA]=await loadABIs();
-      vault=new ethers.Contract(VAULT_ADDR,VA,signer); token=new ethers.Contract(TOKEN_ADDR,TA,signer); oracle=new ethers.Contract(ORACLE_ADDR,OA,provider); window.oracle=oracle;
-      account=await signer.getAddress();
-      const wb=document.getElementById("walletBtn"); wb.textContent=account.slice(0,6)+"..."+account.slice(-4); wb.classList.add("connected");
-      document.getElementById("connectCta").style.display="none";
-      document.getElementById("vaultPanel").style.display="block";
-      document.getElementById("globalStats").style.display="grid";
-      await Promise.all([updatePrice(),loadVault(),checkOracleHealth(),loadGlobalStats()]);
-      setInterval(updatePrice,60000); setInterval(checkOracleHealth,30000); setInterval(loadGlobalStats,90000); setInterval(loadVault,30000);
-      window.ethereum.on("accountsChanged",()=>location.reload()); window.ethereum.on("chainChanged",()=>location.reload());
-    } catch(e) { toast(friendlyErr(e),"err"); }
+      return;
+    }
+    await initWallet();
+  }
+
+  async function initWallet() {
+    try {
+      const wb = document.getElementById("walletBtn");
+      wb.textContent = "Connecting...";
+
+      await window.ethereum.request({ method: "eth_requestAccounts" });
+      provider = new ethers.BrowserProvider(window.ethereum);
+      signer   = await provider.getSigner();
+      account  = await signer.getAddress();
+
+      // Switch to PulseChain, or add it if not present
+      const network = await provider.getNetwork();
+      if (Number(network.chainId) !== 369) {
+        try {
+          await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x171" }] });
+        } catch (switchErr) {
+          // 4902 = chain not added yet — offer to add it
+          if (switchErr.code === 4902 || String(switchErr.message).includes("Unrecognized")) {
+            try {
+              await window.ethereum.request({
+                method: "wallet_addEthereumChain",
+                params: [{
+                  chainId: "0x171",
+                  chainName: "PulseChain",
+                  nativeCurrency: { name: "Pulse", symbol: "PLS", decimals: 18 },
+                  rpcUrls: ["https://rpc.pulsechain.com"],
+                  blockExplorerUrls: ["https://scan.pulsechain.com"]
+                }]
+              });
+            } catch {
+              toast("Please add PulseChain to your wallet manually (chain ID 369).", "err");
+              wb.textContent = "Connect Wallet";
+              return;
+            }
+          } else {
+            toast("Please switch to PulseChain (chain ID 369).", "err");
+            wb.textContent = "Connect Wallet";
+            return;
+          }
+        }
+        // Re-init provider after chain switch
+        provider = new ethers.BrowserProvider(window.ethereum);
+        signer   = await provider.getSigner();
+        account  = await signer.getAddress();
+      }
+
+      const [VA, TA, OA] = await loadABIs();
+      vault  = new ethers.Contract(VAULT_ADDR, VA, signer);
+      token  = new ethers.Contract(TOKEN_ADDR, TA, signer);
+      oracle = new ethers.Contract(ORACLE_ADDR, OA, provider);
+      window.oracle = oracle;
+      account = await signer.getAddress();
+
+      wb.textContent = account.slice(0,6) + "..." + account.slice(-4);
+      wb.classList.add("connected");
+      document.getElementById("connectCta").style.display  = "none";
+      document.getElementById("vaultPanel").style.display  = "block";
+      document.getElementById("globalStats").style.display = "grid";
+
+      await Promise.all([updatePrice(), loadVault(), checkOracleHealth(), loadGlobalStats()]);
+
+      setInterval(updatePrice, 60000);
+      setInterval(checkOracleHealth, 30000);
+      setInterval(loadGlobalStats, 90000);
+      setInterval(loadVault, 30000);
+
+      window.ethereum.on("accountsChanged", () => location.reload());
+      window.ethereum.on("chainChanged",    () => location.reload());
+
+    } catch(e) {
+      document.getElementById("walletBtn").textContent = "Connect Wallet";
+      const msg = e?.code === 4001 ? "Connection cancelled." : friendlyErr(e);
+      toast(msg, "err");
+    }
   }
 
   async function updatePrice() {
@@ -1674,7 +1769,17 @@
 
   document.getElementById("pokeBtn").onclick=pokeOracle;
   document.getElementById("walletBtn").onclick=connectWallet;
-  window.addEventListener("load",connectWallet);
+  window.addEventListener("load", () => {
+    // Silent reconnect — no prompt, no pop-up.
+    // Only restores if user already granted permission previously.
+    tryAutoReconnect();
+    // PWA service worker
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js")
+        .then(r => console.log("SW ready", r.scope))
+        .catch(e => console.warn("SW failed:", e));
+    }
+  });
 </script>
 </body>
 </html>
