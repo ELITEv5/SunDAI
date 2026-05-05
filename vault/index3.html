@@ -126,18 +126,20 @@
     }
     @media (max-width: 520px) { .page { padding: 92px 14px 60px; } }
 
-    /* Desktop two-column */
+    /* Desktop: wider, single column flow — clean and simple */
     @media (min-width: 900px) {
-      .page { display: grid; grid-template-columns: 360px 1fr; grid-template-rows: auto 1fr; gap: 0 28px; }
-      .page-header { grid-column: 1 / -1; }
-      /* col-left is sticky — no independent scroll; page scrolls as one unit */
-      .col-left  { grid-row: 2; position: sticky; top: 90px; align-self: start; }
-      .col-right { grid-row: 2; }
+      .page { max-width: 780px; }
+      /* Action cards sit side by side in pairs on desktop */
+      .card-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .vault-grid { grid-template-columns: repeat(4, 1fr); }
+      .global-strip { grid-template-columns: repeat(4, 1fr); }
     }
+    /* col-left and col-right become normal flow on all screen sizes */
+    .col-left, .col-right { width: 100%; }
 
     /* ─── HERO ─────────────────────────────────────── */
     .page-header { text-align: center; padding: 24px 0 28px; }
-    @media (min-width: 900px) { .page-header { padding: 16px 0 24px; } }
+    @media (min-width: 900px) { .page-header { padding: 12px 0 20px; } }
 
     .hero-logo-wrap { position: relative; display: inline-block; margin-bottom: 14px; }
     .hero-logo { width: 80px; height: 80px; object-fit: contain; display: block; position: relative; z-index: 2; animation: logoFloat 6s ease-in-out infinite; }
@@ -474,7 +476,7 @@
   <div class="toast-area" id="toastArea"></div>
 
   <!-- LEFT COLUMN -->
-  <div class="col-left">
+  <!-- vault status -->
 
     <!-- What is SunDAI -->
     <div class="intro-banner">
@@ -570,10 +572,10 @@
       System health below 130% &mdash; manual Mint is paused. 1-Click Auto Mint still works anytime.
     </div>
 
-  </div><!-- end col-left -->
+  
 
   <!-- RIGHT COLUMN: action cards -->
-  <div class="col-right">
+  <!-- action cards -->
 
     <!-- OPEN / ADD -->
     <div class="section-head"><div class="section-label">Open / Add to Vault</div><div class="section-line"></div></div>
@@ -593,6 +595,7 @@
       <div class="helper">Deposits PLS + mints pSunDAI in one transaction at 155% (contract-enforced). Works at all times.</div>
     </div>
 
+    <div class="card-pair">
     <div class="card">
       <div class="card-head"><div class="card-title">Deposit PLS</div><div class="badge amber">Adds Collateral</div></div>
       <div class="exp-toggle" onclick="toggleExp(this)"><svg width="9" height="9" viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9" fill="currentColor"/></svg> When would I use this?</div>
@@ -620,6 +623,7 @@
       <button class="btn btn-gold" id="mint" disabled><div class="spin"></div><span>Mint pSunDAI</span></button>
       <div class="helper">Must stay above 150% ratio. "Max" fills the safe limit automatically.</div>
     </div>
+    </div><!-- end card-pair: deposit + mint -->
 
     <!-- REPAY & EXIT -->
     <div class="section-head"><div class="section-label">Repay &amp; Exit</div><div class="section-line"></div></div>
@@ -671,6 +675,7 @@
     <!-- SAFETY -->
     <div class="section-head"><div class="section-label">Safety &amp; Advanced</div><div class="section-line"></div></div>
 
+    <div class="card-pair">
     <div class="card">
       <div class="card-head"><div class="card-title">Check My Liquidation Risk</div><div class="badge amber">Safety Check</div></div>
       <div class="exp-toggle" onclick="toggleExp(this)"><svg width="9" height="9" viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9" fill="currentColor"/></svg> What does this check?</div>
@@ -690,6 +695,7 @@
       </div></div>
       <button class="btn btn-ghost" onclick="window.location.href='liquidations.html?t='+Date.now()"><span>View Liquidation Dashboard</span></button>
     </div>
+    </div><!-- end card-pair -->
 
     <div class="card">
       <div class="card-head"><div class="card-title">Oracle Price Feed</div><div class="badge green" id="oracleCardBadge">Live</div></div>
@@ -713,7 +719,7 @@
       <div class="note-safe">Recovers all PLS after 30 days with zero debt &mdash; no penalties.</div>
     </div>
 
-  </div><!-- end col-right -->
+  
 </div><!-- end page -->
 
 <footer class="footer">
