@@ -281,6 +281,35 @@
     .ha-btn.risk:hover { background: rgba(255,45,85,0.12); border-color: var(--risk); }
     .ha-divider { height: 1px; background: rgba(255,255,255,0.06); }
 
+    /* ─── INLINE QUICK-ACTION ───────────────────────── */
+    .qa-wrap { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .qa-input-row { display: flex; gap: 7px; align-items: stretch; }
+    .qa-input-row input {
+      flex: 1; min-width: 0; background: rgba(10,2,28,0.9);
+      border: 1px solid rgba(255,140,0,0.32); color: var(--cream);
+      font-family: var(--display); font-size: 0.92em; font-weight: 600;
+      padding: 10px 12px; border-radius: 8px; outline: none; -webkit-appearance: none;
+      transition: border-color 0.2s;
+    }
+    .qa-input-row input:focus { border-color: var(--gold); }
+    .qa-input-row input::placeholder { color: rgba(255,245,228,0.22); font-weight: 400; }
+    .qa-btn {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      font-family: var(--display); font-weight: 700; font-size: 0.85em;
+      padding: 10px 16px; border-radius: 8px; border: none; cursor: pointer;
+      transition: all 0.18s; white-space: nowrap; flex-shrink: 0; min-width: 120px;
+    }
+    .qa-btn .spin { width: 13px; height: 13px; border: 2px solid rgba(0,0,0,0.2); border-top-color: currentColor; border-radius: 50%; animation: spin 0.65s linear infinite; display: none; }
+    .qa-btn.loading .spin { display: block; }
+    .qa-btn-orange { background: linear-gradient(135deg,#FF7400,#FFBE00); color: #000; box-shadow: 0 3px 12px rgba(255,120,0,0.3); }
+    .qa-btn-orange:hover { background: linear-gradient(135deg,#FFBE00,#FFE44D); transform: translateY(-1px); }
+    .qa-btn-red    { background: linear-gradient(135deg,#C0143C,#FF2D55); color: #fff; box-shadow: 0 3px 12px rgba(192,20,60,0.3); }
+    .qa-btn-red:hover    { transform: translateY(-1px); }
+    .qa-btn:disabled { background: rgba(30,12,50,0.9) !important; color: #555 !important; cursor: not-allowed; transform: none !important; }
+    .qa-preview { font-size: 0.72em; color: rgba(255,189,112,0.65); font-family: var(--mono); min-height: 14px; }
+    .qa-label { font-size: 0.7em; font-weight: 700; color: rgba(255,245,228,0.45); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px; }
+    .qa-or { text-align: center; font-size: 0.68em; color: rgba(255,245,228,0.25); text-transform: uppercase; letter-spacing: 0.1em; }
+
     .gauge-label-row { display: flex; justify-content: space-between; font-size: 0.62em; color: var(--dim); margin-bottom: 6px; font-family: var(--mono); letter-spacing: 0.02em; }
     .gauge-track { height: 6px; border-radius: 100px; background: rgba(255,255,255,0.05); position: relative; overflow: visible; }
     .gauge-fill { height: 100%; border-radius: 100px; transition: width 0.8s cubic-bezier(.4,0,.2,1); background: linear-gradient(90deg, var(--risk) 0%, var(--warn) 30%, var(--safe) 70%); }
@@ -605,12 +634,43 @@
         <div class="ratio-caption" id="ratioCaption">Connect wallet</div>
       </div>
 
-      <!-- SMART ACTION BAR: tells user exactly what to do -->
+      <!-- SMART ACTION BAR -->
       <div class="health-action" id="healthAction">
         <div class="ha-title" id="healthActionTitle">Vault Status</div>
         <div class="ha-rows" id="healthActionRows"></div>
       </div>
-    </div>
+
+      <!-- INLINE QUICK-ACTIONS: pre-filled inputs right in the panel -->
+      <div class="qa-wrap" id="qaWrap" style="display:none">
+
+        <!-- Repay quick-action -->
+        <div id="qaRepayBlock" style="display:none">
+          <div class="qa-label" id="qaRepayLabel">Repay pSunDAI to restore 150%</div>
+          <div class="qa-input-row">
+            <input id="qaRepayInput" type="number" step="0.0001" min="0" placeholder="pSunDAI to repay" />
+            <button class="qa-btn qa-btn-red" id="qaRepayBtn" onclick="doQuickRepay()">
+              <div class="spin"></div><span>Repay Now</span>
+            </button>
+          </div>
+          <div class="qa-preview" id="qaRepayPreview"></div>
+        </div>
+
+        <div class="qa-or" id="qaOr" style="display:none">— or —</div>
+
+        <!-- Deposit quick-action -->
+        <div id="qaDepositBlock" style="display:none">
+          <div class="qa-label" id="qaDepositLabel">Deposit PLS to restore 150%</div>
+          <div class="qa-input-row">
+            <input id="qaDepositInput" type="number" step="0.01" min="0" placeholder="USD value of PLS" />
+            <button class="qa-btn qa-btn-orange" id="qaDepositBtn" onclick="doQuickDeposit()">
+              <div class="spin"></div><span>Deposit Now</span>
+            </button>
+          </div>
+          <div class="qa-preview" id="qaDepositPreview"></div>
+        </div>
+
+      </div><!-- end qa-wrap -->
+    </div><!-- end vault-panel -->
 
     <!-- Global stats -->
     <div class="global-strip" id="globalStats" style="display:none">
@@ -1172,6 +1232,91 @@
       }
       // ── END HEALTH ACTION BAR ─────────────────────────────────
 
+      // ── INLINE QUICK-ACTION PANEL ────────────────────────────────
+      // Shows pre-filled repay/deposit inputs directly in the vault panel
+      // so users never have to scroll to fix an at-risk vault.
+      const qaWrap        = document.getElementById("qaWrap");
+      const qaRepayBlock  = document.getElementById("qaRepayBlock");
+      const qaDepositBlock= document.getElementById("qaDepositBlock");
+      const qaOr          = document.getElementById("qaOr");
+      const qaRepayInput  = document.getElementById("qaRepayInput");
+      const qaDepositInput= document.getElementById("qaDepositInput");
+      const qaRepayPrev   = document.getElementById("qaRepayPreview");
+      const qaDepositPrev = document.getElementById("qaDepositPreview");
+      const qaRepayLabel  = document.getElementById("qaRepayLabel");
+      const qaDepositLabel= document.getElementById("qaDepositLabel");
+
+      // Reset
+      qaWrap.style.display = "none";
+      qaRepayBlock.style.display = "none";
+      qaDepositBlock.style.display = "none";
+      qaOr.style.display = "none";
+
+      if (i.debt > 0n && ratio < 170 && currentPrice > 0n) {
+        // Show quick actions whenever ratio needs attention (below 170%)
+        qaWrap.style.display = "flex";
+
+        if (ratio < 150) {
+          // DANGER: show exact amounts to restore 150%
+          // Repay option — use same BigInt formula as contract's repayToHealth()
+          const repayBig = i.debt > (i.collateral * currentPrice * 100n) / (150n * DECIMALS)
+            ? i.debt - (i.collateral * currentPrice * 100n) / (150n * DECIMALS)
+            : 0n;
+          if (repayBig > 0n) {
+            const rAmt = Number(ethers.formatEther(repayBig));
+            qaRepayBlock.style.display = "block";
+            qaRepayLabel.textContent = "Repay pSunDAI — restores vault to exactly 150%";
+            qaRepayInput.value = rAmt.toFixed(4);
+            qaRepayPrev.textContent = "Burning " + fmt(rAmt, 4) + " pSunDAI brings ratio to 150%";
+            qaRepayPrev.style.color = "var(--risk)";
+          }
+          // Deposit option
+          const reqColl150 = (i.debt * 150n * DECIMALS) / (currentPrice * 100n);
+          const depBig = reqColl150 > i.collateral ? reqColl150 - i.collateral : 0n;
+          if (depBig > 0n) {
+            const dUsd = Number(ethers.formatEther(depBig)) * haPriceNum;
+            qaDepositBlock.style.display = "block";
+            qaDepositLabel.textContent = "Deposit PLS — restores vault to exactly 150%";
+            qaDepositInput.value = dUsd.toFixed(4);
+            qaDepositPrev.textContent = "≈ " + fmt(Number(ethers.formatEther(depBig)), 0) + " PLS";
+            qaDepositPrev.style.color = "var(--risk)";
+            if (repayBig > 0n) qaOr.style.display = "block";
+          }
+        } else {
+          // WARNING: show amounts to reach comfortable 170% buffer
+          const reqDebt170 = (i.collateral * currentPrice * 100n) / (170n * DECIMALS);
+          const repayTo170 = i.debt > reqDebt170 ? i.debt - reqDebt170 : 0n;
+          if (repayTo170 > 0n) {
+            const rAmt = Number(ethers.formatEther(repayTo170));
+            qaRepayBlock.style.display = "block";
+            qaRepayLabel.textContent = "Repay pSunDAI — brings ratio back to 170%";
+            qaRepayInput.value = rAmt.toFixed(4);
+            qaRepayPrev.textContent = "Burning " + fmt(rAmt, 4) + " pSunDAI restores a safe 170% ratio";
+            qaRepayPrev.style.color = "var(--warn)";
+          }
+          const reqColl170 = (i.debt * 170n * DECIMALS) / (currentPrice * 100n);
+          const depBig170 = reqColl170 > i.collateral ? reqColl170 - i.collateral : 0n;
+          if (depBig170 > 0n) {
+            const dUsd = Number(ethers.formatEther(depBig170)) * haPriceNum;
+            qaDepositBlock.style.display = "block";
+            qaDepositLabel.textContent = "Deposit PLS — brings ratio back to 170%";
+            qaDepositInput.value = dUsd.toFixed(4);
+            qaDepositPrev.textContent = "≈ " + fmt(Number(ethers.formatEther(depBig170)), 0) + " PLS";
+            qaDepositPrev.style.color = "var(--warn)";
+            if (repayTo170 > 0n) qaOr.style.display = "block";
+          }
+        }
+
+        // Live preview update for deposit input
+        qaDepositInput.oninput = () => {
+          const u = parseFloat(qaDepositInput.value) || 0;
+          qaDepositPrev.textContent = u > 0 && currentPrice > 0n
+            ? "≈ " + fmt(Number(ethers.formatEther(usdToPLS(u))), 0) + " PLS"
+            : "";
+        };
+      }
+      // ── END QUICK-ACTION PANEL ────────────────────────────────────
+
       // Fetch on-chain repay amount — authoritative value for repayToSafe button
       const needed = await vault.repayToHealth(account);
       const rtsBtn=document.getElementById("repayToSafe"), rtsLabel=document.getElementById("repayToSafeLabel"), rtsPrev=document.getElementById("prevRepayToSafe");
@@ -1218,6 +1363,39 @@
       else if (ratio<150) el.innerHTML=`<span style="color:var(--warn)">Ratio ${fmt(ratio,1)}% \u2014 below 150%, top up</span>`;
       else el.innerHTML=`<span style="color:var(--safe)">Safe \u2014 ratio is ${fmt(ratio,1)}%</span>`;
     });
+  }
+
+  // ── QUICK-ACTION HANDLERS (inline panel in vault gauge) ────────
+  // These execute directly from the pre-filled inputs in the vault panel.
+  // No approval needed for repay — vault burns pSunDAI via onlyVault permission.
+  async function doQuickRepay() {
+    const btn = document.getElementById("qaRepayBtn");
+    const u = parseFloat(document.getElementById("qaRepayInput").value);
+    if (!u || u <= 0) return toast("Enter an amount to repay", "err");
+    const debtNum = Number(ethers.formatEther(currentDebt));
+    if (debtNum > 0 && u > debtNum + 0.0001)
+      return toast("Cannot repay more than your debt (" + fmt(debtNum, 4) + " pSunDAI)", "err");
+    btn.classList.add("loading"); btn.disabled = true;
+    try {
+      await (await vault.repay(ethers.parseUnits(String(u), 18))).wait();
+      toast("Repaid " + fmt(u, 4) + " pSunDAI — vault ratio restored");
+      await loadVault();
+    } catch(e) { toast(friendlyErr(e), "err"); }
+    finally { btn.classList.remove("loading"); btn.disabled = false; }
+  }
+
+  async function doQuickDeposit() {
+    const btn = document.getElementById("qaDepositBtn");
+    const u = parseFloat(document.getElementById("qaDepositInput").value);
+    if (!u || u <= 0) return toast("Enter a deposit amount", "err");
+    if (!currentPrice || currentPrice === 0n) return toast("Oracle price unavailable — wake the oracle first", "err");
+    btn.classList.add("loading"); btn.disabled = true;
+    try {
+      await (await vault.depositPLS({ value: usdToPLS(u) })).wait();
+      toast("Deposited " + fmt(Number(ethers.formatEther(usdToPLS(u))), 0) + " PLS — vault ratio improved");
+      await loadVault();
+    } catch(e) { toast(friendlyErr(e), "err"); }
+    finally { btn.classList.remove("loading"); btn.disabled = false; }
   }
 
   // Direct action functions — called from health action bar buttons
