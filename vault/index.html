@@ -957,11 +957,13 @@
       const ageMin = Math.floor(age / 60);
       const ageLabel = ageMin < 60 ? ageMin + " min ago" : (age/3600).toFixed(1) + "h ago";
 
-      // canPoke: 30-min cooldown has elapsed since last poke?
-      // Falls back to timestamp estimate if canPoke() not on this deployment.
-      let canPoke = false;
-      try { canPoke = await safeCall(oracle.canPoke(), 3000); }
-      catch { canPoke = age > 1800; } // estimate: >30 min since update = likely pokeable
+      // canPoke: confirmed NOT in deployed oracle ABI (oracle-abi.json).
+      // Use lastUpdateTimestamp directly — it IS in the ABI.
+      // MIN_POKE_INTERVAL = 1800s (30 min), confirmed in oracle source.
+      let lastPokeTs = 0;
+      try { lastPokeTs = Number(await oracle.lastUpdateTimestamp()); } catch {}
+      const pokeCooldown = lastPokeTs > 0 ? lastPokeTs : Number(ts);
+      const canPoke = (Math.floor(Date.now() / 1000) - pokeCooldown) >= 1800;
 
       const cardText  = document.getElementById("oracleStatusText");
       const cardBadge = document.getElementById("oracleCardBadge");
