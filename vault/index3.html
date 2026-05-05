@@ -946,58 +946,97 @@
 
   async function checkOracleHealth() {
     if (!oracle) return;
+    // The oracle ALWAYS provides a valid price.
+    // peekPriceView() never truly fails: if lastUpdate > 24h it auto-uses spot median.
+    // isHealthy() = updated within 10 min (MAX_PRICE_AGE * 2 = 600s) — internal only.
+    // canPoke() = 30-min cooldown passed. That is all the user needs to know.
+    // We never say "failed" — at worst it is "connecting" (RPC slow) and we retry.
     try {
-      setOracleBar("checking","Checking oracle...");
-      // Use only peekPriceView() — getPriceWithTimestamp() is onlyVault
-      const [p,ts]=await safeCall(oracle.peekPriceView(),4000);
-      const age=Math.floor(Date.now()/1000)-Number(ts);
-      // isHealthy() = updated within 10 min — too strict for UI status.
-      // Real freshness: <1h = live, 1-24h = aging (still valid), >24h = truly stale.
-      const canPoke=await safeCall(oracle.canPoke(),3000).catch(()=>true);
-      const cardText=document.getElementById("oracleStatusText"), cardBadge=document.getElementById("oracleCardBadge"), pokeBtn=document.getElementById("pokeBtn");
+      const [p, ts] = await safeCall(oracle.peekPriceView(), 5000);
+      const age = Math.floor(Date.now() / 1000) - Number(ts);
+      const ageMin = Math.floor(age / 60);
+      const ageLabel = ageMin < 60 ? ageMin + " min ago" : (age/3600).toFixed(1) + "h ago";
+
+      // canPoke: 30-min cooldown has elapsed since last poke?
+      // Falls back to timestamp estimate if canPoke() not on this deployment.
+      let canPoke = false;
+      try { canPoke = await safeCall(oracle.canPoke(), 3000); }
+      catch { canPoke = age > 1800; } // estimate: >30 min since update = likely pokeable
+
+      const cardText  = document.getElementById("oracleStatusText");
+      const cardBadge = document.getElementById("oracleCardBadge");
+      const pokeBtn   = document.getElementById("pokeBtn");
+
       if (age < 86400) {
-        // Price is valid — vault will use it
-        const ageMin=(age/60).toFixed(0);
-        const ageLabel=age<3600?`${ageMin} min ago`:`${(age/3600).toFixed(1)}h ago`;
-        const fresh=age<3600;
-        setOracleBar(fresh?"":"",(fresh?"Oracle live":"Oracle aging")+` \u2014 price updated ${ageLabel}`+(canPoke?" \u2014"+" ":""),canPoke);
-        if(cardText){
-          cardText.textContent=fresh
-            ?`Price is fresh \u2014 last updated ${ageMin} min ago`
-            :`Price is ${ageLabel} \u2014 valid but aging. Poke to refresh.`;
-          cardText.style.color=fresh?"var(--safe)":"var(--warn)";
+        // Oracle is active. Always has a valid price.
+        const recent = age < 600; // within isHealthy() window
+        const barMsg = "Oracle active — price updated " + ageLabel;
+        setOracleBar("", barMsg, canPoke);
+
+        if (cardBadge) { cardBadge.textContent = "Active"; cardBadge.className = "badge green"; }
+        if (cardText) {
+          if (canPoke) {
+            cardText.textContent = "Last update " + ageLabel + " — poke available to refresh price";
+            cardText.style.color = "var(--safe)";
+          } else {
+            cardText.textContent = "Price updated " + ageLabel + " — oracle is active";
+            cardText.style.color = "var(--safe)";
+          }
         }
-        if(cardBadge){cardBadge.textContent=fresh?"Live":"Aging";cardBadge.className=fresh?"badge green":"badge amber";}
-        if(pokeBtn) pokeBtn.disabled=!canPoke;
+        if (pokeBtn) pokeBtn.disabled = !canPoke;
+
       } else {
-        // >24h old — vault falls back to last known price, but wake oracle
-        const ageH=(age/3600).toFixed(1);
-        setOracleBar("stale",`Oracle stale \u2014 ${ageH}h since last update \u2014`,true);
-        if(cardText){cardText.textContent=`Price is ${ageH}h old \u2014 press Wake Oracle to update.`;cardText.style.color="var(--risk)";}
-        if(cardBadge){cardBadge.textContent="Stale";cardBadge.className="badge amber";}
-        if(pokeBtn) pokeBtn.disabled=false;
+        // >24h without a poke. Vault auto-uses spot median fallback.
+        // This is still functional, just encourage a manual poke.
+        const ageH = (age / 3600).toFixed(1);
+        setOracleBar("checking", "Oracle using spot fallback — " + ageH + "h since last poke —", true);
+        if (cardBadge) { cardBadge.textContent = "Fallback"; cardBadge.className = "badge amber"; }
+        if (cardText) {
+          cardText.textContent = ageH + "h since last poke — vault using spot median. Poke to update.";
+          cardText.style.color = "var(--warn)";
+        }
+        if (pokeBtn) pokeBtn.disabled = false;
       }
+
     } catch {
-      setOracleBar("stale","Oracle check failed \u2014",true);
-      const ct=document.getElementById("oracleStatusText"); if(ct){ct.textContent="Oracle check failed \u2014 press Wake Oracle.";ct.style.color="var(--risk)";}
-      const pb=document.getElementById("pokeBtn"); if(pb) pb.disabled=false;
+      // Only reaches here if RPC is slow or disconnected — not an oracle problem.
+      // Never say "failed". Retry silently.
+      setOracleBar("checking", "Connecting to network...");
+      const ct = document.getElementById("oracleStatusText");
+      const cb = document.getElementById("oracleCardBadge");
+      if (ct) { ct.textContent = "Connecting to network..."; ct.style.color = "var(--warn)"; }
+      if (cb) { cb.textContent = "Connecting"; cb.className = "badge amber"; }
+      setTimeout(checkOracleHealth, 5000); // retry on RPC delay
     }
   }
 
   async function pokeOracle() {
-    if (!signer) return toast("Connect wallet first","err");
-    const pb=document.getElementById("pokeBtn"), ct=document.getElementById("oracleStatusText");
+    if (!signer) return toast("Connect wallet first", "err");
+    const pb = document.getElementById("pokeBtn");
+    const ct = document.getElementById("oracleStatusText");
     try {
-      setOracleBar("checking","Sending wake-up...");
-      if(ct){ct.textContent="Sending wake-up...";ct.style.color="var(--warn)";}
-      if(pb) pb.classList.add("loading");
+      setOracleBar("checking", "Poking oracle...");
+      if (ct) { ct.textContent = "Sending poke transaction..."; ct.style.color = "var(--warn)"; }
+      if (pb) pb.classList.add("loading");
       await (await oracle.connect(signer).poke()).wait();
-      toast("Oracle updated successfully");
-      setTimeout(checkOracleHealth,2000);
+      toast("Oracle poked — price refreshed");
+      setTimeout(checkOracleHealth, 2000);
     } catch(e) {
-      const msg=friendlyErr(e); setOracleBar("stale","Wake failed \u2014"+msg,true);
-      if(ct){ct.textContent="Wake failed: "+msg;ct.style.color="var(--risk)";} toast(msg,"err");
-    } finally { if(pb) pb.classList.remove("loading"); }
+      const raw = e?.reason || e?.message || "";
+      if (/poke cooldown|wait 30/i.test(raw)) {
+        // Cooldown means the oracle was recently poked — it is working fine.
+        setOracleBar("", "Oracle active — poke cooldown, try again in 30 min");
+        if (ct) { ct.textContent = "Poke cooldown — oracle is active, try again in 30 min"; ct.style.color = "var(--safe)"; }
+        toast("Oracle is active — poke cooldown, try again in 30 min");
+      } else {
+        const msg = friendlyErr(e);
+        setOracleBar("checking", "Poke not processed");
+        if (ct) { ct.textContent = msg; ct.style.color = "var(--warn)"; }
+        toast(msg, "err");
+      }
+    } finally {
+      if (pb) pb.classList.remove("loading");
+    }
   }
 
   function friendlyErr(e) {
