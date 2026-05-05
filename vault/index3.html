@@ -1010,8 +1010,11 @@
     if(/poke cooldown|wait 30/i.test(m)) return "Oracle poke cooldown \u2014 wait 30 minutes between pokes.";
     if(/oracle|price|invalid price/i.test(m)) return "Oracle price unavailable \u2014 try waking the oracle first.";
     if(/invalid repay|zero.*repay/i.test(m)) return "Repay amount exceeds your debt. Use Max.";
+    // OZ ERC20 _burn reverts with this when wallet doesn't hold enough pSunDAI
+    if(/burn amount exceeds balance/i.test(m)) return "Not enough pSunDAI in your wallet to repay this amount. You need to acquire more pSunDAI first (e.g. buy on PulseX) or deposit more PLS collateral instead.";
     if(/too small/i.test(m)) return "Amount is below the minimum (0.0001 PLS / pSunDAI).";
-    if(/insufficient|balance/i.test(m)) return "Insufficient balance.";
+    if(/insufficient funds/i.test(m)) return "Not enough PLS in your wallet for this transaction (including gas).";
+    if(/insufficient|balance/i.test(m)) return "Insufficient balance. Check you have enough pSunDAI or PLS.";
     if(/user rejected|denied|cancelled/i.test(m)) return "Transaction cancelled.";
     return m.length>120?m.substring(0,120)+"\u2026":m;
   }
@@ -1265,10 +1268,21 @@
           if (repayBig > 0n) {
             const rAmt = Number(ethers.formatEther(repayBig));
             qaRepayBlock.style.display = "block";
-            qaRepayLabel.textContent = "Repay pSunDAI — restores vault to exactly 150%";
+            qaRepayLabel.textContent = "Repay pSunDAI \u2014 restores vault to exactly 150%";
             qaRepayInput.value = rAmt.toFixed(4);
-            qaRepayPrev.textContent = "Burning " + fmt(rAmt, 4) + " pSunDAI brings ratio to 150%";
-            qaRepayPrev.style.color = "var(--risk)";
+            // Show wallet balance so user knows immediately if they can afford to repay
+            try {
+              const walBal = await token.balanceOf(account);
+              const walNum = Number(ethers.formatEther(walBal));
+              const hasEnough = walNum >= rAmt - 0.0001;
+              qaRepayPrev.textContent = "Need " + fmt(rAmt, 4) + " pSunDAI \u2014 wallet: " + fmt(walNum, 4)
+                + (hasEnough ? " \u2714 enough" : " \u2716 not enough \u2014 deposit PLS instead");
+              qaRepayPrev.style.color = hasEnough ? "var(--warn)" : "var(--risk)";
+              if (!hasEnough) document.getElementById("qaRepayBtn").disabled = true;
+            } catch {
+              qaRepayPrev.textContent = "Need " + fmt(rAmt, 4) + " pSunDAI to restore 150%";
+              qaRepayPrev.style.color = "var(--risk)";
+            }
           }
           // Deposit option
           const reqColl150 = (i.debt * 150n * DECIMALS) / (currentPrice * 100n);
@@ -1289,10 +1303,20 @@
           if (repayTo170 > 0n) {
             const rAmt = Number(ethers.formatEther(repayTo170));
             qaRepayBlock.style.display = "block";
-            qaRepayLabel.textContent = "Repay pSunDAI — brings ratio back to 170%";
+            qaRepayLabel.textContent = "Repay pSunDAI \u2014 brings ratio back to 170%";
             qaRepayInput.value = rAmt.toFixed(4);
-            qaRepayPrev.textContent = "Burning " + fmt(rAmt, 4) + " pSunDAI restores a safe 170% ratio";
-            qaRepayPrev.style.color = "var(--warn)";
+            try {
+              const walBal = await token.balanceOf(account);
+              const walNum = Number(ethers.formatEther(walBal));
+              const hasEnough = walNum >= rAmt - 0.0001;
+              qaRepayPrev.textContent = "Need " + fmt(rAmt, 4) + " pSunDAI \u2014 wallet: " + fmt(walNum, 4)
+                + (hasEnough ? " \u2714 enough" : " \u2716 not enough \u2014 deposit PLS instead");
+              qaRepayPrev.style.color = hasEnough ? "var(--warn)" : "var(--risk)";
+              if (!hasEnough) document.getElementById("qaRepayBtn").disabled = true;
+            } catch {
+              qaRepayPrev.textContent = "Need " + fmt(rAmt, 4) + " pSunDAI to restore 170%";
+              qaRepayPrev.style.color = "var(--warn)";
+            }
           }
           const reqColl170 = (i.debt * 170n * DECIMALS) / (currentPrice * 100n);
           const depBig170 = reqColl170 > i.collateral ? reqColl170 - i.collateral : 0n;
@@ -1375,10 +1399,23 @@
     const debtNum = Number(ethers.formatEther(currentDebt));
     if (debtNum > 0 && u > debtNum + 0.0001)
       return toast("Cannot repay more than your debt (" + fmt(debtNum, 4) + " pSunDAI)", "err");
+    // Pre-flight: check pSunDAI wallet balance before sending — prevents silent revert
+    try {
+      const walBal = await token.balanceOf(account);
+      const walNum = Number(ethers.formatEther(walBal));
+      if (walNum < u - 0.0001) {
+        return toast(
+          "You only have " + fmt(walNum, 4) + " pSunDAI in your wallet but need " + fmt(u, 4) + ". "
+          + "Buy more on PulseX, or use Deposit PLS to add collateral instead.",
+          "err"
+        );
+      }
+    } catch { /* balance check failed — let the tx proceed and catch the real error */ }
+
     btn.classList.add("loading"); btn.disabled = true;
     try {
       await (await vault.repay(ethers.parseUnits(String(u), 18))).wait();
-      toast("Repaid " + fmt(u, 4) + " pSunDAI — vault ratio restored");
+      toast("Repaid " + fmt(u, 4) + " pSunDAI \u2014 vault ratio restored");
       await loadVault();
     } catch(e) { toast(friendlyErr(e), "err"); }
     finally { btn.classList.remove("loading"); btn.disabled = false; }
@@ -1404,8 +1441,19 @@
     await withLoading("repayToSafe", async () => {
       const needed = await vault.repayToHealth(account);
       if (needed === 0n) throw new Error("Already at or above 150% \u2014 no repayment needed");
+      // Pre-flight: check wallet balance before attempting burn
+      const walletBal = await token.balanceOf(account);
+      const walletBalNum = Number(ethers.formatEther(walletBal));
+      const neededNum = Number(ethers.formatEther(needed));
+      if (walletBalNum < neededNum - 0.0001) {
+        throw new Error(
+          "Not enough pSunDAI in your wallet. You need " + fmt(neededNum, 4)
+          + " but only have " + fmt(walletBalNum, 4) + ". "
+          + "Buy more on PulseX, or deposit PLS instead."
+        );
+      }
       await (await vault.autoRepayToHealth()).wait();
-      toast("Repaid " + fmt(Number(ethers.formatEther(needed)), 4) + " pSunDAI \u2014 vault restored to 150%");
+      toast("Repaid " + fmt(neededNum, 4) + " pSunDAI \u2014 vault restored to 150%");
     });
   }
   async function doWithdrawMax() {
@@ -1484,6 +1532,8 @@
   document.getElementById("repay").onclick=()=>withLoading("repay",async()=>{
     const u=parseFloat(document.getElementById("usdRepay").value); if(!u||u<=0) throw new Error("Enter an amount to repay");
     const dn=Number(ethers.formatEther(currentDebt)); if(dn>0&&u>dn+0.0001) throw new Error(`Cannot repay more than your debt (${fmt(dn,4)} pSunDAI). Use Max.`);
+    const walBal=await token.balanceOf(account); const walNum=Number(ethers.formatEther(walBal));
+    if(walNum<u-0.0001) throw new Error(`Not enough pSunDAI in wallet. You have ${fmt(walNum,4)} but need ${fmt(u,4)}. Buy more on PulseX or deposit PLS instead.`);
     await (await vault.repay(ethers.parseUnits(String(u),18))).wait();
     toast(`Repaid ${fmt(u,2)} pSunDAI`); document.getElementById("usdRepay").value=""; document.getElementById("prevRepay").textContent="";
   });
@@ -1491,6 +1541,8 @@
   document.getElementById("repayAuto").onclick=()=>withLoading("repayAuto",async()=>{
     const u=parseFloat(document.getElementById("usdRepay").value); if(!u||u<=0) throw new Error("Enter an amount to repay");
     const dn=Number(ethers.formatEther(currentDebt)); if(dn>0&&u>dn+0.0001) throw new Error(`Cannot repay more than your debt (${fmt(dn,4)} pSunDAI). Use Max.`);
+    const walBal=await token.balanceOf(account); const walNum=Number(ethers.formatEther(walBal));
+    if(walNum<u-0.0001) throw new Error(`Not enough pSunDAI in wallet. You have ${fmt(walNum,4)} but need ${fmt(u,4)}.`);
     await (await vault.repayAndAutoWithdraw(ethers.parseUnits(String(u),18))).wait();
     toast(u>=dn-0.0001?"Repaid all debt \u2014 vault closed, all collateral returned":`Repaid ${fmt(u,2)} pSunDAI and withdrew freed collateral`);
     document.getElementById("usdRepay").value=""; document.getElementById("prevRepay").textContent="";
