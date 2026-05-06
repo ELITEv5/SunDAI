@@ -15,12 +15,27 @@
   <script src="ethers.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
-    /* iOS overscroll bounce shows the html background — set it to match */
+    /* Full overscroll fix for iOS Safari + Android Chrome:
+       - html background covers the rubber-band bounce zone
+       - overscroll-behavior stops the bounce animation
+       - fixed dark pseudo-element covers any remaining edge cases */
     html {
       background: #0a001f;
-      overscroll-behavior: none; /* kills rubber-band white flash on iOS/Android */
+      overscroll-behavior: none;
+      overscroll-behavior-y: none;
       height: 100%;
     }
+    html::before, html::after {
+      content: '';
+      position: fixed;
+      left: 0; right: 0;
+      height: 50vh;
+      background: #0a001f;
+      z-index: -1;
+      pointer-events: none;
+    }
+    html::before { top: -50vh; }   /* covers overscroll at top */
+    html::after  { bottom: -50vh; } /* covers overscroll at bottom */
     body {
       margin: 0;
       background: #0a001f;
@@ -31,6 +46,7 @@
       align-items: center;
       min-height: 100%;
       overflow-x: hidden;
+      overscroll-behavior: none;
     }
     /* ── NAV (matches vault page) ── */
     .nav {
