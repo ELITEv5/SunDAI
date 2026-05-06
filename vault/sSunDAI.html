@@ -369,8 +369,7 @@
                 ];
                 const oracle = new ethers.Contract(ORACLE_ADDRESS, ORACLE_ABI, provider);
                 let price;
-                try { [price] = await oracle.getPriceWithTimestamp(); }
-                catch { [price] = await oracle.peekPriceView(); }
+                [price] = await oracle.peekPriceView(); // getPriceWithTimestamp is onlyVault
                 plsPrice = parseFloat(ethers.formatEther(price));
             } catch { /* use fallback */ }
         }
@@ -378,10 +377,19 @@
         async function getLPTokenUSDValue() {
             try {
                 const [reserve0, reserve1] = await pairContract.getReserves();
-                const totalSupply = await pairContract.totalSupply();
-                const r0 = parseFloat(ethers.formatEther(reserve0)) * 1.0;
-                const r1 = parseFloat(ethers.formatEther(reserve1)) * plsPrice;
-                return (r0 + r1) / parseFloat(ethers.formatEther(totalSupply));
+                const [totalSupply, token0] = await Promise.all([
+                    pairContract.totalSupply(),
+                    pairContract.token0()
+                ]);
+                // pSunDAI is pegged $1. PLS value = plsPrice.
+                // token0 address determines which reserve is which.
+                const PSUNDAI = "0x5529c1cb179b2c256501031adCDAfC22D9c6d236".toLowerCase();
+                const isPSunDAIToken0 = token0.toLowerCase() === PSUNDAI;
+                const pSunDAIReserve = isPSunDAIToken0 ? reserve0 : reserve1;
+                const plsReserve     = isPSunDAIToken0 ? reserve1 : reserve0;
+                const pSunDAIValue = parseFloat(ethers.formatEther(pSunDAIReserve)) * 1.0;
+                const plsValue     = parseFloat(ethers.formatEther(plsReserve))     * plsPrice;
+                return (pSunDAIValue + plsValue) / parseFloat(ethers.formatEther(totalSupply));
             } catch { return 0; }
         }
 
@@ -436,7 +444,7 @@
                 document.getElementById("totalHarvests").textContent  = stats.harvestCount.toString();
                 document.getElementById("feesCompounded").textContent = parseFloat(ethers.formatEther(stats.feesCompounded)).toFixed(6) + " LP";
 
-                const secsSince = stats.timeSinceLastHarvest.toNumber();
+                const secsSince = Number(stats.timeSinceLastHarvest);
                 document.getElementById("timeSinceHarvest").textContent = formatDuration(secsSince);
 
                 const harvestBtn = document.getElementById("harvestBtn");
@@ -445,7 +453,7 @@
                     document.getElementById("harvestPreview").textContent = "Ready — click to compound fees for all stakers";
                     harvestBtn.disabled = false;
                 } else {
-                    const secsUntil = canHarvest.timeUntilReady.toNumber();
+                    const secsUntil = Number(canHarvest.timeUntilReady);
                     document.getElementById("nextHarvest").textContent    = formatDuration(secsUntil);
                     document.getElementById("harvestPreview").textContent = "Next harvest in " + formatDuration(secsUntil);
                     harvestBtn.disabled = true;
@@ -550,12 +558,13 @@
         async function withLoading(btn, fn) {
             const orig = btn.textContent;
             btn.disabled = true;
-            btn.innerHTML = '<div class="loading"></div>';
+            // Use text replacement only — no innerHTML swap avoids GPU layer repaint/black flash
+            btn.textContent = "Processing...";
             document.getElementById("error").textContent = "";
             try {
                 await fn();
                 await loadData();
-                showStatus("Success!");
+                showStatus("Done!");
             } catch (e) {
                 showError(e.reason || e.message || "Transaction failed");
             } finally {
@@ -570,7 +579,7 @@
             await withLoading(document.getElementById("depositBtn"), async () => {
                 const amountWei = ethers.parseEther(amount);
                 const allowance = await lpTokenContract.allowance(userAddress, SSUNDAI_ADDRESS);
-                if (allowance.lt(amountWei)) {
+                if (allowance < amountWei) {
                     const tx = await lpTokenContract.approve(SSUNDAI_ADDRESS, ethers.MaxUint256);
                     await tx.wait();
                 }
