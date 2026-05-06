@@ -6,7 +6,11 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <title>sSunDAI - Auto-Compounding LP Vault</title>
     <link rel="icon" href="sundailogo.png" type="image/png" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="sundailogo.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <script src="ethers.umd.min.js"></script>
     <style>
         body {
             margin: 0; background: #0a001f; color: #ffebd1;
@@ -16,19 +20,32 @@
         #bg { position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0; animation: fadeIn 2s ease forwards; }
         @keyframes fadeIn { to { opacity: 1; } }
 
-        .wallet {
-            position: fixed; top: 20px; right: 20px; background: #111; padding: 10px 22px;
-            border: 2px solid #ff8c00; border-radius: 10px; color: #fff; font-weight: 700;
-            cursor: pointer; z-index: 9999; transition: all 0.2s ease;
+        /* ── NAV ── */
+        .nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: 58px;
+            display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
+            background: rgba(5,0,15,0.92); backdrop-filter: blur(24px);
+            border-bottom: 1px solid rgba(255,140,0,0.15);
         }
-        .wallet:hover { background: #222; box-shadow: 0 0 15px rgba(255,140,0,0.4); }
-        .wallet.connected { border-color: #fbbf24; color: #fbbf24; box-shadow: 0 0 20px rgba(251,191,36,0.5); }
+        .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #FFF5E4; flex-shrink: 0; }
+        .nav-brand img { height: 28px; width: 28px; object-fit: contain; }
+        .nav-brand-text { font-size: 1.1em; font-weight: 800; background: linear-gradient(90deg,#FF8C00,#FFD700); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+        .wallet-btn {
+            background: linear-gradient(135deg,rgba(255,140,0,0.15),rgba(255,85,0,0.12));
+            border: 1px solid rgba(255,140,0,0.4); color: #FFF5E4;
+            font-weight: 700; font-size: 0.82em; padding: 7px 16px; border-radius: 8px;
+            cursor: pointer; transition: all 0.2s; white-space: nowrap; font-family: 'Segoe UI', sans-serif;
+        }
+        .wallet-btn:hover { background: rgba(255,140,0,0.22); border-color: #FF8C00; }
+        .wallet-btn.connected { border-color: #FFD700; color: #FFD700; background: rgba(255,215,0,0.08); }
+        @media (max-width: 520px) { .nav { padding: 0 14px; } .nav-brand-text { display: none; } .nav-link { padding: 5px 10px; } }
 
         .container {
             background: rgba(10,0,30,0.8); backdrop-filter: blur(20px);
             border: 2px solid #ff8c00; border-radius: 20px;
             box-shadow: 0 0 40px rgba(255,140,0,0.3); padding: 30px 25px;
-            max-width: 480px; width: 90%; margin: 80px 0; position: relative; z-index: 10;
+            max-width: 480px; width: 90%; margin: 78px 0 40px; position: relative; z-index: 10;
         }
         .logo { display: block; max-width: 240px; margin: 0 auto 10px; animation: pulseGlow 4s ease-in-out infinite; }
         @keyframes pulseGlow {
@@ -125,7 +142,13 @@
 </head>
 <body>
     <div id="bg"></div>
-    <div class="wallet" id="walletBtn"><span id="walletText">Connect Wallet</span></div>
+    <nav class="nav">
+        <a class="nav-brand" href="sSunDAI.html">
+            <img src="sundailogo.png" alt="SunDAI" />
+            <span class="nav-brand-text">sSunDAI</span>
+        </a>
+        <button class="wallet-btn" id="walletBtn">Connect Wallet</button>
+    </nav>
 
     <div class="container">
         <a href="https://www.sundaitoken.com" target="_blank" style="text-decoration:none">
@@ -384,8 +407,7 @@
                 lpTokenContract = new ethers.Contract(LP_TOKEN_ADDRESS, ERC20_ABI,   signer);
                 pairContract    = new ethers.Contract(LP_TOKEN_ADDRESS, PAIR_ABI,    provider);
 
-                document.getElementById("walletText").textContent = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
-                document.getElementById("walletBtn").classList.add("connected");
+                const wb=document.getElementById("walletBtn"); wb.textContent=userAddress.slice(0,6)+"..."+userAddress.slice(-4); wb.classList.add("connected");
                 document.querySelectorAll(".btn").forEach(b => b.disabled = false);
 
                 await updatePLSPrice();
@@ -608,7 +630,18 @@
             targetY = (e.clientY / innerHeight - 0.5);
         });
         animate();
-        window.addEventListener("load", connectWallet);
+        window.addEventListener("load", () => {
+            tryAutoReconnect();
+            if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+        });
+
+        async function tryAutoReconnect() {
+            if (!window.ethereum) return;
+            try {
+                const accounts = await window.ethereum.request({ method: "eth_accounts" });
+                if (accounts && accounts.length > 0) connectWallet();
+            } catch {}
+        }
     </script>
 </body>
 </html>
