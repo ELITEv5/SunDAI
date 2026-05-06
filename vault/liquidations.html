@@ -15,7 +15,12 @@
   <script src="ethers.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
-    html { background: #0a001f; } /* covers scroll overrun — no white flash */
+    /* iOS overscroll bounce shows the html background — set it to match */
+    html {
+      background: #0a001f;
+      overscroll-behavior: none; /* kills rubber-band white flash on iOS/Android */
+      height: 100%;
+    }
     body {
       margin: 0;
       background: #0a001f;
@@ -24,8 +29,8 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-height: 100vh;
-      overflow-x: hidden; /* prevent horizontal scroll from long address strings */
+      min-height: 100%;
+      overflow-x: hidden;
     }
     /* ── NAV (matches vault page) ── */
     .nav {
