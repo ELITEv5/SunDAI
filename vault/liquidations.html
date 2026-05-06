@@ -4,42 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-  <title>pSunDAI – Liquidation Dashboard</title>
+  <title>SunDAI — Liquidation Dashboard</title>
   <link rel="icon" href="sundailogo.png" type="image/png" />
   <meta name="description" content="Real-time liquidation opportunities for SunDAI vaults on PulseChain." />
   <meta name="theme-color" content="#FF6B00" />
-  <meta name="robots" content="index,follow" />
-  
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="sundailogo.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <script src="ethers.umd.min.js"></script>
-  <script>
-    // Mobile MetaMask redirect (mirrors index.html)
-    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-      if (!navigator.userAgent.includes("MetaMaskMobile")) {
-        const url = location.origin + location.pathname + location.search + location.hash;
-        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-        if (isIOS) {
-          const deepLink = "metamask://dapp/" + url.replace(/^https?:\/\//, '');
-          const appStoreUrl = "https://apps.apple.com/us/app/metamask-blockchain-wallet/id1438144202";
-          const fallbackTimer = setTimeout(() => {
-            document.body.innerHTML = `
-              <div style="font-family:sans-serif;text-align:center;padding:60px 20px;background:#0a001f;color:#ffebd1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px">
-                <img src="sundailogo.png" style="width:100px;margin-bottom:10px" />
-                <h2 style="color:#ffd700;margin:0">MetaMask Required</h2>
-                <p style="color:#ffbd70;max-width:300px;margin:0">To use SunDAI, you need the MetaMask wallet app.</p>
-                <a href="${appStoreUrl}" style="background:linear-gradient(135deg,#ff8c00,#ffa500);color:#000;font-weight:800;padding:16px 32px;border-radius:12px;text-decoration:none;font-size:1.1em">Get MetaMask on App Store</a>
-                <a href="${deepLink}" style="color:#ffbd70;font-size:0.9em">Already installed? Open MetaMask</a>
-              </div>`;
-          }, 1500);
-          window.addEventListener("blur", () => clearTimeout(fallbackTimer));
-          location.replace(deepLink);
-        } else {
-          location.replace("https://metamask.app.link/dapp/" + encodeURIComponent(url));
-        }
-      }
-    }
-  </script>
   <style>
     body {
       margin: 0;
@@ -52,26 +25,35 @@
       min-height: 100vh;
       overflow-y: auto;
     }
-    canvas { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
-    .wallet {
-      position: fixed; top: 20px; right: 20px; background: #111; padding: 10px 22px;
-      border: 2px solid #ff6b00; border-radius: 10px; color: #fff; font-weight: 700;
-      cursor: pointer; z-index: 9999; transition: all 0.2s ease; pointer-events: auto;
+    /* ── NAV (matches vault page) ── */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: 58px;
+      display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
+      background: rgba(5,0,15,0.92); backdrop-filter: blur(24px);
+      border-bottom: 1px solid rgba(255,140,0,0.15);
     }
-    .wallet:hover { background: #222; }
-    .wallet.connected { border-color: #ffd700; color: #ffd700; }
-    .back-btn {
-      position: fixed; top: 20px; left: 20px; background: #111; padding: 10px 22px;
-      border: 2px solid #ff6b00; border-radius: 10px; color: #fff; font-weight: 700;
-      cursor: pointer; z-index: 9999; transition: all 0.2s ease; text-decoration: none;
-      display: inline-block;
+    .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #FFF5E4; flex-shrink: 0; }
+    .nav-brand img { height: 28px; width: 28px; object-fit: contain; }
+    .nav-brand-text { font-size: 1.15em; font-weight: 800; background: linear-gradient(90deg,#FF8C00,#FFD700); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .nav-links { display: flex; gap: 4px; }
+    .nav-link { padding: 5px 14px; border-radius: 6px; font-size: 0.82em; font-weight: 600; text-decoration: none; color: rgba(255,245,228,0.45); transition: all 0.15s; border: 1px solid transparent; }
+    .nav-link:hover { color: #FFF5E4; background: rgba(255,140,0,0.1); }
+    .nav-link.active { color: #FFD700; border-color: rgba(255,215,0,0.25); background: rgba(255,215,0,0.06); }
+    .wallet-btn {
+      background: linear-gradient(135deg,rgba(255,140,0,0.15),rgba(255,85,0,0.12));
+      border: 1px solid rgba(255,140,0,0.4); color: #FFF5E4;
+      font-weight: 700; font-size: 0.82em; padding: 7px 16px; border-radius: 8px;
+      cursor: pointer; transition: all 0.2s; white-space: nowrap;
     }
-    .back-btn:hover { background: #222; }
+    .wallet-btn:hover { background: rgba(255,140,0,0.22); border-color: #FF8C00; }
+    .wallet-btn.connected { border-color: #FFD700; color: #FFD700; background: rgba(255,215,0,0.08); }
+    @media (max-width: 520px) { .nav { padding: 0 14px; } .nav-brand-text { display: none; } .nav-link { padding: 5px 10px; } }
+
     .container {
-      background: rgba(10, 0, 30, 0.8); backdrop-filter: blur(20px);
-      border: 2px solid #ff6b00; border-radius: 20px;
-      box-shadow: 0 0 40px rgba(255, 215, 0, 0.25); padding: 30px 25px;
-      max-width: 900px; width: 90%; margin: 100px 0 40px 0; position: relative; z-index: 10;
+      background: rgba(10, 0, 30, 0.82); backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,140,0,0.25); border-radius: 18px;
+      box-shadow: 0 0 40px rgba(255,140,0,0.12); padding: 28px 24px;
+      max-width: 900px; width: 90%; margin: 78px 0 40px 0; position: relative; z-index: 10;
     }
     .logo { display: block; max-width: 200px; margin: 0 auto 10px;
       animation: pulseGlow 4s ease-in-out infinite; transform-origin: center; }
@@ -182,8 +164,17 @@
 <body>
   <div id="bg"></div>
   
-  <div class="back-btn" onclick="window.location.href='index.html?t=' + Date.now()">← Back to Vault</div>
-  <div class="wallet" id="walletBtn"><span id="walletText">Connect Wallet</span></div>
+  <nav class="nav">
+    <a class="nav-brand" href="index.html">
+      <img src="sundailogo.png" alt="SunDAI" />
+      <span class="nav-brand-text">SunDAI</span>
+    </a>
+    <div class="nav-links">
+      <a class="nav-link" href="index.html">Vault</a>
+      <a class="nav-link active" href="liquidations.html">Liquidate</a>
+    </div>
+    <button class="wallet-btn" id="walletBtn">Connect Wallet</button>
+  </nav>
   
   <div class="container">
     <img src="sundailogo.png" class="logo" alt="SunDAI Logo" />
@@ -195,14 +186,14 @@
     
     <div class="info-box">
       <h3 onclick="toggleInfo()">
-        📖 How Liquidations Work
+        How Liquidations Work
         <span class="toggle-icon" id="toggleIcon">▼</span>
       </h3>
       <div class="info-content" id="infoContent">
         <ul>
           <li><span class="highlight">Liquidation Trigger:</span> Vaults below 110% health ratio can be liquidated</li>
           <li><span class="highlight">Minimum Repay:</span> 20% of total debt (automatically calculated)</li>
-          <li><span class="highlight">Dutch Auction Bonus:</span> Starts at 2% and increases to 5% over 3 hours — wait longer for a bigger bonus</li>
+          <li><span class="highlight">Dutch Auction Bonus:</span> Starts at 2% and grows to 5% over 3 hours. Earlier liquidators get a smaller bonus but face less competition. Wait longer for a bigger reward, but risk someone else doing it first.</li>
           <li><span class="highlight">Cooldown:</span> 10-minute cooldown between liquidations of the same vault</li>
           <li><span class="highlight">Process:</span> Two-step transaction
             <ul style="margin-top:4px;">
@@ -217,19 +208,19 @@
     </div>
     
     <button class="btn scan" id="scanBtn" onclick="scanAll()">
-      🔍 Scan for Liquidation Opportunities
+      Scan for Liquidation Opportunities
     </button>
     
     <div class="tabs" id="tabs" style="display:none;">
-      <div class="tab active" onclick="showTab(event, 'liquidatable')">
+      <div class="tab active" onclick="showTab('liquidatable')">
         <div style="font-size:0.8em;color:#ffbd70;">Liquidatable</div>
         <div id="liqCount" style="font-size:1.5em;color:#ff3366;">0</div>
       </div>
-      <div class="tab" onclick="showTab(event, 'risky')">
+      <div class="tab" onclick="showTab('risky')">
         <div style="font-size:0.8em;color:#ffbd70;">At Risk</div>
         <div id="riskyCount" style="font-size:1.5em;color:#ffcc00;">0</div>
       </div>
-      <div class="tab" onclick="showTab(event, 'healthy')">
+      <div class="tab" onclick="showTab('healthy')">
         <div style="font-size:0.8em;color:#ffbd70;">Healthy</div>
         <div id="healthyCount" style="font-size:1.5em;color:#00ff9d;">0</div>
       </div>
@@ -288,8 +279,9 @@
         token = new ethers.Contract(TOKEN, TOKEN_ABI, signer);
         oracle = new ethers.Contract(ORACLE, ORACLE_ABI, provider);
         
-        document.getElementById("walletText").textContent = account.slice(0,6) + "..." + account.slice(-4);
-        document.getElementById("walletBtn").classList.add("connected");
+        const wb = document.getElementById("walletBtn");
+        wb.textContent = account.slice(0,6) + "..." + account.slice(-4);
+        wb.classList.add("connected");
         
         await updatePrice();
         
@@ -300,21 +292,14 @@
     }
 
     async function updatePrice() {
+      // getPriceWithTimestamp() has onlyVault modifier — use peekPriceView() only
       try {
-        let p, t;
-        try {
-          [p, t] = await oracle.getPriceWithTimestamp();
-        } catch {
-          [p, t] = await oracle.peekPriceView();
-        }
+        const [p] = await oracle.peekPriceView();
         price = p;
       } catch {
         price = 0n;
       }
     }
-
-    // Vault deployment block - avoids scanning from genesis (gets slower over time)
-    const VAULT_DEPLOY_BLOCK = 25581279;
 
     async function getAllVaultOwners() {
       try {
@@ -322,8 +307,8 @@
         const mintFilter = vault.filters.Mint();
         
         const [depositEvents, mintEvents] = await Promise.all([
-          vault.queryFilter(depositFilter, VAULT_DEPLOY_BLOCK, 'latest'),
-          vault.queryFilter(mintFilter, VAULT_DEPLOY_BLOCK, 'latest')
+          vault.queryFilter(depositFilter, 0, 'latest'),
+          vault.queryFilter(mintFilter, 0, 'latest')
         ]);
         
         const allAddresses = [
@@ -350,12 +335,12 @@
       const results = document.getElementById("results");
       
       btn.disabled = true;
-      btn.textContent = "⏳ Scanning...";
+      btn.textContent = "Scanning...";
       document.getElementById("error").textContent = "";
       
       results.innerHTML = `
         <div class="loading">
-          🔍 Scanning all vaults...<br>
+          Scanning all vaults...<br>
           <div style="font-size:0.8em;margin-top:10px;">This may take 30-60 seconds</div>
         </div>
       `;
@@ -427,22 +412,21 @@
         
         displayCurrentTab();
         
-        document.getElementById("status").textContent = `✅ Scan complete! Found ${vaultOwners.length} total vaults`;
+        document.getElementById("status").textContent = `Scan complete! Found ${vaultOwners.length} total vaults`;
         setTimeout(() => document.getElementById("status").textContent = "", 5000);
-        scanComplete = true;
         
       } catch (e) {
         document.getElementById("error").textContent = "Scan failed: " + (e.message || "Unknown error");
       } finally {
         btn.disabled = false;
-        btn.textContent = "🔄 Rescan";
+        btn.textContent = "Rescan";
       }
     }
 
-    function showTab(e, tab) {
+    function showTab(tab) {
       currentTab = tab;
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      e.target.closest('.tab').classList.add('active');
+      event.target.closest('.tab').classList.add('active');
       displayCurrentTab();
     }
 
@@ -454,9 +438,9 @@
       
       if (data.length === 0) {
         const messages = {
-          liquidatable: "✅ No liquidation opportunities found. All vaults are above 110% health!",
-          risky: "✅ No vaults at risk. All are either liquidatable or healthy!",
-          healthy: "⚠️ No healthy vaults found."
+          liquidatable: "No liquidation opportunities found. All vaults are above 110% health!",
+          risky: "No vaults at risk. All are either liquidatable or healthy!",
+          healthy: "No healthy vaults found."
         };
         results.innerHTML = `<div class="empty-state">${messages[currentTab]}</div>`;
         return;
@@ -467,7 +451,7 @@
       if (currentTab === 'liquidatable') {
         html += `
           <div class="stats-header">
-            <h2>⚠️ LIQUIDATION OPPORTUNITIES</h2>
+            <h2>LIQUIDATION OPPORTUNITIES</h2>
             <div class="count">${data.length}</div>
             <div style="color:#ffbd70;margin-top:10px;">Vaults below 110% health ratio</div>
           </div>
@@ -483,7 +467,7 @@
                 </div>
                 <div class="info-row">
                   <span class="label">Health Ratio:</span>
-                  <span class="value risk">${v.ratio > 1e6 ? 'Infinite' : v.ratio.toFixed(2) + '%'} 🔴</span>
+                  <span class="value risk">${v.ratio > 1e6 ? 'Infinite' : v.ratio.toFixed(2) + '%'} </span>
                 </div>
                 <div class="info-row">
                   <span class="label">Total Debt:</span>
@@ -504,16 +488,16 @@
                 <div class="info-row">
                   <span class="label">Est. Profit:</span>
                   <span class="value ${v.isProfitable ? 'safe' : 'risk'}">
-                    ${v.isProfitable ? `$${v.profitUSD.toFixed(4)} 💰` : 'Unprofitable (gas too high)'}
+                    ${v.isProfitable ? `$${v.profitUSD.toFixed(4)} ` : 'Unprofitable (gas too high)'}
                   </span>
                 </div>
               </div>
               <button 
                 class="btn danger" 
                 style="margin-top:12px;"
-                onclick="liquidateVault('${v.owner}', this)"
+                onclick="liquidateVault('${v.owner}')"
               >
-                🔥 Liquidate Now (minRepay: ${v.minRepay.toFixed(6)})
+                Liquidate Now (minRepay: ${v.minRepay.toFixed(6)})
               </button>
             </div>
           `;
@@ -521,7 +505,7 @@
       } else if (currentTab === 'risky') {
         html += `
           <div class="stats-header" style="border-color:#ffcc00;background:linear-gradient(135deg, rgba(255,204,0,0.2), rgba(255,107,0,0.2));">
-            <h2 style="color:#ffcc00;">⚠️ AT-RISK VAULTS</h2>
+            <h2 style="color:#ffcc00;">AT-RISK VAULTS</h2>
             <div class="count">${data.length}</div>
             <div style="color:#ffbd70;margin-top:10px;">Vaults between 110-150% (not yet liquidatable)</div>
           </div>
@@ -538,7 +522,7 @@
                 </div>
                 <div class="info-row">
                   <span class="label">Health Ratio:</span>
-                  <span class="value warn">${v.ratio.toFixed(2)}% ⚠️</span>
+                  <span class="value warn">${v.ratio.toFixed(2)}% </span>
                 </div>
                 <div class="info-row">
                   <span class="label">Buffer Above Liquidation:</span>
@@ -564,7 +548,7 @@
       } else {
         html += `
           <div class="stats-header" style="border-color:#00ff9d;background:linear-gradient(135deg, rgba(0,255,157,0.2), rgba(255,107,0,0.2));">
-            <h2 style="color:#00ff9d;">✅ HEALTHY VAULTS</h2>
+            <h2 style="color:#00ff9d;">HEALTHY VAULTS</h2>
             <div class="count">${data.length}</div>
             <div style="color:#ffbd70;margin-top:10px;">Vaults above 150% health ratio</div>
           </div>
@@ -580,7 +564,7 @@
                 </div>
                 <div class="info-row">
                   <span class="label">Health Ratio:</span>
-                  <span class="value safe">${v.ratio > 1e6 ? 'Infinite ♾️' : v.ratio.toFixed(2) + '% ✅'}</span>
+                  <span class="value safe">${v.ratio > 1e6 ? 'Infinite ' : v.ratio.toFixed(2) + '% '}</span>
                 </div>
                 <div class="info-row">
                   <span class="label">Total Debt:</span>
@@ -606,10 +590,11 @@
     // ═══════════════════════════════════════════════════════════════
     // LIQUIDATION FUNCTION - Fixed for interest accrual timing
     // ═══════════════════════════════════════════════════════════════
-    async function liquidateVault(ownerAddress, btn) {
+    async function liquidateVault(ownerAddress) {
       try {
+        const btn = event.target;
         btn.disabled = true;
-        btn.textContent = "⏳ Processing...";
+        btn.textContent = "Processing...";
         document.getElementById("error").textContent = "";
         
         // Get liquidation parameters
@@ -624,7 +609,7 @@
         // Approve with additional margin for rounding
         const approvalAmount = (minRepayWithBuffer * 10050n) / 10000n; // +0.5% more
         
-        btn.textContent = "⏳ Checking balance...";
+        btn.textContent = "Checking balance...";
         
         // Verify sufficient balance
         const balance = await token.balanceOf(account);
@@ -632,13 +617,13 @@
           throw new Error(`Insufficient pSunDAI balance. Need ${ethers.formatEther(minRepayWithBuffer)}, have ${ethers.formatEther(balance)}`);
         }
         
-        btn.textContent = "⏳ Approving...";
+        btn.textContent = "Approving...";
         
         // Approve token spending
         const approveTx = await token.approve(VAULT, approvalAmount);
         await approveTx.wait();
         
-        btn.textContent = "⏳ Liquidating...";
+        btn.textContent = "Liquidating...";
         
         // Execute liquidation
         const liqTx = await vault.liquidate(ownerAddress, minRepayWithBuffer);
@@ -661,7 +646,7 @@
           // Silent fail on event parsing
         }
         
-        document.getElementById("status").textContent = `✅ Liquidation successful! Received ${rewardPLS} PLS 🎉`;
+        document.getElementById("status").textContent = `Liquidation successful! Received ${rewardPLS} PLS`;
         setTimeout(() => document.getElementById("status").textContent = "", 8000);
         
         // Rescan after short delay
@@ -706,8 +691,8 @@ Solution:
         
         document.getElementById("error").textContent = errorMsg;
         setTimeout(() => document.getElementById("error").textContent = "", 15000);
-        btn.disabled = false;
-        btn.textContent = "🔥 Liquidate Now";
+        event.target.disabled = false;
+        event.target.textContent = "Liquidate Now";
       }
     }
 
@@ -750,12 +735,24 @@ Solution:
     });
     animate();
 
-    window.addEventListener("load", connectWallet);
-    
-    let scanComplete = false;
+    window.addEventListener("load", () => {
+      // Silent reconnect only — no wallet prompt on page load
+      tryAutoReconnect();
+      if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+    });
 
+    async function tryAutoReconnect() {
+      if (!window.ethereum) return;
+      try {
+        const accounts = await window.ethereum.request({ method: "eth_accounts" });
+        if (accounts && accounts.length > 0) connectWallet();
+      } catch {}
+    }
+    
     setInterval(() => {
-      if (scanComplete) scanAll();
+      if (scanData && document.getElementById("scanBtn").textContent === "Rescan") {
+        scanAll();
+      }
     }, 120000);
   </script>
 </body>
