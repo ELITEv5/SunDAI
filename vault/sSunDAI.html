@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>sSunDAI - Auto-Compounding LP Vault</title>
+    <link rel="icon" href="sundailogo.png" type="image/png" />
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="sundailogo.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <script src="ethers.umd.min.js"></script>
+    <style>
+        body {
+            margin: 0; background: #0a001f; color: #ffebd1;
+            font-family: Segoe UI, sans-serif; display: flex; flex-direction: column;
+            align-items: center; min-height: 100vh; overflow-y: auto;
+        }
+        #bg { position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0; animation: fadeIn 2s ease forwards; }
+        @keyframes fadeIn { to { opacity: 1; } }
+
+        /* ── NAV ── */
+        .nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: 58px;
+            display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
+            background: rgba(5,0,15,0.92); backdrop-filter: blur(24px);
+            border-bottom: 1px solid rgba(255,140,0,0.15);
+        }
+        .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #FFF5E4; flex-shrink: 0; }
+        .nav-brand img { height: 28px; width: 28px; object-fit: contain; }
+        .nav-brand-text { font-size: 1.1em; font-weight: 800; background: linear-gradient(90deg,#FF8C00,#FFD700); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+        .wallet-btn {
+            background: linear-gradient(135deg,rgba(255,140,0,0.15),rgba(255,85,0,0.12));
+            border: 1px solid rgba(255,140,0,0.4); color: #FFF5E4;
+            font-weight: 700; font-size: 0.82em; padding: 7px 16px; border-radius: 8px;
+            cursor: pointer; transition: all 0.2s; white-space: nowrap; font-family: 'Segoe UI', sans-serif;
+        }
+        .wallet-btn:hover { background: rgba(255,140,0,0.22); border-color: #FF8C00; }
+        .wallet-btn.connected { border-color: #FFD700; color: #FFD700; background: rgba(255,215,0,0.08); }
+        @media (max-width: 520px) { .nav { padding: 0 14px; } .nav-brand-text { display: none; } .nav-link { padding: 5px 10px; } }
+
+        .container {
+            background: rgba(10,0,30,0.8); backdrop-filter: blur(20px);
+            border: 2px solid #ff8c00; border-radius: 20px;
+            box-shadow: 0 0 40px rgba(255,140,0,0.3); padding: 30px 25px;
+            max-width: 480px; width: 90%; margin: 78px 0 40px; position: relative; z-index: 10;
+        }
+        .logo { display: block; max-width: 240px; margin: 0 auto 10px; animation: pulseGlow 4s ease-in-out infinite; }
+        @keyframes pulseGlow {
+            0%   { filter: drop-shadow(0 0 10px rgba(180,120,255,0.5)); }
+            50%  { filter: drop-shadow(0 0 35px rgba(255,180,255,0.85)); }
+            100% { filter: drop-shadow(0 0 10px rgba(180,120,255,0.5)); }
+        }
+        h1 {
+            text-align: center; font-size: 2em;
+            background: linear-gradient(90deg, #ff8c00, #ffa500, #fbbf24, #fde047);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; margin-bottom: 8px;
+        }
+        h2 { text-align: center; color: #ffebd1; font-size: 1.1em; margin-top: 0; }
+
+        .auto-badge {
+            display: block; text-align: center; font-size: 0.82em; color: #00ff9d;
+            background: rgba(0,255,157,0.08); border: 1px solid rgba(0,255,157,0.25);
+            border-radius: 8px; padding: 8px 14px; margin: 0 0 14px; line-height: 1.5;
+        }
+        .price { text-align: center; color: #ffd700; font-weight: 800; font-size: 1.2em; margin-bottom: 10px; }
+
+        .card {
+            background: rgba(255,140,0,0.08); border: 1px solid rgba(255,140,0,0.3);
+            border-radius: 14px; padding: 16px; margin-bottom: 12px; transition: box-shadow .2s ease;
+        }
+        .card:hover { box-shadow: 0 0 12px rgba(255,165,0,0.2); }
+        .card-title {
+            font-size: 0.75em; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+            color: #ff8c00; margin-bottom: 10px;
+        }
+
+        input, .btn {
+            width: 100%; display: block; box-sizing: border-box; font-size: 1em;
+            font-weight: 700; text-align: center; border-radius: 10px; padding: 14px;
+            transition: all 0.2s ease;
+        }
+        input { background: #110022; border: 2px solid rgba(255,140,0,0.4); color: #fff; }
+        input:focus { border-color: #fbbf24; outline: none; box-shadow: 0 0 10px rgba(251,191,36,0.3); }
+        .btn {
+            background: linear-gradient(135deg, #ff8c00, #ffa500); border: 2px solid transparent;
+            color: #000; cursor: pointer; box-shadow: 0 4px 15px rgba(255,140,0,0.3);
+        }
+        .btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #ffa500, #ffd700);
+            transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,215,0,0.5);
+        }
+        .btn:disabled { background: #2a2a2a; color: #666; cursor: not-allowed; border-color: transparent; box-shadow: none; }
+        .btn-secondary { background: transparent; border: 2px solid #ff8c00; color: #ff8c00; }
+        .btn-secondary:hover:not(:disabled) { background: rgba(255,140,0,0.1); }
+        .btn + .btn   { margin-top: 8px; }
+        input + .btn  { margin-top: 8px; }
+
+        .preview     { color: #ffbd70; text-align: center; font-size: 0.9em; margin-top: 6px; min-height: 1.2em; }
+        .helper-text { color: #999; text-align: center; font-size: 0.8em; margin-top: 6px; font-style: italic; }
+
+        .stats   { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center; font-size: 0.9em; }
+        .stats-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; text-align: center; font-size: 0.82em; }
+        .stat { background: rgba(255,107,0,0.12); padding: 10px; border-radius: 10px; }
+        .label { color: #ffbd70; font-size: 0.85em; }
+        .value { color: #ffd700; font-weight: 700; margin-top: 2px; }
+        .value.safe  { color: #00ff9d; text-shadow: 0 0 8px rgba(0,255,157,0.5); }
+        .value.muted { color: #888; }
+
+        .approve-banner {
+            display: none; text-align: center; font-size: 0.8em; color: #fbbf24;
+            background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.3);
+            border-radius: 8px; padding: 7px 12px; margin-bottom: 8px;
+        }
+        .divider { border: none; border-top: 1px solid rgba(255,140,0,0.15); margin: 10px 0; }
+
+        .status, .error { text-align: center; font-weight: bold; margin-top: 10px; }
+        .status { color: #00ff9d; }
+        .error   { color: #ff3366; }
+
+        .footer {
+            text-align: center; margin: 40px 0 20px; padding: 20px 10px; font-size: 0.85em;
+            color: #ffbd70; border-top: 1px solid rgba(255,215,0,0.15);
+            width: 100%; max-width: 800px; z-index: 5;
+        }
+        .footer h3 { margin-bottom: 10px; color: #ffd700; letter-spacing: 0.5px; font-size: 1.1em; }
+        .contracts { display: flex; flex-direction: column; gap: 8px; text-align: left; font-family: monospace; font-size: 0.75em; }
+        .contracts a { color: #ffebd1; text-decoration: none; word-break: break-all; transition: color 0.2s ease; }
+        .contracts a:hover { color: #ffd700; }
+        .contracts .label { color: #ff6b00; font-weight: 700; margin-bottom: 2px; }
+
+        .loading {
+            display: inline-block; width: 16px; height: 16px;
+            border: 3px solid rgba(255,140,0,0.3); border-radius: 50%;
+            border-top-color: #ff8c00; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div id="bg"></div>
+    <nav class="nav">
+        <a class="nav-brand" href="sSunDAI.html">
+            <img src="sundailogo.png" alt="SunDAI" />
+            <span class="nav-brand-text">sSunDAI</span>
+        </a>
+        <button class="wallet-btn" id="walletBtn">Connect Wallet</button>
+    </nav>
+
+    <div class="container">
+        <a href="https://www.sundaitoken.com" target="_blank" style="text-decoration:none">
+            <img src="sundailogo.png" class="logo" alt="sSunDAI Logo" onerror="this.style.display='none'" />
+        </a>
+        <h1>sSunDAI</h1>
+        <h2>Auto-Compounding LP Vault</h2>
+
+        <div class="auto-badge">
+            Your position grows automatically — no claiming required.<br>
+            Withdraw whenever you want to exit with your compounded LP.
+        </div>
+
+        <div class="price" id="exchangeRate">Exchange Rate: 1.000000 LP/sSunDAI</div>
+        <div class="status" id="status"></div>
+        <div class="error"  id="error"></div>
+
+        <!-- Vault Stats -->
+        <div class="card">
+            <div class="card-title">Vault</div>
+            <div class="stats" style="margin-bottom:10px">
+                <div class="stat">
+                    <div class="label">Total Value Locked</div>
+                    <div class="value" id="tvl">$0.00</div>
+                </div>
+                <div class="stat">
+                    <div class="label">Total sSunDAI Supply</div>
+                    <div class="value" id="totalSupply">0</div>
+                </div>
+                <div class="stat">
+                    <div class="label">Total Harvests</div>
+                    <div class="value" id="totalHarvests">0</div>
+                </div>
+                <div class="stat">
+                    <div class="label">Fees Compounded</div>
+                    <div class="value" id="feesCompounded">0 LP</div>
+                </div>
+            </div>
+            <div class="stats-3">
+                <div class="stat">
+                    <div class="label">Est. APY</div>
+                    <div class="value safe" id="vaultAPY">0.00%</div>
+                </div>
+                <div class="stat">
+                    <div class="label">Last Harvest</div>
+                    <div class="value" id="timeSinceHarvest">—</div>
+                </div>
+                <div class="stat">
+                    <div class="label">Next Harvest</div>
+                    <div class="value" id="nextHarvest">—</div>
+                </div>
+            </div>
+            <div id="residualRow" style="display:none">
+                <hr class="divider">
+                <div class="stats-3">
+                    <div class="stat">
+                        <div class="label">Pending Token0</div>
+                        <div class="value muted" id="pendingToken0">0</div>
+                    </div>
+                    <div class="stat">
+                        <div class="label">Pending Token1</div>
+                        <div class="value muted" id="pendingToken1">0</div>
+                    </div>
+                    <div class="stat">
+                        <div class="label">Swept On</div>
+                        <div class="value muted">Next Harvest</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Your Position -->
+        <div class="card">
+            <div class="card-title">Your Position</div>
+            <div class="stats" style="margin-bottom:10px">
+                <div class="stat">
+                    <div class="label">sSunDAI Shares</div>
+                    <div class="value" id="userShares">0.000000</div>
+                </div>
+                <div class="stat">
+                    <div class="label">Position (USD)</div>
+                    <div class="value" id="userPositionUSD">$0.00</div>
+                </div>
+                <div class="stat">
+                    <div class="label">Current LP Value</div>
+                    <div class="value" id="userLPValue">0.000000</div>
+                </div>
+                <div class="stat">
+                    <div class="label">Compounded Gains</div>
+                    <div class="value safe" id="userEarned">+0.000000</div>
+                </div>
+            </div>
+            <div class="stats-3">
+                <div class="stat">
+                    <div class="label">Wallet LP</div>
+                    <div class="value" id="lpBalance">0.000000</div>
+                </div>
+                <div class="stat">
+                    <div class="label">Wallet LP (USD)</div>
+                    <div class="value" id="lpBalanceUSD">$0.00</div>
+                </div>
+                <div class="stat">
+                    <div class="label">Appreciation</div>
+                    <div class="value safe" id="userAppreciation">0.0000%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stake -->
+        <div class="card">
+            <div class="card-title">Stake</div>
+            <div class="approve-banner" id="approveBanner">Approval required before first deposit</div>
+            <input id="depositAmount" type="number" step="any" min="0" placeholder="Enter LP amount to stake" />
+            <div class="preview" id="depositPreview"></div>
+            <button class="btn" id="depositBtn" disabled>Stake LP Tokens</button>
+            <div class="helper-text">Deposit pSunDAI/PLS LP — receive sSunDAI shares that appreciate automatically</div>
+        </div>
+
+        <!-- Withdraw -->
+        <div class="card">
+            <div class="card-title">Withdraw</div>
+            <input id="withdrawAmount" type="number" step="any" min="0" placeholder="Enter sSunDAI shares to withdraw" />
+            <div class="preview" id="withdrawPreview"></div>
+            <button class="btn btn-secondary" id="withdrawBtn" disabled>Withdraw Partial</button>
+            <hr class="divider">
+            <button class="btn btn-secondary" id="withdrawAllBtn" disabled>Withdraw All</button>
+            <div class="preview" id="withdrawAllPreview"></div>
+            <div class="helper-text">Burns sSunDAI shares and returns your compounded LP</div>
+        </div>
+
+        <!-- Harvest -->
+        <div class="card">
+            <div class="card-title">Harvest</div>
+            <button class="btn" id="harvestBtn" disabled>Harvest &amp; Compound (Permissionless)</button>
+            <div class="preview" id="harvestPreview">Anyone can call — compounds trading fees for all stakers</div>
+            <div class="helper-text">Harvests 1% of vault TVL — 1-hour cooldown between calls</div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <h3>Official Contracts</h3>
+        <div class="contracts">
+            <div><span class="label">sSunDAI Vault:</span>
+                <a href="https://scan.pulsechain.com/address/0xAb4575aaDe7d62ed4Abb4661385C6AdAFf7B93D9" target="_blank">
+                    0xAb4575aaDe7d62ed4Abb4661385C6AdAFf7B93D9
+                </a>
+            </div>
+            <div><span class="label">LP Token (pSunDAI/PLS):</span>
+                <a href="https://scan.pulsechain.com/address/0x490743C92d0A60EfaE050d4B7656CDCa79E4d722" target="_blank">
+                    0x490743C92d0A60EfaE050d4B7656CDCa79E4d722
+                </a>
+            </div>
+            <div><span class="label">pSunDAI Token:</span>
+                <a href="https://scan.pulsechain.com/address/0x5529c1cb179b2c256501031adCDAfC22D9c6d236" target="_blank">
+                    0x5529c1cb179b2c256501031adCDAfC22D9c6d236
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const ethers = window.ethers;
+        if (!ethers) alert("Ethers.js failed to load");
+
+        const SSUNDAI_ADDRESS  = '0xAb4575aaDe7d62ed4Abb4661385C6AdAFf7B93D9';
+        const LP_TOKEN_ADDRESS = '0x490743C92d0A60EfaE050d4B7656CDCa79E4d722';
+
+        const SSUNDAI_ABI = [
+            {"type":"constructor","inputs":[{"name":"_lpToken","type":"address"},{"name":"_router","type":"address"}],"stateMutability":"nonpayable"},
+            {"name":"deposit","type":"function","inputs":[{"name":"lpAmount","type":"uint256"}],"outputs":[{"name":"shares","type":"uint256"}],"stateMutability":"nonpayable"},
+            {"name":"withdraw","type":"function","inputs":[{"name":"shares","type":"uint256"}],"outputs":[{"name":"lpAmount","type":"uint256"}],"stateMutability":"nonpayable"},
+            {"name":"withdrawAll","type":"function","inputs":[],"outputs":[{"name":"lpAmount","type":"uint256"}],"stateMutability":"nonpayable"},
+            {"name":"harvest","type":"function","inputs":[],"outputs":[{"name":"netGain","type":"uint256"}],"stateMutability":"nonpayable"},
+            {"name":"balanceOf","type":"function","inputs":[{"name":"account","type":"address"}],"outputs":[{"name":"","type":"uint256"}],"stateMutability":"view"},
+            {"name":"totalSupply","type":"function","inputs":[],"outputs":[{"name":"","type":"uint256"}],"stateMutability":"view"},
+            {"name":"positionInfo","type":"function","inputs":[{"name":"user","type":"address"}],"outputs":[
+                {"name":"sharesOwned","type":"uint256"},{"name":"lpValue","type":"uint256"},
+                {"name":"appreciationBps","type":"uint256"},{"name":"appreciationPercent","type":"uint256"},
+                {"name":"depositedLP","type":"uint256"},{"name":"earnedLP","type":"uint256"}
+            ],"stateMutability":"view"},
+            {"name":"vaultStats","type":"function","inputs":[],"outputs":[
+                {"name":"totalLPHeld","type":"uint256"},{"name":"totalSharesIssued","type":"uint256"},
+                {"name":"currentExchangeRate","type":"uint256"},{"name":"harvestCount","type":"uint256"},
+                {"name":"feesCompounded","type":"uint256"},{"name":"timeSinceLastHarvest","type":"uint256"},
+                {"name":"pendingResidual0","type":"uint256"},{"name":"pendingResidual1","type":"uint256"}
+            ],"stateMutability":"view"},
+            {"name":"canHarvest","type":"function","inputs":[],"outputs":[{"name":"ready","type":"bool"},{"name":"timeUntilReady","type":"uint256"}],"stateMutability":"view"},
+            {"name":"exchangeRate","type":"function","inputs":[],"outputs":[{"name":"rate","type":"uint256"}],"stateMutability":"view"},
+            {"name":"previewDeposit","type":"function","inputs":[{"name":"lpAmount","type":"uint256"}],"outputs":[{"name":"shares","type":"uint256"}],"stateMutability":"view"},
+            {"name":"previewWithdraw","type":"function","inputs":[{"name":"shares","type":"uint256"}],"outputs":[{"name":"lpAmount","type":"uint256"}],"stateMutability":"view"},
+            {"name":"maxWithdraw","type":"function","inputs":[{"name":"user","type":"address"}],"outputs":[{"name":"maxLP","type":"uint256"}],"stateMutability":"view"},
+            {"name":"getLPToken","type":"function","inputs":[],"outputs":[{"name":"lpAddress","type":"address"}],"stateMutability":"view"}
+        ];
+
+        const ERC20_ABI = [
+            "function balanceOf(address) view returns (uint256)",
+            "function approve(address spender, uint256 amount) returns (bool)",
+            "function allowance(address owner, address spender) view returns (uint256)"
+        ];
+
+        const PAIR_ABI = [
+            "function getReserves() view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast)",
+            "function totalSupply() view returns (uint256)",
+            "function token0() view returns (address)",
+            "function token1() view returns (address)"
+        ];
+
+        let provider, signer, userAddress, sSunDAIContract, lpTokenContract, pairContract;
+        let plsPrice    = 0.00001;
+        let lpUnitValue = 0;
+
+        async function updatePLSPrice() {
+            try {
+                const ORACLE_ADDRESS = "0xC19C8201701585D9087F261eaCd3Ee3345251Da3";
+                const ORACLE_ABI = [
+                    "function getPriceWithTimestamp() view returns (uint256 price, uint256 timestamp)",
+                    "function peekPriceView() view returns (uint256 price, uint256 timestamp)"
+                ];
+                const oracle = new ethers.Contract(ORACLE_ADDRESS, ORACLE_ABI, provider);
+                let price;
+                try { [price] = await oracle.getPriceWithTimestamp(); }
+                catch { [price] = await oracle.peekPriceView(); }
+                plsPrice = parseFloat(ethers.utils.formatEther(price));
+            } catch { /* use fallback */ }
+        }
+
+        async function getLPTokenUSDValue() {
+            try {
+                const [reserve0, reserve1] = await pairContract.getReserves();
+                const totalSupply = await pairContract.totalSupply();
+                const r0 = parseFloat(ethers.utils.formatEther(reserve0)) * 1.0;
+                const r1 = parseFloat(ethers.utils.formatEther(reserve1)) * plsPrice;
+                return (r0 + r1) / parseFloat(ethers.utils.formatEther(totalSupply));
+            } catch { return 0; }
+        }
+
+        async function connectWallet() {
+            try {
+                if (!window.ethereum) return alert("Please install MetaMask");
+                await window.ethereum.request({ method: "eth_requestAccounts" });
+                provider    = new ethers.providers.Web3Provider(window.ethereum);
+                signer      = provider.getSigner();
+                userAddress = await signer.getAddress();
+
+                const network = await provider.getNetwork();
+                if (Number(network.chainId) !== 369) {
+                    try {
+                        await window.ethereum.request({
+                            method: "wallet_switchEthereumChain",
+                            params: [{ chainId: "0x171" }]
+                        });
+                    } catch { return alert("Please switch to PulseChain"); }
+                }
+
+                sSunDAIContract = new ethers.Contract(SSUNDAI_ADDRESS,  SSUNDAI_ABI, signer);
+                lpTokenContract = new ethers.Contract(LP_TOKEN_ADDRESS, ERC20_ABI,   signer);
+                pairContract    = new ethers.Contract(LP_TOKEN_ADDRESS, PAIR_ABI,    provider);
+
+                const wb=document.getElementById("walletBtn"); wb.textContent=userAddress.slice(0,6)+"..."+userAddress.slice(-4); wb.classList.add("connected");
+                document.querySelectorAll(".btn").forEach(b => b.disabled = false);
+
+                await updatePLSPrice();
+                await loadData();
+                setInterval(loadData, 10000);
+            } catch (e) { showError(e.message || "Connection failed"); }
+        }
+
+        async function loadData() {
+            if (!sSunDAIContract) return;
+            try {
+                const [stats, canHarvest, totalSupply] = await Promise.all([
+                    sSunDAIContract.vaultStats(),
+                    sSunDAIContract.canHarvest(),
+                    sSunDAIContract.totalSupply()
+                ]);
+
+                lpUnitValue = await getLPTokenUSDValue();
+
+                const rate = parseFloat(ethers.utils.formatEther(stats.currentExchangeRate));
+                document.getElementById("exchangeRate").textContent = "Exchange Rate: " + rate.toFixed(6) + " LP/sSunDAI";
+
+                const totalLPHeld = parseFloat(ethers.utils.formatEther(stats.totalLPHeld));
+                document.getElementById("tvl").textContent            = "$" + (totalLPHeld * lpUnitValue).toFixed(2);
+                document.getElementById("totalSupply").textContent    = parseFloat(ethers.utils.formatEther(totalSupply)).toFixed(4);
+                document.getElementById("totalHarvests").textContent  = stats.harvestCount.toString();
+                document.getElementById("feesCompounded").textContent = parseFloat(ethers.utils.formatEther(stats.feesCompounded)).toFixed(6) + " LP";
+
+                const secsSince = stats.timeSinceLastHarvest.toNumber();
+                document.getElementById("timeSinceHarvest").textContent = formatDuration(secsSince);
+
+                const harvestBtn = document.getElementById("harvestBtn");
+                if (canHarvest.ready) {
+                    document.getElementById("nextHarvest").textContent    = "Now";
+                    document.getElementById("harvestPreview").textContent = "Ready — click to compound fees for all stakers";
+                    harvestBtn.disabled = false;
+                } else {
+                    const secsUntil = canHarvest.timeUntilReady.toNumber();
+                    document.getElementById("nextHarvest").textContent    = formatDuration(secsUntil);
+                    document.getElementById("harvestPreview").textContent = "Next harvest in " + formatDuration(secsUntil);
+                    harvestBtn.disabled = true;
+                }
+
+                // Residuals — only show row when non-zero
+                const r0 = parseFloat(ethers.utils.formatEther(stats.pendingResidual0));
+                const r1 = parseFloat(ethers.utils.formatEther(stats.pendingResidual1));
+                if (r0 > 0 || r1 > 0) {
+                    document.getElementById("residualRow").style.display = "block";
+                    document.getElementById("pendingToken0").textContent = r0.toFixed(6);
+                    document.getElementById("pendingToken1").textContent = r1.toFixed(6);
+                } else {
+                    document.getElementById("residualRow").style.display = "none";
+                }
+
+                // User position
+                if (userAddress) {
+                    const [position, lpBalance, maxLP, allowance] = await Promise.all([
+                        sSunDAIContract.positionInfo(userAddress),
+                        lpTokenContract.balanceOf(userAddress),
+                        sSunDAIContract.maxWithdraw(userAddress),
+                        lpTokenContract.allowance(userAddress, SSUNDAI_ADDRESS)
+                    ]);
+
+                    const sharesOwned = parseFloat(ethers.utils.formatEther(position.sharesOwned));
+                    const lpValue     = parseFloat(ethers.utils.formatEther(position.lpValue));
+                    const earnedLP    = parseFloat(ethers.utils.formatEther(position.earnedLP));
+                    const appBps      = parseFloat(position.appreciationBps.toString());
+                    const lpBal       = parseFloat(ethers.utils.formatEther(lpBalance));
+                    const maxLPFloat  = parseFloat(ethers.utils.formatEther(maxLP));
+
+                    document.getElementById("userShares").textContent       = sharesOwned.toFixed(6);
+                    document.getElementById("userLPValue").textContent      = lpValue.toFixed(6);
+                    document.getElementById("userEarned").textContent       = "+" + earnedLP.toFixed(6);
+                    document.getElementById("userPositionUSD").textContent  = "$" + (lpValue * lpUnitValue).toFixed(2);
+                    document.getElementById("lpBalance").textContent        = lpBal.toFixed(6);
+                    document.getElementById("lpBalanceUSD").textContent     = "$" + (lpBal * lpUnitValue).toFixed(2);
+                    document.getElementById("userAppreciation").textContent = (appBps / 100).toFixed(4) + "%";
+
+                    document.getElementById("withdrawAllPreview").textContent =
+                        maxLPFloat > 0 ? "Returns " + maxLPFloat.toFixed(6) + " LP  (~$" + (maxLPFloat * lpUnitValue).toFixed(2) + ")" : "";
+
+                    // APY — time-weighted annualisation off appreciation accrued
+                    if (appBps > 0 && secsSince > 0) {
+                        const apy = ((appBps / 10000) * (365 * 24 * 3600 / secsSince) * 100).toFixed(2);
+                        document.getElementById("vaultAPY").textContent = apy + "%";
+                    } else {
+                        document.getElementById("vaultAPY").textContent = "0.00%";
+                    }
+
+                    // Approval banner
+                    document.getElementById("approveBanner").style.display = allowance.isZero() ? "block" : "none";
+                }
+            } catch (e) { console.error("Load error:", e); }
+        }
+
+        document.getElementById("depositAmount").addEventListener("input", async (e) => {
+            const amount = e.target.value;
+            if (!amount || !sSunDAIContract) {
+                document.getElementById("depositPreview").textContent = ""; return;
+            }
+            try {
+                const shares = await sSunDAIContract.previewDeposit(ethers.utils.parseEther(amount));
+                const sf = parseFloat(ethers.utils.formatEther(shares));
+                document.getElementById("depositPreview").textContent = "Will receive " + sf.toFixed(6) + " sSunDAI";
+            } catch { document.getElementById("depositPreview").textContent = ""; }
+        });
+
+        document.getElementById("withdrawAmount").addEventListener("input", async (e) => {
+            const amount = e.target.value;
+            if (!amount || !sSunDAIContract) {
+                document.getElementById("withdrawPreview").textContent = ""; return;
+            }
+            try {
+                const lpOut = await sSunDAIContract.previewWithdraw(ethers.utils.parseEther(amount));
+                const lf    = parseFloat(ethers.utils.formatEther(lpOut));
+                document.getElementById("withdrawPreview").textContent =
+                    "Returns " + lf.toFixed(6) + " LP  (~$" + (lf * lpUnitValue).toFixed(2) + ")";
+            } catch { document.getElementById("withdrawPreview").textContent = ""; }
+        });
+
+        function formatDuration(secs) {
+            if (secs <= 0) return "0s";
+            const h = Math.floor(secs / 3600);
+            const m = Math.floor((secs % 3600) / 60);
+            const s = secs % 60;
+            if (h > 0) return h + "h " + m + "m";
+            if (m > 0) return m + "m " + s + "s";
+            return s + "s";
+        }
+
+        function showError(msg) {
+            document.getElementById("error").textContent = msg;
+            setTimeout(() => document.getElementById("error").textContent = "", 6000);
+        }
+        function showStatus(msg) {
+            document.getElementById("status").textContent = msg;
+            setTimeout(() => document.getElementById("status").textContent = "", 6000);
+        }
+
+        async function withLoading(btn, fn) {
+            const orig = btn.textContent;
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading"></div>';
+            document.getElementById("error").textContent = "";
+            try {
+                await fn();
+                await loadData();
+                showStatus("Success!");
+            } catch (e) {
+                showError(e.reason || e.message || "Transaction failed");
+            } finally {
+                btn.textContent = orig;
+                btn.disabled = false;
+            }
+        }
+
+        document.getElementById("depositBtn").onclick = async () => {
+            const amount = document.getElementById("depositAmount").value;
+            if (!amount) return showError("Enter an amount");
+            await withLoading(document.getElementById("depositBtn"), async () => {
+                const amountWei = ethers.utils.parseEther(amount);
+                const allowance = await lpTokenContract.allowance(userAddress, SSUNDAI_ADDRESS);
+                if (allowance.lt(amountWei)) {
+                    const tx = await lpTokenContract.approve(SSUNDAI_ADDRESS, ethers.constants.MaxUint256);
+                    await tx.wait();
+                }
+                const tx = await sSunDAIContract.deposit(amountWei);
+                await tx.wait();
+                document.getElementById("depositAmount").value = "";
+            });
+        };
+
+        document.getElementById("withdrawBtn").onclick = async () => {
+            const amount = document.getElementById("withdrawAmount").value;
+            if (!amount) return showError("Enter shares to withdraw");
+            await withLoading(document.getElementById("withdrawBtn"), async () => {
+                const tx = await sSunDAIContract.withdraw(ethers.utils.parseEther(amount));
+                await tx.wait();
+                document.getElementById("withdrawAmount").value = "";
+            });
+        };
+
+        document.getElementById("withdrawAllBtn").onclick = () =>
+            withLoading(document.getElementById("withdrawAllBtn"), async () => {
+                if (!confirm("Withdraw your full compounded position?")) return;
+                const tx = await sSunDAIContract.withdrawAll();
+                await tx.wait();
+            });
+
+        document.getElementById("harvestBtn").onclick = () =>
+            withLoading(document.getElementById("harvestBtn"), async () => {
+                const tx = await sSunDAIContract.harvest();
+                await tx.wait();
+            });
+
+        document.getElementById("walletBtn").onclick = connectWallet;
+
+        // Nebula background
+        const bg = document.getElementById("bg");
+        let t = 0, mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
+        function animate() {
+            t += 0.004;
+            mouseX += (targetX - mouseX) * 0.05;
+            mouseY += (targetY - mouseY) * 0.05;
+            const x1 = 25 + Math.sin(t * 0.7) * 20 + mouseX * 15;
+            const y1 = 25 + Math.cos(t * 0.8) * 15 + mouseY * 10;
+            const x2 = 75 + Math.cos(t * 0.5) * 18 - mouseX * 12;
+            const y2 = 70 + Math.sin(t * 0.6) * 14 - mouseY * 10;
+            const x3 = 50 + Math.sin(t * 0.3) * 15 + mouseX * 10;
+            const y3 = 50 + Math.cos(t * 0.4) * 12 + mouseY * 10;
+            bg.style.background = `
+                radial-gradient(circle at ${x1}% ${y1}%, rgba(255,200,100,0.20), transparent 65%),
+                radial-gradient(circle at ${x2}% ${y2}%, rgba(255,130,40,0.16), transparent 65%),
+                radial-gradient(circle at ${x3}% ${y3}%, rgba(120,0,180,0.22), transparent 75%)
+            `;
+            requestAnimationFrame(animate);
+        }
+        window.addEventListener("mousemove", e => {
+            targetX = (e.clientX / innerWidth  - 0.5);
+            targetY = (e.clientY / innerHeight - 0.5);
+        });
+        animate();
+        window.addEventListener("load", () => {
+            tryAutoReconnect();
+            if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+        });
+
+        async function tryAutoReconnect() {
+            if (!window.ethereum) return;
+            try {
+                const accounts = await window.ethereum.request({ method: "eth_accounts" });
+                if (accounts && accounts.length > 0) connectWallet();
+            } catch {}
+        }
+    </script>
+</body>
+</html>
