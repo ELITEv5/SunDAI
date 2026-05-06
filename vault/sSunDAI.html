@@ -371,7 +371,7 @@
                 let price;
                 try { [price] = await oracle.getPriceWithTimestamp(); }
                 catch { [price] = await oracle.peekPriceView(); }
-                plsPrice = parseFloat(ethers.utils.formatEther(price));
+                plsPrice = parseFloat(ethers.formatEther(price));
             } catch { /* use fallback */ }
         }
 
@@ -379,9 +379,9 @@
             try {
                 const [reserve0, reserve1] = await pairContract.getReserves();
                 const totalSupply = await pairContract.totalSupply();
-                const r0 = parseFloat(ethers.utils.formatEther(reserve0)) * 1.0;
-                const r1 = parseFloat(ethers.utils.formatEther(reserve1)) * plsPrice;
-                return (r0 + r1) / parseFloat(ethers.utils.formatEther(totalSupply));
+                const r0 = parseFloat(ethers.formatEther(reserve0)) * 1.0;
+                const r1 = parseFloat(ethers.formatEther(reserve1)) * plsPrice;
+                return (r0 + r1) / parseFloat(ethers.formatEther(totalSupply));
             } catch { return 0; }
         }
 
@@ -389,8 +389,8 @@
             try {
                 if (!window.ethereum) return alert("Please install MetaMask");
                 await window.ethereum.request({ method: "eth_requestAccounts" });
-                provider    = new ethers.providers.Web3Provider(window.ethereum);
-                signer      = provider.getSigner();
+                provider    = new ethers.BrowserProvider(window.ethereum);
+                signer      = await provider.getSigner();
                 userAddress = await signer.getAddress();
 
                 const network = await provider.getNetwork();
@@ -427,14 +427,14 @@
 
                 lpUnitValue = await getLPTokenUSDValue();
 
-                const rate = parseFloat(ethers.utils.formatEther(stats.currentExchangeRate));
+                const rate = parseFloat(ethers.formatEther(stats.currentExchangeRate));
                 document.getElementById("exchangeRate").textContent = "Exchange Rate: " + rate.toFixed(6) + " LP/sSunDAI";
 
-                const totalLPHeld = parseFloat(ethers.utils.formatEther(stats.totalLPHeld));
+                const totalLPHeld = parseFloat(ethers.formatEther(stats.totalLPHeld));
                 document.getElementById("tvl").textContent            = "$" + (totalLPHeld * lpUnitValue).toFixed(2);
-                document.getElementById("totalSupply").textContent    = parseFloat(ethers.utils.formatEther(totalSupply)).toFixed(4);
+                document.getElementById("totalSupply").textContent    = parseFloat(ethers.formatEther(totalSupply)).toFixed(4);
                 document.getElementById("totalHarvests").textContent  = stats.harvestCount.toString();
-                document.getElementById("feesCompounded").textContent = parseFloat(ethers.utils.formatEther(stats.feesCompounded)).toFixed(6) + " LP";
+                document.getElementById("feesCompounded").textContent = parseFloat(ethers.formatEther(stats.feesCompounded)).toFixed(6) + " LP";
 
                 const secsSince = stats.timeSinceLastHarvest.toNumber();
                 document.getElementById("timeSinceHarvest").textContent = formatDuration(secsSince);
@@ -452,8 +452,8 @@
                 }
 
                 // Residuals — only show row when non-zero
-                const r0 = parseFloat(ethers.utils.formatEther(stats.pendingResidual0));
-                const r1 = parseFloat(ethers.utils.formatEther(stats.pendingResidual1));
+                const r0 = parseFloat(ethers.formatEther(stats.pendingResidual0));
+                const r1 = parseFloat(ethers.formatEther(stats.pendingResidual1));
                 if (r0 > 0 || r1 > 0) {
                     document.getElementById("residualRow").style.display = "block";
                     document.getElementById("pendingToken0").textContent = r0.toFixed(6);
@@ -471,12 +471,12 @@
                         lpTokenContract.allowance(userAddress, SSUNDAI_ADDRESS)
                     ]);
 
-                    const sharesOwned = parseFloat(ethers.utils.formatEther(position.sharesOwned));
-                    const lpValue     = parseFloat(ethers.utils.formatEther(position.lpValue));
-                    const earnedLP    = parseFloat(ethers.utils.formatEther(position.earnedLP));
+                    const sharesOwned = parseFloat(ethers.formatEther(position.sharesOwned));
+                    const lpValue     = parseFloat(ethers.formatEther(position.lpValue));
+                    const earnedLP    = parseFloat(ethers.formatEther(position.earnedLP));
                     const appBps      = parseFloat(position.appreciationBps.toString());
-                    const lpBal       = parseFloat(ethers.utils.formatEther(lpBalance));
-                    const maxLPFloat  = parseFloat(ethers.utils.formatEther(maxLP));
+                    const lpBal       = parseFloat(ethers.formatEther(lpBalance));
+                    const maxLPFloat  = parseFloat(ethers.formatEther(maxLP));
 
                     document.getElementById("userShares").textContent       = sharesOwned.toFixed(6);
                     document.getElementById("userLPValue").textContent      = lpValue.toFixed(6);
@@ -498,7 +498,7 @@
                     }
 
                     // Approval banner
-                    document.getElementById("approveBanner").style.display = allowance.isZero() ? "block" : "none";
+                    document.getElementById("approveBanner").style.display = allowance === 0n ? "block" : "none";
                 }
             } catch (e) { console.error("Load error:", e); }
         }
@@ -509,8 +509,8 @@
                 document.getElementById("depositPreview").textContent = ""; return;
             }
             try {
-                const shares = await sSunDAIContract.previewDeposit(ethers.utils.parseEther(amount));
-                const sf = parseFloat(ethers.utils.formatEther(shares));
+                const shares = await sSunDAIContract.previewDeposit(ethers.parseEther(amount));
+                const sf = parseFloat(ethers.formatEther(shares));
                 document.getElementById("depositPreview").textContent = "Will receive " + sf.toFixed(6) + " sSunDAI";
             } catch { document.getElementById("depositPreview").textContent = ""; }
         });
@@ -521,8 +521,8 @@
                 document.getElementById("withdrawPreview").textContent = ""; return;
             }
             try {
-                const lpOut = await sSunDAIContract.previewWithdraw(ethers.utils.parseEther(amount));
-                const lf    = parseFloat(ethers.utils.formatEther(lpOut));
+                const lpOut = await sSunDAIContract.previewWithdraw(ethers.parseEther(amount));
+                const lf    = parseFloat(ethers.formatEther(lpOut));
                 document.getElementById("withdrawPreview").textContent =
                     "Returns " + lf.toFixed(6) + " LP  (~$" + (lf * lpUnitValue).toFixed(2) + ")";
             } catch { document.getElementById("withdrawPreview").textContent = ""; }
@@ -568,10 +568,10 @@
             const amount = document.getElementById("depositAmount").value;
             if (!amount) return showError("Enter an amount");
             await withLoading(document.getElementById("depositBtn"), async () => {
-                const amountWei = ethers.utils.parseEther(amount);
+                const amountWei = ethers.parseEther(amount);
                 const allowance = await lpTokenContract.allowance(userAddress, SSUNDAI_ADDRESS);
                 if (allowance.lt(amountWei)) {
-                    const tx = await lpTokenContract.approve(SSUNDAI_ADDRESS, ethers.constants.MaxUint256);
+                    const tx = await lpTokenContract.approve(SSUNDAI_ADDRESS, ethers.MaxUint256);
                     await tx.wait();
                 }
                 const tx = await sSunDAIContract.deposit(amountWei);
@@ -584,7 +584,7 @@
             const amount = document.getElementById("withdrawAmount").value;
             if (!amount) return showError("Enter shares to withdraw");
             await withLoading(document.getElementById("withdrawBtn"), async () => {
-                const tx = await sSunDAIContract.withdraw(ethers.utils.parseEther(amount));
+                const tx = await sSunDAIContract.withdraw(ethers.parseEther(amount));
                 await tx.wait();
                 document.getElementById("withdrawAmount").value = "";
             });
