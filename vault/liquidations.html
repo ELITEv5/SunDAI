@@ -14,6 +14,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <script src="ethers.umd.min.js"></script>
   <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html { background: #0a001f; } /* covers scroll overrun — no white flash */
     body {
       margin: 0;
       background: #0a001f;
@@ -23,7 +25,7 @@
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
-      overflow-y: auto;
+      overflow-x: hidden; /* prevent horizontal scroll from long address strings */
     }
     /* ── NAV (matches vault page) ── */
     .nav {
@@ -53,7 +55,8 @@
       background: rgba(10, 0, 30, 0.82); backdrop-filter: blur(20px);
       border: 1px solid rgba(255,140,0,0.25); border-radius: 18px;
       box-shadow: 0 0 40px rgba(255,140,0,0.12); padding: 28px 24px;
-      max-width: 900px; width: 90%; margin: 78px 0 40px 0; position: relative; z-index: 10;
+      max-width: 900px; width: calc(100% - 28px); margin: 78px 0 40px 0;
+      position: relative; z-index: 10;
     }
     .logo { display: block; max-width: 200px; margin: 0 auto 10px;
       animation: pulseGlow 4s ease-in-out infinite; transform-origin: center; }
@@ -86,9 +89,9 @@
     .status, .error { text-align: center; font-weight: bold; margin-top: 10px; transition: opacity .4s ease; }
     .status { color: #00ff9d; }
     .error { color: #ff3366; font-size: 0.9em; }
-    .info-grid { display: grid; gap: 8px; margin: 12px 0; }
+    .info-grid { display: grid; gap: 8px; margin: 12px 0; min-width: 0; overflow: hidden; }
     .info-row { display: flex; justify-content: space-between; align-items: center; }
-    .address { font-family: monospace; font-size: 0.85em; }
+    .address { font-family: monospace; font-size: 0.85em; word-break: break-all; }
     .loading {
       text-align: center; padding: 40px; color: #ffd700; font-size: 1.1em;
       animation: pulse 2s ease-in-out infinite;
@@ -153,11 +156,18 @@
     }
     .tab:hover { background: rgba(255,107,0,0.2); }
     .tab.active { background: rgba(255,107,0,0.3); border-color: #ffd700; }
-    #bg { opacity: 0; animation: fadeIn 2s ease forwards; }
+    #bg {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      opacity: 0; animation: fadeIn 2s ease forwards;
+    }
     @keyframes fadeIn { to { opacity: 1; } }
     @media (max-width: 600px) {
+      .container { padding: 20px 14px; border-radius: 14px; }
       .info-row { flex-direction: column; align-items: flex-start; gap: 4px; }
-      .address { font-size: 0.75em; }
+      .address { font-size: 0.72em; }
+      h1 { font-size: 1.5em; }
+      .tab { min-width: 100px; padding: 10px 8px; font-size: 0.85em; }
+      .stats-header .count { font-size: 1.8em; }
     }
   </style>
 </head>
